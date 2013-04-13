@@ -3,7 +3,7 @@ import json
 from collections import OrderedDict
 from engine import Engine
 
-COMMAND_DEADLINE = 30
+COMMAND_DEADLINE = 3
 
 class Player(object):
     def __init__(self, conn, username):
@@ -25,6 +25,7 @@ class Player(object):
             self.conn.send(msg)
 
     def disqualify(self, reason):
+        print "player %r disqualified: %s" % (self, reason)
         self.send("you were disqualified: %s" % reason)
         self.game.other_player(self).send("other player was disqualified: %s" % reason)
         self.game.game_over = True
@@ -32,6 +33,7 @@ class Player(object):
         self.game.send_state()
 
     def cmd_nop(self):
+        print "player %r nop" % self
         if self.cmd_issued:
             self.disqualify("sent more than one command")
             return
@@ -40,6 +42,7 @@ class Player(object):
         self.game.check_round_finished()
 
     def cmd_send_fleet(self, origin_id, target_id, a, b, c):
+        print "player %r fleet %d->%d (%d,%d,%d = %d)" % (self, origin_id, target_id, a, b, c, a+b+c)
         if self.cmd_issued:
             self.disqualify("sent more than one command")
             return
@@ -47,6 +50,9 @@ class Player(object):
         self.send("command received. waiting for other player...")
         self.game.engine.send_fleet(self.player_id, origin_id, target_id, [a,b,c])
         self.game.check_round_finished()
+
+    def __repr__(self):
+        return "<Player %s>" % (self.username)
 
 class Game(object):
     def __init__(self, players):
@@ -61,7 +67,7 @@ class Game(object):
         for player in self.players:
             player.send("game starts. other player is %s" % self.other_player(player).username)
 
-        self.engine = Engine()
+        self.engine = Engine(max_rounds=100)
 
         self.send_state()
         self.deadline = eventlet.greenthread.spawn_after(COMMAND_DEADLINE, self.deadline_reached)
@@ -95,6 +101,8 @@ class Game(object):
         
     def get_state(self, for_player):
         state = self.engine.dump()
+        state['player_id'] = for_player.player_id
+        state['status'] = self.engine.winner
         state['players'] = [
             OrderedDict([
                 ('id', player.player_id),

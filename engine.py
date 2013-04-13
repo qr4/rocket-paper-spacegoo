@@ -51,7 +51,7 @@ def battle(s1,s2):
         new1 = battle_round(ships2,ships1)
         ships2 = battle_round(ships1,ships2)
         ships1 = new1
-        print ships1,ships2
+        # print ships1,ships2
         
     return ships1, ships2
         #new2 = ships2
@@ -70,7 +70,7 @@ class Fleet():
         self.owner_id = owner_id
     
     def land(self):
-        print "fleet landing"
+        # print "fleet landing"
         if self.target.owner_id == self.owner_id:
             self.target.ships = map(lambda infleet,onplanet: infleet+onplanet, self.ships,self.target.ships)
         else:
@@ -78,11 +78,11 @@ class Fleet():
             attacker,defender = battle(self.ships,self.target.ships)
             if sum(defender) > 0:
                 #defended!
-                print "ZOMG defended"
+                # print "ZOMG defended"
                 self.target.ships = defender
             else:
                 #invasion successful!
-                print "ZOMG invasion successful"
+                # print "ZOMG invasion successful"
                 self.target.ships = attacker
                 self.target.owner_id = self.owner_id
     def dump(self):
@@ -103,8 +103,10 @@ class Engine():
     def generate_map(self):
         
         self.planets.append(Planet(len(self.planets),0,[1,1,1],0,0))
+        self.planets.append(Planet(len(self.planets),0,[2,1,1],0,-6))
+        self.planets.append(Planet(len(self.planets),0,[2,1,1],0,6))
         
-        self.planets.append(Planet(len(self.planets),1,[10,20,30],-1,-2))
+        self.planets.append(Planet(len(self.planets),1,[1,2,3],-1,-2))
         
         self.planets.append(Planet(len(self.planets),2,[1,2,3],1,2))
         
@@ -140,15 +142,15 @@ class Engine():
         print "DINGDINGDING ROUND ", self.round
         
         for i,planet in enumerate(self.planets):
-            print "planet ", i, "owner ", planet.owner_id, " :"
+            # print "planet ", i, "owner ", planet.owner_id, " :"
             if not planet.owner_id == 0:
                 planet.ships = map(lambda s,p: s+p, planet.ships, planet.production)
-            print planet.ships
+            # print planet.ships
         
         players_alive = []
-        for fleet in self.fleets:
+        for fleet in self.fleets[:]:
             player = fleet.owner_id
-            print "fleet ", fleet.id, ", owner ", fleet.owner_id, ", eta ", fleet.eta
+            # print "fleet ", fleet.id, ", owner ", fleet.owner_id, ", eta ", fleet.eta
             if not player in players_alive:
                 players_alive.append(player)
             if fleet.eta == self.round:
@@ -159,18 +161,19 @@ class Engine():
             player = planet.owner_id
             if not player == 0 and not player in players_alive:
                 players_alive.append(player)
+
+        self.round +=1
         
         if len(players_alive) == 1:
             self.winner = players_alive[0]
-            print "WINNER: ", self.winner
+            # print "WINNER: ", self.winner
             return
         
         if self.round >= self.max_rounds:
             self.winner = "draw"
-            print "DRAW!"
+            # print "DRAW!"
             return
             
-        self.round +=1
             
     def dump(self):
         state = OrderedDict([
