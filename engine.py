@@ -19,6 +19,8 @@ class Planet():
     def dump(self):
         state = OrderedDict([
             ("id", self.id),
+            ("x", self.posx),
+            ("y", self.posy),
             ("owner_id", self.owner_id),
             ("ships", self.ships),
             ("production", self.production)

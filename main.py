@@ -1,6 +1,7 @@
 import eventlet
 import json
-from game import Game as Engine
+from collections import OrderedDict
+from engine import Engine
 
 COMMAND_DEADLINE = 30
 
@@ -28,6 +29,7 @@ class Player(object):
         self.game.other_player(self).send("other player was disqualified: %s" % reason)
         self.game.game_over = True
         self.lose = True
+        self.game.send_state()
 
     def cmd_nop(self):
         if self.cmd_issued:
@@ -62,6 +64,7 @@ class Game(object):
         self.engine = Engine()
 
         self.send_state()
+        self.deadline = eventlet.greenthread.spawn_after(COMMAND_DEADLINE, self.deadline_reached)
 
     def is_abandoned(self):
         return all(player.conn is None for player in self.players)
@@ -81,22 +84,32 @@ class Game(object):
             player.send("round starts")
         self.engine.do_round()
         self.send_state()
+        self.deadline = eventlet.greenthread.spawn_after(COMMAND_DEADLINE, self.deadline_reached)
+        for player in self.players:
+            player.cmd_issued = False
 
     def deadline_reached(self):
         for player in self.players:
             if not player.cmd_issued:
                 player.disqualify("no command sent")
         
-    def get_state(self):
-        return self.engine.dump()
+    def get_state(self, for_player):
+        state = self.engine.dump()
+        state['players'] = [
+            OrderedDict([
+                ('id', player.player_id),
+                ('name', player.username),
+                ('won', player.win),
+                ('lost', player.lose),
+                ('itsme', player == for_player),
+            ]) for player in self.players
+        ]
+        return state
 
     def send_state(self):
-        state = self.get_state()
         for player in self.players:
+            state = self.get_state(player)
             player.send(json.dumps(state))
-        self.deadline = eventlet.greenthread.spawn_after(COMMAND_DEADLINE, self.deadline_reached)
-        for player in self.players:
-            player.cmd_issued = False
 
     def end(self):
         if self.deadline:
