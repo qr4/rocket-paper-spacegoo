@@ -137,13 +137,15 @@ class MatchMaking(object):
     def remove_player(self, player):
         if player in self.lobby:
             self.lobby.remove(player)
-        player.disqualify("connection lost")
+
         player.connection_lost()
 
         game = player.game
-        if game.is_abandoned():
-            print "game abandoned"
-            self.games.remove(game)
+        if game:
+            player.disqualify("connection lost")
+            if game.is_abandoned():
+                print "game abandoned"
+                self.games.remove(game)
 
     def check_should_game_start(self):
         if len(self.lobby) >= 2:
