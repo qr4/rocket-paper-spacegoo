@@ -97,7 +97,7 @@ class Fleet():
         
         
 
-class Game():
+class Engine():
     def generate_map(self):
         
         self.planets.append(Planet(len(self.planets),0,[1,1,1],0,0))
@@ -116,7 +116,7 @@ class Game():
         self.round = 0
         self.next_fleet_id = 0
         self.max_rounds = max_rounds
-        self.winner = "none" #can also be "draw" or a player_id
+        self.winner = None #can also be "draw" or a player_id
     
     def send_fleet(self,player_id,origin_id,target_id,ships):
         if not (0 <= origin_id < len(self.planets)):
@@ -136,23 +136,39 @@ class Game():
         
     def do_round(self):
         print "DINGDINGDING ROUND ", self.round
+        
         for i,planet in enumerate(self.planets):
             print "planet ", i, "owner ", planet.owner_id, " :"
             if not planet.owner_id == 0:
                 planet.ships = map(lambda s,p: s+p, planet.ships, planet.production)
             print planet.ships
         
-        
+        players_alive = []
         for fleet in self.fleets:
+            player = fleet.owner_id
             print "fleet ", fleet.id, ", owner ", fleet.owner_id, ", eta ", fleet.eta
+            if not player in players_alive:
+                players_alive.append(player)
             if fleet.eta == self.round:
                 self.fleets.remove(fleet)
                 fleet.land()
                 
-                
-        self.round +=1
+        for planet in self.planets:
+            player = planet.owner_id
+            if not player == 0 and not player in players_alive:
+                players_alive.append(player)
+        
+        if len(players_alive) == 1:
+            self.winner = players_alive[0]
+            print "WINNER: ", self.winner
+            return
+        
         if self.round >= self.max_rounds:
             self.winner = "draw"
+            print "DRAW!"
+            return
+            
+        self.round +=1
             
     def dump(self):
         state = OrderedDict([
@@ -165,18 +181,18 @@ class Game():
             
     
 if __name__ == "__main__":
-    game = Game()
-    game.do_round()
-    game.send_fleet(1, 1, 2, [200,300,400])
-    game.do_round()
-    game.do_round()
-    game.do_round()
-    game.do_round()
-    print game.dump()
-    game.do_round()
-    game.do_round()
-    game.do_round()
-    print game.dump()
+    engine = Engine()
+    engine.do_round()
+    engine.send_fleet(1, 1, 2, [200,300,400])
+    engine.do_round()
+    engine.do_round()
+    engine.do_round()
+    engine.do_round()
+    print engine.dump()
+    engine.do_round()
+    engine.do_round()
+    engine.do_round()
+    print engine.dump()
     
     
     
