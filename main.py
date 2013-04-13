@@ -7,7 +7,6 @@ COMMAND_DEADLINE = 30
 class Player(object):
     def __init__(self, conn, username):
         self.conn = conn
-        conn.player = self
 
         self.username = username
         self.cmd_issued = False
@@ -17,8 +16,12 @@ class Player(object):
         self.game = None
         self.player_id = None
 
+    def connection_lost(self):
+        self.conn = None
+
     def send(self, msg):
-        self.conn.send(msg)
+        if self.conn:
+            self.conn.send(msg)
 
     def disqualify(self, reason):
         self.send("you were disqualified: %s" % reason)
@@ -57,9 +60,11 @@ class Game(object):
             player.send("game starts. other player is %s" % self.other_player(player).username)
 
         self.engine = Engine()
-        self.engine.generate_map()
 
         self.send_state()
+
+    def is_abandoned(self):
+        return all(player.conn is None for player in self.players)
 
     def other_player(self, player):
         return self.players[1 - self.players.index(player)]
@@ -72,7 +77,6 @@ class Game(object):
             if not player.cmd_issued:
                 return
         self.deadline.cancel() # abort deadline countdown
-        self.deadline = None
         for player in self.players:
             player.send("round starts")
         self.engine.do_round()
@@ -120,16 +124,22 @@ class MatchMaking(object):
     def remove_player(self, player):
         if player in self.lobby:
             self.lobby.remove(player)
-        for game in self.games:
-            if game.has_player(player):
-                game.player_disappears(player)
-                self.games.remove(game)
-                break
+        player.disqualify("connection lost")
+        player.connection_lost()
+
+        game = player.game
+        if game.is_abandoned():
+            print "game abandoned"
+            self.games.remove(game)
 
     def check_should_game_start(self):
         if len(self.lobby) >= 2:
             player1, player2 = self.lobby.pop(), self.lobby.pop()
             self.games.append(Game([player1, player2]))
+
+    def dump(self):
+        print "%d player in lobby, %d running games" % (
+            len(self.lobby), len(self.games))
 
 MatchMaking = MatchMaking()
 
@@ -151,6 +161,7 @@ def cmd_dispatch(queue):
                 continue
 
             player = Player(conn, username)
+            conn.player = player
             conn.send("waiting for game start...")
             MatchMaking.add_player(player)
         elif cmd == "send":
@@ -177,7 +188,8 @@ def cmd_dispatch(queue):
 
             conn.player.cmd_nop()
         elif cmd == "quit":
-            MatchMaking.remove_player(player)
+            if conn.player:
+                MatchMaking.remove_player(conn.player)
         else:
             conn.send("unknown command")
 
@@ -229,11 +241,17 @@ class Connection(object):
     def __repr__(self):
         return "<Connection: %r>" % (self.username,)
 
+def status():
+    while 1:
+        eventlet.greenthread.sleep(2)
+        MatchMaking.dump()
+
 def main():
     server = eventlet.listen(('0.0.0.0', 6000))
     pool = eventlet.GreenPool()
     queue = eventlet.queue.Queue()
     pool.spawn_n(cmd_dispatch, queue)
+    pool.spawn_n(status)
 
     while 1:
         try:
