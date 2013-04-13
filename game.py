@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from math import *
 
   
@@ -16,10 +17,12 @@ class Planet():
         return int(ceil(sqrt(xdiff*xdiff + ydiff*ydiff)))
     
     def dump(self):
-        state = {"id": self.id,
-                 "owner_id": self.owner_id,
-                 "ships": self.ships,
-                 "production":self.production}
+        state = OrderedDict([
+            ("id", self.id),
+            ("owner_id", self.owner_id),
+            ("ships", self.ships),
+            ("production", self.production)
+        ])
         return state
     
 def battle_round(attacker,defender):  
@@ -81,12 +84,14 @@ class Fleet():
                 self.target.ships = attacker
                 self.target.owner_id = self.owner_id
     def dump(self):
-        state = {"id": self.id,
-                 "owner_id": self.owner_id,
-                 "ships": self.ships,
-                 "origin":self.origin.id,
-                 "target":self.target.id,
-                 "eta":self.eta}
+        state = OrderedDict([
+             ("id", self.id),
+             ("owner_id", self.owner_id),
+             ("ships", self.ships),
+             ("origin", self.origin.id),
+             ("target", self.target.id),
+             ("eta", self.eta),
+        ])
         return state
         
         
@@ -150,10 +155,12 @@ class Game():
             self.winner = "draw"
             
     def dump(self):
-        state = {"planets": map(lambda p: p.dump(), self.planets),
-                 "fleets": map(lambda f: f.dump(), self.fleets),
-                 "round": self.round,
-                 "max_rounds": self.max_rounds}
+        state = OrderedDict([
+            ("planets", map(lambda p: p.dump(), self.planets)),
+            ("fleets", map(lambda f: f.dump(), self.fleets)),
+            ("round", self.round),
+            ("max_rounds", self.max_rounds),
+        ])
         return state
             
     
