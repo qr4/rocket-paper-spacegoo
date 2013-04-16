@@ -67,7 +67,7 @@ class Game(object):
         for player in self.players:
             player.send("game starts. other player is %s" % self.other_player(player).username)
 
-        self.engine = Engine(max_rounds=100)
+        self.engine = Engine(max_rounds=500)
 
         self.send_state()
         self.deadline = eventlet.greenthread.spawn_after(COMMAND_DEADLINE, self.deadline_reached)

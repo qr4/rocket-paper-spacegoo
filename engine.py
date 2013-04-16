@@ -100,18 +100,25 @@ class Fleet():
         
 
 class Engine():
+
+    def insert_symmetric_planets(self,posx,posy,production,start_planets = False):
+        owner0, owner1 = 0,0
+        if start_planets:
+            owner0, owner1 = 1,2
+
+        self.planets.append(Planet(len(self.planets),owner0,production,posx,posy))
+        self.planets.append(Planet(len(self.planets),owner1,production,-posx,-posy))
+
+    def insert_central_planet(self,production):
+        self.planets.append(Planet(len(self.planets),0,production,0,0))
+
     def generate_map(self):
-        
-        self.planets.append(Planet(len(self.planets),0,[1,1,1],0,0))
-        self.planets.append(Planet(len(self.planets),0,[2,1,1],0,-6))
-        self.planets.append(Planet(len(self.planets),0,[2,1,1],0,6))
-        
-        self.planets.append(Planet(len(self.planets),1,[1,2,3],-1,-2))
-        
-        self.planets.append(Planet(len(self.planets),2,[1,2,3],1,2))
-        
-        
-        
+        self.insert_symmetric_planets(15,10,[5,0,0], start_planets=True)
+        self.insert_symmetric_planets(15,-10,[2,0,0])
+        self.insert_symmetric_planets(10,10,[1,0,0])
+        self.insert_symmetric_planets(5,0,[0,1,0])
+        self.insert_central_planet([0,0,4])
+
         
     def __init__(self,max_rounds = 500):
         self.planets = []
