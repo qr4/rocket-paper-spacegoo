@@ -96,8 +96,9 @@ class Fleet():
         ])
         return state
         
-        
-        
+    def combine(self, other):
+        for idx, count in enumerate(other.ships):
+            self.ships[idx] += count
 
 class Engine():
 
@@ -155,6 +156,8 @@ class Engine():
             # print planet.ships
         
         players_alive = []
+        land_on_planet = {}
+        highest_owner = 1
         for fleet in self.fleets[:]:
             player = fleet.owner_id
             # print "fleet ", fleet.id, ", owner ", fleet.owner_id, ", eta ", fleet.eta
@@ -162,8 +165,24 @@ class Engine():
                 players_alive.append(player)
             if fleet.eta == self.round:
                 self.fleets.remove(fleet)
-                fleet.land()
-                
+                # combine fleets before battling
+                if fleet.target not in land_on_planet:
+                    land_on_planet[fleet.target] = []
+                land_on_planet[fleet.target].append(fleet)
+                if fleet.owner_id > highest_owner: highest_owner = fleet.owner_id
+
+        for planet, fleets in land_on_planet.iteritems():
+            print "landing fleets on ", planet
+            fleets_of_players = [[] for _ in range(highest_owner + 1)]
+            for fleet in fleets:
+                fleets_of_players[fleet.owner_id].append(fleet)
+            for playerfleets in fleets_of_players:
+                if len(playerfleets) > 1:
+                    for other in playerfleets[1:]:
+                        playerfleets[0].combine(other)
+                if playerfleets:
+                    playerfleets[0].land()
+
         for planet in self.planets:
             player = planet.owner_id
             if not player == 0 and not player in players_alive:
@@ -205,6 +224,3 @@ if __name__ == "__main__":
     engine.do_round()
     engine.do_round()
     print engine.dump()
-    
-    
-    
