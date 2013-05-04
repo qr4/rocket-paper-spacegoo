@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from math import *
+import random
 
   
 class Planet():
@@ -170,12 +171,60 @@ class Engine():
     def insert_central_planet(self,production):
         self.planets.append(Planet(len(self.planets),0,production,0,0))
 
+
+    def generate_planet(self):
+        type = random.randint(0,2)
+        production = [0]*3
+        if type == 0: #one kind only
+            production = [max(1,int(abs(random.gauss(2,5)))),0,0]
+        elif type == 1: #two kinds of ships
+            production = [max(1,int(abs(random.gauss(1,4)))),max(1,int(abs(random.gauss(1,4)))),0]
+        else: # three kinds of ships
+            if random.randint(0,1) == 0:
+                production = [max(1,int(abs(random.gauss(0,3)))),max(1,int(abs(random.gauss(0,3)))),max(1,int(abs(random.gauss(0,3))))]
+            else:
+                production = [max(1,int(abs(random.gauss(0,3))))]*3
+        random.shuffle(production)
+        print production
+        return production
+            
+            
+    def does_planet_fit(self,x,y):
+        mindist = 100023
+        for planet in self.planets:
+            xdiff = x-planet.posx
+            ydiff = y-planet.posy
+            dist = sqrt(xdiff*xdiff + ydiff*ydiff)
+            mindist = min(mindist,dist)
+        return (dist > 3.0)
+    
+    def find_fitting_position(self,max_x, max_y):
+        x = 0
+        y = 0
+        while not self.does_planet_fit(x, y):
+            x = random.randint(-max_x,max_x)
+            y = random.randint(-max_y,max_y)
+        return x,y
+        
     def generate_map(self):
+        max_x = 20
+        max_y = 15
+        num_planets = random.randint(1,10)
+        
+        self.insert_central_planet(self.generate_planet())
+        for i in range(0,num_planets):
+            x,y = self.find_fitting_position(max_x, max_y)
+            self.insert_symmetric_planets(x,y,self.generate_planet(), start_planets=((i==0) or (i < num_planets/2) and (random.randint(0,10) < 2)))
+        
+        #print self.planets
+       
+        '''
         self.insert_symmetric_planets(15,10,[5,0,0], start_planets=True)
         self.insert_symmetric_planets(15,-10,[2,0,0])
         self.insert_symmetric_planets(10,10,[1,0,0])
         self.insert_symmetric_planets(5,0,[0,1,0])
         self.insert_central_planet([0,0,4])
+        '''
 
         
     def __init__(self,max_rounds = 500):
@@ -269,5 +318,7 @@ class Engine():
             
     
 if __name__ == "__main__":
-    battle([100,0,0], [30,30,20])
+    engine = Engine()
+    engine.do_round()
+    print engine.dump()
     
