@@ -27,6 +27,7 @@ class Planet():
         ])
         return state
     
+'''
 def battle_round(attacker,defender):  
     #das gute 3,1,1-schema.
     #nur eine asymmetrische runde. das hier muss mal also zweimal aufrufen.
@@ -42,8 +43,27 @@ def battle_round(attacker,defender):
             defender[def_type] -= multiplier
         defender[def_type] = max(0,defender[def_type])
     return defender
+'''
+
+def battle_round(attacker,defender):
+    #nur eine asymmetrische runde. das hier muss mal also zweimal aufrufen.
+    numships = len(attacker)
+    defender = defender[::]
+    for def_type in range(0,numships):
+        for att_type in range(0,numships):
+            multiplier = 0.1
+            absolute = 1
+            if (def_type-att_type)%numships == 1:
+                multiplier = 0.25
+                absolute = 2
+            if (def_type-att_type)%numships == numships-1:
+                multiplier = 0.01
+            defender[def_type] -= (attacker[att_type]*multiplier) + (attacker[att_type] > 0) * absolute
+        defender[def_type] = max(0,defender[def_type])
+    return defender
+
     
-    
+
 def battle(s1,s2):
     ships1 = s1[::]
     ships2 = s2[::]
@@ -51,13 +71,50 @@ def battle(s1,s2):
         new1 = battle_round(ships2,ships1)
         ships2 = battle_round(ships1,ships2)
         ships1 = new1
-        # print ships1,ships2
+        #print ships1,ships2
+        
+    ships1 = map(int,ships1)
+    ships2 = map(int,ships2)
+    #print ships1,ships2
+    return ships1, ships2
+        #new2 = ships2
+'''
+
+def shoot_at (att_type, num_attackers, def_type, num_defenders):
+    #return
+    multiplier = 0.1
+    absolute = 1
+    if (def_type-att_type)%3 == 1:
+        multiplier = 0.5
+        absolute = 2
+    if (def_type-att_type)%3 == 2:
+        multiplier = 0.0
+
+def battle_round(attacker,defender):
+    damages = [0]*3
+    for att_type in range(0,3):
+        #attacker chooses group of ships to shoot at:
+        
+        for att_type in range(0,3):
+            
+
+
+def battle(s1,s2):
+    ships1 = s1[::]
+    ships2 = s2[::]
+    while sum(ships1) > 0 and sum(ships2) >0:
+        damages1to2 = battle_round(s1,s2)
+        damages2to1 = battle_round(s2,s1)
+        
+            
+        
+        
+        print ships1,ships2
         
     return ships1, ships2
         #new2 = ships2
         
-        
-
+'''
     
 class Fleet():
     def __init__(self,id,owner_id,origin,target,ships,current_round):
@@ -212,15 +269,5 @@ class Engine():
             
     
 if __name__ == "__main__":
-    engine = Engine()
-    engine.do_round()
-    engine.send_fleet(1, 1, 2, [200,300,400])
-    engine.do_round()
-    engine.do_round()
-    engine.do_round()
-    engine.do_round()
-    print engine.dump()
-    engine.do_round()
-    engine.do_round()
-    engine.do_round()
-    print engine.dump()
+    battle([100,0,0], [30,30,20])
+    
