@@ -17,10 +17,10 @@ while 1:
     data = io.readline()
     if data[0] == "{":
         state = json.loads(data)
-        status = state["status"]
+        winner = state["winner"]
         own_id = state["player_id"]
-        if status:
-            print "################", own_id, " ", status, "#############"
+        if winner:
+            print "################", own_id, " ", winner, "#############"
             sys.exit()
         print data
        

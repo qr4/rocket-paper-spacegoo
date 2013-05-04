@@ -4,6 +4,7 @@ from collections import OrderedDict
 from engine import Engine
 
 COMMAND_DEADLINE = 3
+MAX_ROUNDS = 500
 
 class Player(object):
     def __init__(self, conn, username):
@@ -11,8 +12,6 @@ class Player(object):
 
         self.username = username
         self.cmd_issued = False
-        self.win = False
-        self.lose = False
 
         self.game = None
         self.player_id = None
@@ -26,14 +25,17 @@ class Player(object):
 
     def disqualify(self, reason):
         print "player %r disqualified: %s" % (self, reason)
-        self.send("you were disqualified: %s" % reason)
-        self.game.other_player(self).send("other player was disqualified: %s" % reason)
-        self.game.game_over = True
-        self.lose = True
-        self.game.send_state()
+        other_player = self.game.other_player(self)
+        self.game.game_end(
+            other_player.player_id,
+            "player %d disqualified: %s" % (self.player_id, reason)
+        )
 
     def cmd_nop(self):
         print "player %r nop" % self
+        if self.game.game_over:
+            self.send("game is over. please disconnect")
+            return
         if self.cmd_issued:
             self.disqualify("sent more than one command")
             return
@@ -43,6 +45,9 @@ class Player(object):
 
     def cmd_send_fleet(self, origin_id, target_id, a, b, c):
         print "player %r fleet %d->%d (%d,%d,%d = %d)" % (self, origin_id, target_id, a, b, c, a+b+c)
+        if self.game.game_over:
+            self.send("game is over. please disconnect")
+            return
         if self.cmd_issued:
             self.disqualify("sent more than one command")
             return
@@ -58,7 +63,9 @@ class Game(object):
     def __init__(self, players):
         assert len(players) == 2
         self.players = players
+
         self.game_over = False
+        self.winner = None
 
         for idx, player in enumerate(self.players):
             player.game = self
@@ -67,7 +74,7 @@ class Game(object):
         for player in self.players:
             player.send("game starts. other player is %s" % self.other_player(player).username)
 
-        self.engine = Engine(max_rounds=500)
+        self.engine = Engine(max_rounds=MAX_ROUNDS)
 
         self.send_state()
         self.deadline = eventlet.greenthread.spawn_after(COMMAND_DEADLINE, self.deadline_reached)
@@ -81,6 +88,13 @@ class Game(object):
     def has_player(self, player):
         return player in self.players
 
+    def game_end(self, winner, reason):
+        self.game_over = True
+        self.winner = winner
+        self.send_state()
+        for player in self.players:
+            player.send("game ended: %s" % reason)
+
     def check_round_finished(self):
         for player in self.players:
             if not player.cmd_issued:
@@ -89,12 +103,26 @@ class Game(object):
         for player in self.players:
             player.send("round starts")
         self.engine.do_round()
+        if self.engine.winner is not None:
+            if self.engine.winner == "draw":
+                self.game_end(
+                    None,
+                    "game is a draw"
+                )
+            else:
+                self.game_end(
+                    self.engine.winner, 
+                    "player %d won" % self.engine.winner
+                )
+            return
         self.send_state()
         self.deadline = eventlet.greenthread.spawn_after(COMMAND_DEADLINE, self.deadline_reached)
         for player in self.players:
             player.cmd_issued = False
 
     def deadline_reached(self):
+        if self.game_over:
+            return
         for player in self.players:
             if not player.cmd_issued:
                 player.disqualify("no command sent")
@@ -102,13 +130,12 @@ class Game(object):
     def get_state(self, for_player):
         state = self.engine.dump()
         state['player_id'] = for_player.player_id
-        state['status'] = self.engine.winner
+        state['game_over'] = self.game_over
+        state['winner'] = self.winner
         state['players'] = [
             OrderedDict([
                 ('id', player.player_id),
                 ('name', player.username),
-                ('won', player.win),
-                ('lost', player.lose),
                 ('itsme', player == for_player),
             ]) for player in self.players
         ]
@@ -150,7 +177,8 @@ class MatchMaking(object):
 
         game = player.game
         if game:
-            player.disqualify("connection lost")
+            if not game.game_over:
+                player.disqualify("connection lost")
             if game.is_abandoned():
                 print "game abandoned"
                 self.games.remove(game)
@@ -158,6 +186,8 @@ class MatchMaking(object):
     def check_should_game_start(self):
         if len(self.lobby) >= 2:
             player1, player2 = self.lobby.pop(), self.lobby.pop()
+            print "sending %s and %s into game" % (
+                player1, player2)
             self.games.append(Game([player1, player2]))
 
     def dump(self):
@@ -169,6 +199,7 @@ MatchMaking = MatchMaking()
 def cmd_dispatch(queue):
     while 1:
         conn, cmd, args = queue.get()
+        print conn, cmd, args
         if cmd == "login":
             if conn.player:
                 conn.send("already logged in")
@@ -235,6 +266,9 @@ class Connection(object):
 
         return [token.strip().lower() for token in line.split() if token]
 
+    def disconnect(self):
+        self.out_queue.put(None) # signal eof to writer
+
     def send(self, msg):
         self.out_queue.put(msg + "\n")
 
@@ -243,7 +277,7 @@ class Connection(object):
             tokens = self.read_tokens()
             if tokens is None or (tokens and tokens[0] == "quit"): # eof or quit
                 self.game_queue.put((self, "quit", []))
-                self.out_queue.put(None) # signal eof to writer
+                self.disconnect()
                 break
             elif not tokens: # empty?
                 continue
@@ -262,7 +296,7 @@ class Connection(object):
         self.socket.close()
 
     def __repr__(self):
-        return "<Connection: %r>" % (self.username,)
+        return "<Connection: %r>" % (self.player,)
 
 def status():
     while 1:

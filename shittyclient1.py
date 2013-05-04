@@ -22,8 +22,8 @@ while 1:
         state = json.loads(data)
         view.update(state)
         pprint.pprint(state)
-        if state['status'] is not None:
-            print "final: %s" % state['status']
+        if state['winner'] is not None:
+            print "final: %s" % state['winner']
             break
 
         player_id = state['player_id']
@@ -50,3 +50,6 @@ while 1:
     else:
         print data
 
+while 1:
+    data = io.readline().strip()
+    print data
