@@ -21,7 +21,7 @@ while 1:
     if data[0] == "{":
         state = json.loads(data)
         view.update(state)
-        pprint.pprint(state)
+        # pprint.pprint(state)
         if state['winner'] is not None:
             print "final: %s" % state['winner']
             break
@@ -49,7 +49,3 @@ while 1:
                 best_planet['ships'][2]/6))
     else:
         print data
-
-while 1:
-    data = io.readline().strip()
-    print data

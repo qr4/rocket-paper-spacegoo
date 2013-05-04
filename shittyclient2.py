@@ -22,8 +22,6 @@ while 1:
         if winner:
             print "################", own_id, " ", winner, "#############"
             sys.exit()
-        print data
-       
         
            # if player["draw"] and player["id"] == own_id:
            #     print "wtf, draw?!"

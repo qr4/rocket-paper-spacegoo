@@ -1,10 +1,47 @@
+import re
 import eventlet
-import json
+import simplejson as json
+import redis
 from collections import OrderedDict
 from engine import Engine
 
+redis = redis.Redis(host='localhost')
+
 COMMAND_DEADLINE = 3
 MAX_ROUNDS = 500
+START_ELO = 100
+
+class Authenticator(object):
+    def check(self, username, password):
+        saved_password = redis.get("user:%s" % username)
+        if not saved_password:
+            redis.set("user:%s" % username, password)
+            return True
+        return saved_password == password
+
+Authenticator = Authenticator()
+
+class Scoreboard(object):
+    def update_victory(self, winner, loser):
+        self.update_elo(winner, loser, 1.0, 0.0)
+
+    def update_draw(self, player1, player2):
+        self.update_elo(player1, player2, 0.5, 0.5)
+
+    def update_elo(self, p_a, p_b, score_a, score_b):
+        print score_a, score_b
+        Ra = redis.zscore('elo', p_a) or START_ELO
+        Rb = redis.zscore('elo', p_b) or START_ELO
+        Ea = 1.0 / (1 + 10.0 ** ((Rb - Ra)/400.0))
+        Eb = 1.0 / (1 + 10.0 ** ((Ra - Rb)/400.0))
+        print Ea, Eb
+        Ra_new = Ra + 10 * (score_a - Ea)
+        Rb_new = Rb + 10 * (score_b - Eb)
+        print Ra_new, Rb_new
+        redis.zadd('elo', p_a, Ra_new)
+        redis.zadd('elo', p_b, Rb_new)
+
+Scoreboard = Scoreboard()
 
 class Player(object):
     def __init__(self, conn, username):
@@ -89,11 +126,29 @@ class Game(object):
         return player in self.players
 
     def game_end(self, winner, reason):
+        if self.deadline:
+            self.deadline.cancel()
         self.game_over = True
         self.winner = winner
         self.send_state()
         for player in self.players:
             player.send("game ended: %s" % reason)
+
+        if winner is None:
+            Scoreboard.update_draw(
+                self.players[0].username,
+                self.players[1].username
+            )
+        elif winner == 1:
+            Scoreboard.update_victory(
+                self.players[0].username,
+                self.players[1].username
+            )
+        else:
+            Scoreboard.update_victory(
+                self.players[1].username,
+                self.players[0].username
+            )
 
     def check_round_finished(self):
         for player in self.players:
@@ -145,20 +200,6 @@ class Game(object):
         for player in self.players:
             state = self.get_state(player)
             player.send(json.dumps(state))
-
-    def end(self):
-        if self.deadline:
-            self.deadline.cancel()
-
-
-class Authenticator(object):
-    def __init__(self):
-        pass
-
-    def check(self, username, password):
-        return True
-
-Authenticator = Authenticator()
 
 class MatchMaking(object):
     def __init__(self):
@@ -259,9 +300,12 @@ class Connection(object):
         self.player = None
 
     def read_tokens(self):
-        line = self.read_file.readline()
+        line = self.read_file.readline().strip()
 
         if not line: # eof
+            return None
+
+        if not re.match("^[a-z 0-9]*$", line):
             return None
 
         return [token.strip().lower() for token in line.split() if token]
