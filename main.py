@@ -2,6 +2,7 @@ import re
 import eventlet
 import simplejson as json
 import redis
+import random
 from collections import OrderedDict
 from engine import Engine
 
@@ -40,6 +41,9 @@ class Scoreboard(object):
         print Ra_new, Rb_new
         redis.zadd('elo', p_a, Ra_new)
         redis.zadd('elo', p_b, Rb_new)
+
+    def get_score(self, player):
+        return redis.zscore('elo', player)
 
 Scoreboard = Scoreboard()
 
@@ -176,8 +180,6 @@ class Game(object):
             player.cmd_issued = False
 
     def deadline_reached(self):
-        if self.game_over:
-            return
         for player in self.players:
             if not player.cmd_issued:
                 player.disqualify("no command sent")
@@ -208,7 +210,7 @@ class MatchMaking(object):
 
     def add_player(self, player):
         self.lobby.append(player)
-        self.check_should_game_start()
+        # self.check_should_game_start()
 
     def remove_player(self, player):
         if player in self.lobby:
@@ -225,11 +227,28 @@ class MatchMaking(object):
                 self.games.remove(game)
 
     def check_should_game_start(self):
-        if len(self.lobby) >= 2:
-            player1, player2 = self.lobby.pop(), self.lobby.pop()
+        print "matchmaking"
+        pairing = []
+        for player in self.lobby:
+            pairing.append((Scoreboard.get_score(player.username), player))
+        pairing.sort()
+        print pairing
+
+        while len(pairing) >= 2:
+            first_idx = random.randint(0, len(pairing)-1)
+            while 1:
+                second_idx = int(random.gauss(first_idx, 2))
+                second_idx = max(0, min(len(pairing) - 1, second_idx))
+                if second_idx != first_idx:
+                    break
+            if first_idx > second_idx:
+                first_idx, second_idx = second_idx, first_idx
+            (_, player1), (_, player2) = pairing.pop(second_idx), pairing.pop(first_idx)
             print "sending %s and %s into game" % (
                 player1, player2)
             self.games.append(Game([player1, player2]))
+
+        self.lobby = [player for _, player in pairing]
 
     def dump(self):
         print "%d player in lobby, %d running games" % (
@@ -347,12 +366,18 @@ def status():
         eventlet.greenthread.sleep(2)
         MatchMaking.dump()
 
+def check_match():
+    while 1:
+        eventlet.greenthread.sleep(5)
+        MatchMaking.check_should_game_start()
+
 def main():
     server = eventlet.listen(('0.0.0.0', 6000))
     pool = eventlet.GreenPool()
     queue = eventlet.queue.Queue()
     pool.spawn_n(cmd_dispatch, queue)
     pool.spawn_n(status)
+    pool.spawn_n(check_match)
 
     while 1:
         try:
