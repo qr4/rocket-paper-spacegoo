@@ -30,15 +30,12 @@ class Scoreboard(object):
         self.update_elo(player1, player2, 0.5, 0.5)
 
     def update_elo(self, p_a, p_b, score_a, score_b):
-        print score_a, score_b
         Ra = redis.zscore('elo', p_a) or START_ELO
         Rb = redis.zscore('elo', p_b) or START_ELO
         Ea = 1.0 / (1 + 10.0 ** ((Rb - Ra)/400.0))
         Eb = 1.0 / (1 + 10.0 ** ((Ra - Rb)/400.0))
-        print Ea, Eb
         Ra_new = Ra + 10 * (score_a - Ea)
         Rb_new = Rb + 10 * (score_b - Eb)
-        print Ra_new, Rb_new
         redis.zadd('elo', p_a, Ra_new)
         redis.zadd('elo', p_b, Rb_new)
 
@@ -73,7 +70,7 @@ class Player(object):
         )
 
     def cmd_nop(self):
-        print "player %r nop" % self
+        # print "player %r nop" % self
         if self.game.game_over:
             self.send("game is over. please disconnect")
             return
@@ -85,7 +82,7 @@ class Player(object):
         self.game.check_round_finished()
 
     def cmd_send_fleet(self, origin_id, target_id, a, b, c):
-        print "player %r fleet %d->%d (%d,%d,%d = %d)" % (self, origin_id, target_id, a, b, c, a+b+c)
+        # print "player %r fleet %d->%d (%d,%d,%d = %d)" % (self, origin_id, target_id, a, b, c, a+b+c)
         if self.game.game_over:
             self.send("game is over. please disconnect")
             return
@@ -227,12 +224,10 @@ class MatchMaking(object):
                 self.games.remove(game)
 
     def check_should_game_start(self):
-        print "matchmaking"
         pairing = []
         for player in self.lobby:
             pairing.append((Scoreboard.get_score(player.username), player))
         pairing.sort()
-        print pairing
 
         while len(pairing) >= 2:
             first_idx = random.randint(0, len(pairing)-1)
@@ -243,11 +238,12 @@ class MatchMaking(object):
                     break
             if first_idx > second_idx:
                 first_idx, second_idx = second_idx, first_idx
-            (_, player1), (_, player2) = pairing.pop(second_idx), pairing.pop(first_idx)
-            print "sending %s and %s into game" % (
-                player1, player2)
+            (elo1, player1), (elo2, player2) = pairing.pop(second_idx), pairing.pop(first_idx)
+            print "sending %s (%f) and %s (%f) into game" % (
+                player1, elo1, player2, elo2)
             self.games.append(Game([player1, player2]))
 
+        # uebriggebliebenen Spieler ist nun die neue Lobby
         self.lobby = [player for _, player in pairing]
 
     def dump(self):
@@ -259,7 +255,7 @@ MatchMaking = MatchMaking()
 def cmd_dispatch(queue):
     while 1:
         conn, cmd, args = queue.get()
-        print conn, cmd, args
+        # print conn, cmd, args
         if cmd == "login":
             if conn.player:
                 conn.send("already logged in")
