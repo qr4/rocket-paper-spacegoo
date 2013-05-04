@@ -253,7 +253,7 @@ class Engine():
         
         
     def do_round(self):
-        print "DINGDINGDING ROUND ", self.round
+        # print "DINGDINGDING ROUND ", self.round
         
         for i,planet in enumerate(self.planets):
             # print "planet ", i, "owner ", planet.owner_id, " :"
@@ -278,7 +278,7 @@ class Engine():
                 if fleet.owner_id > highest_owner: highest_owner = fleet.owner_id
 
         for planet, fleets in land_on_planet.iteritems():
-            print "landing fleets on ", planet
+            # print "landing fleets on ", planet
             fleets_of_players = [[] for _ in range(highest_owner + 1)]
             for fleet in fleets:
                 fleets_of_players[fleet.owner_id].append(fleet)

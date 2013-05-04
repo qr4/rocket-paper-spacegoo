@@ -1,10 +1,48 @@
+import re
 import eventlet
-import json
+import simplejson as json
+import redis
+import random
 from collections import OrderedDict
 from engine import Engine
 
+redis = redis.Redis(host='localhost')
+
 COMMAND_DEADLINE = 3
 MAX_ROUNDS = 500
+START_ELO = 100
+
+class Authenticator(object):
+    def check(self, username, password):
+        saved_password = redis.get("user:%s" % username)
+        if not saved_password:
+            redis.set("user:%s" % username, password)
+            return True
+        return saved_password == password
+
+Authenticator = Authenticator()
+
+class Scoreboard(object):
+    def update_victory(self, winner, loser):
+        self.update_elo(winner, loser, 1.0, 0.0)
+
+    def update_draw(self, player1, player2):
+        self.update_elo(player1, player2, 0.5, 0.5)
+
+    def update_elo(self, p_a, p_b, score_a, score_b):
+        Ra = redis.zscore('elo', p_a) or START_ELO
+        Rb = redis.zscore('elo', p_b) or START_ELO
+        Ea = 1.0 / (1 + 10.0 ** ((Rb - Ra)/400.0))
+        Eb = 1.0 / (1 + 10.0 ** ((Ra - Rb)/400.0))
+        Ra_new = Ra + 10 * (score_a - Ea)
+        Rb_new = Rb + 10 * (score_b - Eb)
+        redis.zadd('elo', p_a, Ra_new)
+        redis.zadd('elo', p_b, Rb_new)
+
+    def get_score(self, player):
+        return redis.zscore('elo', player)
+
+Scoreboard = Scoreboard()
 
 class Player(object):
     def __init__(self, conn, username):
@@ -32,7 +70,7 @@ class Player(object):
         )
 
     def cmd_nop(self):
-        print "player %r nop" % self
+        # print "player %r nop" % self
         if self.game.game_over:
             self.send("game is over. please disconnect")
             return
@@ -44,7 +82,7 @@ class Player(object):
         self.game.check_round_finished()
 
     def cmd_send_fleet(self, origin_id, target_id, a, b, c):
-        print "player %r fleet %d->%d (%d,%d,%d = %d)" % (self, origin_id, target_id, a, b, c, a+b+c)
+        # print "player %r fleet %d->%d (%d,%d,%d = %d)" % (self, origin_id, target_id, a, b, c, a+b+c)
         if self.game.game_over:
             self.send("game is over. please disconnect")
             return
@@ -89,11 +127,29 @@ class Game(object):
         return player in self.players
 
     def game_end(self, winner, reason):
+        if self.deadline:
+            self.deadline.cancel()
         self.game_over = True
         self.winner = winner
         self.send_state()
         for player in self.players:
             player.send("game ended: %s" % reason)
+
+        if winner is None:
+            Scoreboard.update_draw(
+                self.players[0].username,
+                self.players[1].username
+            )
+        elif winner == 1:
+            Scoreboard.update_victory(
+                self.players[0].username,
+                self.players[1].username
+            )
+        else:
+            Scoreboard.update_victory(
+                self.players[1].username,
+                self.players[0].username
+            )
 
     def check_round_finished(self):
         for player in self.players:
@@ -121,8 +177,6 @@ class Game(object):
             player.cmd_issued = False
 
     def deadline_reached(self):
-        if self.game_over:
-            return
         for player in self.players:
             if not player.cmd_issued:
                 player.disqualify("no command sent")
@@ -146,20 +200,6 @@ class Game(object):
             state = self.get_state(player)
             player.send(json.dumps(state))
 
-    def end(self):
-        if self.deadline:
-            self.deadline.cancel()
-
-
-class Authenticator(object):
-    def __init__(self):
-        pass
-
-    def check(self, username, password):
-        return True
-
-Authenticator = Authenticator()
-
 class MatchMaking(object):
     def __init__(self):
         self.lobby = []
@@ -167,7 +207,7 @@ class MatchMaking(object):
 
     def add_player(self, player):
         self.lobby.append(player)
-        self.check_should_game_start()
+        # self.check_should_game_start()
 
     def remove_player(self, player):
         if player in self.lobby:
@@ -184,11 +224,27 @@ class MatchMaking(object):
                 self.games.remove(game)
 
     def check_should_game_start(self):
-        if len(self.lobby) >= 2:
-            player1, player2 = self.lobby.pop(), self.lobby.pop()
-            print "sending %s and %s into game" % (
-                player1, player2)
+        pairing = []
+        for player in self.lobby:
+            pairing.append((Scoreboard.get_score(player.username), player))
+        pairing.sort()
+
+        while len(pairing) >= 2:
+            first_idx = random.randint(0, len(pairing)-1)
+            while 1:
+                second_idx = int(random.gauss(first_idx, 2))
+                second_idx = max(0, min(len(pairing) - 1, second_idx))
+                if second_idx != first_idx:
+                    break
+            if first_idx > second_idx:
+                first_idx, second_idx = second_idx, first_idx
+            (elo1, player1), (elo2, player2) = pairing.pop(second_idx), pairing.pop(first_idx)
+            print "sending %s (%f) and %s (%f) into game" % (
+                player1, elo1, player2, elo2)
             self.games.append(Game([player1, player2]))
+
+        # uebriggebliebenen Spieler ist nun die neue Lobby
+        self.lobby = [player for _, player in pairing]
 
     def dump(self):
         print "%d player in lobby, %d running games" % (
@@ -199,7 +255,7 @@ MatchMaking = MatchMaking()
 def cmd_dispatch(queue):
     while 1:
         conn, cmd, args = queue.get()
-        print conn, cmd, args
+        # print conn, cmd, args
         if cmd == "login":
             if conn.player:
                 conn.send("already logged in")
@@ -259,9 +315,12 @@ class Connection(object):
         self.player = None
 
     def read_tokens(self):
-        line = self.read_file.readline()
+        line = self.read_file.readline().strip()
 
         if not line: # eof
+            return None
+
+        if not re.match("^[a-z 0-9]*$", line):
             return None
 
         return [token.strip().lower() for token in line.split() if token]
@@ -303,12 +362,18 @@ def status():
         eventlet.greenthread.sleep(2)
         MatchMaking.dump()
 
+def check_match():
+    while 1:
+        eventlet.greenthread.sleep(5)
+        MatchMaking.check_should_game_start()
+
 def main():
     server = eventlet.listen(('0.0.0.0', 6000))
     pool = eventlet.GreenPool()
     queue = eventlet.queue.Queue()
     pool.spawn_n(cmd_dispatch, queue)
     pool.spawn_n(status)
+    pool.spawn_n(check_match)
 
     while 1:
         try:
