@@ -196,7 +196,7 @@ class Engine():
             ydiff = y-planet.posy
             dist = sqrt(xdiff*xdiff + ydiff*ydiff)
             mindist = min(mindist,dist)
-        return (dist > 3.0)
+        return (mindist > 3.0)
     
     def find_fitting_position(self,max_x, max_y):
         x = 0
