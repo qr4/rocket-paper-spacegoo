@@ -1,0 +1,8 @@
+{% macro game(game) %}
+  <div class='game'>
+    <a href='{{url_for('game', game_id=game.game_id)}}'>{{ game.game_id}}</a> - 
+    <a class='winner' href='{{url_for('player', username=game.player1)}}'>{{ game.player1}}</a> :
+    <a class='loser' href='{{url_for('player', username=game.player2)}}'>{{ game.player2}}</a>
+    <span>+{{ "%.2f"|format(game.elodiff) }}</span>
+  </div>
+{% endmacro %}

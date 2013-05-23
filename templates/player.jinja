@@ -1,0 +1,50 @@
+{% extends "layout.jinja" %}
+{% import "macro.jinja" as m %}
+
+{% block content %}
+  <h1>{{username}}</h1>
+  <p class='lead'>
+    {{ num_games }} games played. Ranked #{{ rank }}.
+  </p>
+  <div class="row">
+    <div class="span6">
+      <h3>{{ username }}'s scoreboard</h3>
+      <table class='table highscore'>
+        {% for score_user, score in highscores %}
+          <tr class='{{('', 'me')[score_user== username]}}'>
+            <td style='width: 30px;'>
+              {{ highscore_first + loop.index }}.
+            </td>
+            <td>
+              <a href='{{url_for('player', username=score_user)}}'>{{score_user}}</a>
+            </td>
+            <td style='text-align: right;'>
+              {{"%.2f"|format(score)}}
+            </td>
+          </tr>
+        {% endfor %}
+      </table>
+    </div>
+    <div class="span6">
+      <h3>{{ username }}'s recent games</h3>
+      <table class='table game'>
+        {% for game in last_games %}
+          <tr>
+            <td>
+              <a href='{{url_for('game', game_id=game.game_id)}}'>{{ game.game_id}}</a>
+            </td>
+            <td>
+              <a class='{{('', 'me')[game.player1 == username]}} winner' href='{{url_for('player', username=game.player1)}}'>{{ game.player1}}</a> 
+              <sub>vs</sub>
+              <a class='{{('', 'me')[game.player2 == username]}} loser' href='{{url_for('player', username=game.player2)}}'>{{ game.player2}}</a>
+            </td>
+            <td style='text-align: right;'>
+              +{{ "%.2f"|format(game.elodiff) }}
+            </td>
+        {% endfor %}
+      </table>
+    </div>
+  </div>
+  {{ highscore }}
+{% endblock %}
+

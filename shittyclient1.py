@@ -1,8 +1,8 @@
 import socket, json
 import random, pprint
 
-import view
-view.init(1024, 768)
+# import view
+# view.init(1024, 768)
 
 USERNAME = "dividuum"
 PASSWORD = "bar"
@@ -20,7 +20,7 @@ while 1:
     data = io.readline().strip()
     if data and data[0] == "{":
         state = json.loads(data)
-        view.update(state)
+        # view.update(state)
         # pprint.pprint(state)
         if state['winner'] is not None:
             print "final: %s" % state['winner']

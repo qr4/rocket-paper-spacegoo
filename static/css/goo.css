@@ -1,0 +1,14 @@
+.game .winner {
+  color: #090;
+}
+.game .loser {
+  color: #900;
+}
+.game .me {
+  background-color: #eee;
+  padding: 3px;
+  border-radius: 3px;
+}
+.highscore .me {
+  background-color: #eee;
+}

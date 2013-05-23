@@ -1,11 +1,13 @@
 import re
 import time
 import eventlet
-from eventlet.green import socket
 import simplejson as json
-import redis
 import random
 from collections import OrderedDict
+
+from eventlet.green import socket
+import redis
+
 from engine import Engine
 
 redis = redis.Redis(host='localhost')
@@ -162,10 +164,11 @@ class Game(object):
                 self.players[1].username
             )
         else:
-            elo_p1, elo_p2, elo_diff = Scoreboard.update_victory(
+            elo_p2, elo_p1, elo_diff = Scoreboard.update_victory(
                 self.players[1].username,
                 self.players[0].username
             )
+            elo_diff = - elo_diff
 
         p = redis.pipeline()
         p.hset('game:%d' % self.game_id, 'end', int(time.time()))
@@ -175,6 +178,8 @@ class Game(object):
 
         p.zadd('scoreboard', self.players[0].username, -elo_p1)
         p.zadd('scoreboard', self.players[1].username, -elo_p2)
+
+        p.rpush('games', self.game_id)
 
         p.rpush('player:%s:games' % self.players[0].username, self.game_id)
         p.rpush('player:%s:games' % self.players[1].username, self.game_id)
@@ -422,7 +427,7 @@ def main():
         try:
             socket, address = server.accept()
             conn = Connection(socket)
-            conn.send("\n\nwelcome to rocket-scissor-spacegoo. see http://??? for more information on how to play\n\n")
+            conn.send("welcome to rocket-scissor-spacegoo. see http://??? for more information on how to play")
         except (SystemExit, KeyboardInterrupt):
             break
 
