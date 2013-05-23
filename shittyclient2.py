@@ -15,7 +15,7 @@ def write(data):
 write('login %s %s' % (USERNAME, PASSWORD))
 while 1:
     data = io.readline()
-    if data[0] == "{":
+    if data and data[0] == "{":
         state = json.loads(data)
         winner = state["winner"]
         own_id = state["player_id"]

@@ -1,5 +1,7 @@
 import re
+import time
 import eventlet
+from eventlet.green import socket
 import simplejson as json
 import redis
 import random
@@ -7,6 +9,7 @@ from collections import OrderedDict
 from engine import Engine
 
 redis = redis.Redis(host='localhost')
+pool = eventlet.GreenPool()
 
 COMMAND_DEADLINE = 3
 MAX_ROUNDS = 500
@@ -24,10 +27,10 @@ Authenticator = Authenticator()
 
 class Scoreboard(object):
     def update_victory(self, winner, loser):
-        self.update_elo(winner, loser, 1.0, 0.0)
+        return self.update_elo(winner, loser, 1.0, 0.0)
 
     def update_draw(self, player1, player2):
-        self.update_elo(player1, player2, 0.5, 0.5)
+        return self.update_elo(player1, player2, 0.5, 0.5)
 
     def update_elo(self, p_a, p_b, score_a, score_b):
         Ra = redis.zscore('elo', p_a) or START_ELO
@@ -38,9 +41,10 @@ class Scoreboard(object):
         Rb_new = Rb + 10 * (score_b - Eb)
         redis.zadd('elo', p_a, Ra_new)
         redis.zadd('elo', p_b, Rb_new)
+        return Ra_new, Rb_new, Ra_new - Ra
 
     def get_score(self, player):
-        return redis.zscore('elo', player)
+        return redis.zscore('elo', player) or START_ELO
 
 Scoreboard = Scoreboard()
 
@@ -54,12 +58,16 @@ class Player(object):
         self.game = None
         self.player_id = None
 
-    def connection_lost(self):
-        self.conn = None
+    def get_score(self):
+        return Scoreboard.get_score(self.username)
 
     def send(self, msg):
         if self.conn:
             self.conn.send(msg)
+
+    def connection_lost(self):
+        if self.game and not self.game.game_over:
+            self.disqualify("connection lost")
 
     def disqualify(self, reason):
         print "player %r disqualified: %s" % (self, reason)
@@ -100,6 +108,9 @@ class Player(object):
 class Game(object):
     def __init__(self, players):
         assert len(players) == 2
+        self.game_id = redis.incr('game_id')
+        print "starting game %r" % self.game_id
+
         self.players = players
 
         self.game_over = False
@@ -117,9 +128,6 @@ class Game(object):
         self.send_state()
         self.deadline = eventlet.greenthread.spawn_after(COMMAND_DEADLINE, self.deadline_reached)
 
-    def is_abandoned(self):
-        return all(player.conn is None for player in self.players)
-
     def other_player(self, player):
         return self.players[1 - self.players.index(player)]
 
@@ -127,38 +135,67 @@ class Game(object):
         return player in self.players
 
     def game_end(self, winner, reason):
-        if self.deadline:
+        assert not self.game_over
+
+        print "game ends: winner is %s: %s" % (winner, reason)
+
+        if self.deadline is not None:
             self.deadline.cancel()
+            self.deadline = None
+
         self.game_over = True
         self.winner = winner
-        self.send_state()
+
         for player in self.players:
-            player.send("game ended: %s" % reason)
+            player.send("game ended: %s. final state follows" % reason)
+
+        self.send_state()
 
         if winner is None:
-            Scoreboard.update_draw(
+            elo_p1, elo_p2, elo_diff = Scoreboard.update_draw(
                 self.players[0].username,
                 self.players[1].username
             )
         elif winner == 1:
-            Scoreboard.update_victory(
+            elo_p1, elo_p2, elo_diff = Scoreboard.update_victory(
                 self.players[0].username,
                 self.players[1].username
             )
         else:
-            Scoreboard.update_victory(
+            elo_p1, elo_p2, elo_diff = Scoreboard.update_victory(
                 self.players[1].username,
                 self.players[0].username
             )
 
+        p = redis.pipeline()
+        p.hset('game:%d' % self.game_id, 'end', int(time.time()))
+        p.hset('game:%d' % self.game_id, 'p1', self.players[0].username)
+        p.hset('game:%d' % self.game_id, 'p2', self.players[1].username)
+        p.hset('game:%d' % self.game_id, 'elodiff', elo_diff)
+
+        p.zadd('scoreboard', self.players[0].username, -elo_p1)
+        p.zadd('scoreboard', self.players[1].username, -elo_p2)
+
+        p.rpush('player:%s:games' % self.players[0].username, self.game_id)
+        p.rpush('player:%s:games' % self.players[1].username, self.game_id)
+        p.execute()
+
+        self.players[0].conn.disconnect()
+        self.players[1].conn.disconnect()
+
     def check_round_finished(self):
+        # pruefen, ob beide spieler befehle abgegeben haben...
         for player in self.players:
             if not player.cmd_issued:
                 return
+
         self.deadline.cancel() # abort deadline countdown
+        self.deadline = None
+
         for player in self.players:
-            player.send("round starts")
+            player.send("calculating round")
         self.engine.do_round()
+
         if self.engine.winner is not None:
             if self.engine.winner == "draw":
                 self.game_end(
@@ -171,15 +208,26 @@ class Game(object):
                     "player %d won" % self.engine.winner
                 )
             return
+
         self.send_state()
+
+        for player in self.players:
+            player.send("waiting for you command")
+       
         self.deadline = eventlet.greenthread.spawn_after(COMMAND_DEADLINE, self.deadline_reached)
         for player in self.players:
             player.cmd_issued = False
 
     def deadline_reached(self):
-        for player in self.players:
-            if not player.cmd_issued:
-                player.disqualify("no command sent")
+        if not self.players[0].cmd_issued and not self.players[1].cmd_issued:
+            self.game_end(
+                None,
+                "both players failed to send a command"
+            )
+        else:
+            for player in self.players:
+                if not player.cmd_issued:
+                    player.disqualify("no command sent")
         
     def get_state(self, for_player):
         state = self.engine.dump()
@@ -203,30 +251,18 @@ class Game(object):
 class MatchMaking(object):
     def __init__(self):
         self.lobby = []
-        self.games = []
 
     def add_player(self, player):
         self.lobby.append(player)
-        # self.check_should_game_start()
 
     def remove_player(self, player):
         if player in self.lobby:
             self.lobby.remove(player)
 
-        player.connection_lost()
-
-        game = player.game
-        if game:
-            if not game.game_over:
-                player.disqualify("connection lost")
-            if game.is_abandoned():
-                print "game abandoned"
-                self.games.remove(game)
-
     def check_should_game_start(self):
         pairing = []
         for player in self.lobby:
-            pairing.append((Scoreboard.get_score(player.username), player))
+            pairing.append((player.get_score(), player))
         pairing.sort()
 
         while len(pairing) >= 2:
@@ -241,78 +277,85 @@ class MatchMaking(object):
             (elo1, player1), (elo2, player2) = pairing.pop(second_idx), pairing.pop(first_idx)
             print "sending %s (%f) and %s (%f) into game" % (
                 player1, elo1, player2, elo2)
-            self.games.append(Game([player1, player2]))
+            Game([player1, player2])
 
         # uebriggebliebenen Spieler ist nun die neue Lobby
         self.lobby = [player for _, player in pairing]
 
     def dump(self):
-        print "%d player in lobby, %d running games" % (
-            len(self.lobby), len(self.games))
+        print "%d player in lobby" % len(self.lobby)
 
 MatchMaking = MatchMaking()
 
-def cmd_dispatch(queue):
-    while 1:
-        conn, cmd, args = queue.get()
-        # print conn, cmd, args
-        if cmd == "login":
-            if conn.player:
-                conn.send("already logged in")
-                continue
-
-            if len(args) != 2:
-                conn.send("invalid arguments")
-                continue
-
-            username, password = args
-            if not Authenticator.check(username, password):
-                conn.send("invalid login")
-                continue
-
-            player = Player(conn, username)
-            conn.player = player
-            conn.send("waiting for game start...")
-            MatchMaking.add_player(player)
-        elif cmd == "send":
-            if len(args) != 5:
-                conn.send("invalid arguments")
-                continue
-
-            try:
-                origin_id, target_id, a, b, c = map(int, args)
-
-            except ValueError:
-                conn.send("numbers expected")
-                continue
-
-            if conn.player is None:
-                conn.send("login first")
-                continue
-
-            conn.player.cmd_send_fleet(origin_id, target_id, a, b, c)
-        elif cmd == "nop":
-            if conn.player is None:
-                conn.send("login first")
-                continue
-
-            conn.player.cmd_nop()
-        elif cmd == "quit":
-            if conn.player:
-                MatchMaking.remove_player(conn.player)
-        else:
-            conn.send("unknown command")
-
-
-
-
 class Connection(object):
-    def __init__(self, socket, game_queue):
+    def __init__(self, socket):
         self.socket = socket
         self.read_file = socket.makefile('r')
-        self.game_queue = game_queue
-        self.out_queue = eventlet.queue.Queue()
+        self.write_queue = eventlet.queue.Queue()
         self.player = None
+        self.reader_thread = pool.spawn(self.reader)
+        pool.spawn_n(self.writer)
+
+    def handle_cmd_login(self, username, password):
+        if self.player:
+            self.send("already logged in")
+            return
+
+        if not Authenticator.check(username, password):
+            self.send("invalid login")
+            return
+
+        self.player = Player(self, username)
+        self.send("your current score: %.2f. waiting for game start..." % self.player.get_score())
+        MatchMaking.add_player(self.player)
+
+    def handle_cmd_send(self, origin_id, target_id, a, b, c):
+        if self.player is None:
+            self.send("login first")
+            return
+
+        if self.player.game is None:
+            self.send("not in a game. please wait")
+            return
+
+        try:
+            origin_id, target_id, a, b, c = int(origin_id), int(target_id), int(a), int(b), int(c)
+        except ValueError:
+            self.send("numbers expected")
+            return
+
+        self.player.cmd_send_fleet(origin_id, target_id, a, b, c)
+
+    def handle_cmd_nop(self):
+        if self.player is None:
+            self.send("login first")
+            return
+
+        if self.player.game is None:
+            self.send("not in a game. please wait")
+            return
+
+        self.player.cmd_nop()
+
+    def handle_cmd_quit(self):
+        self.disconnect()
+
+    def handle_connection_lost(self):
+        if self.player:
+            MatchMaking.remove_player(self.player)
+            self.player.connection_lost()
+
+    def disconnect(self):
+        self.send("closing connection. see you next time")
+        self.write_queue.put(None) # signal eof to writer
+
+        print "reader closed"
+        self.read_file.close()
+        self.reader_thread.kill()
+        # no code here: the kill might prevent this from being reached
+
+    def send(self, msg):
+        self.write_queue.put(msg + "\n")
 
     def read_tokens(self):
         line = self.read_file.readline().strip()
@@ -325,33 +368,36 @@ class Connection(object):
 
         return [token.strip().lower() for token in line.split() if token]
 
-    def disconnect(self):
-        self.out_queue.put(None) # signal eof to writer
-
-    def send(self, msg):
-        self.out_queue.put(msg + "\n")
-
     def reader(self):
         while 1:
             tokens = self.read_tokens()
-            if tokens is None or (tokens and tokens[0] == "quit"): # eof or quit
-                self.game_queue.put((self, "quit", []))
-                self.disconnect()
-                break
+            if tokens is None:
+                self.handle_connection_lost()
+                return # never reached. this thread is killed
             elif not tokens: # empty?
                 continue
             cmd, args = tokens[0], tokens[1:]
-            self.game_queue.put((self, cmd, args))
-        print "reader closed"
-        self.read_file.close()
+            handler = getattr(self, "handle_cmd_%s" % cmd, None)
+            if handler is None:
+                self.send("unknown command: %r" % cmd)
+            else:
+                try:
+                    handler(*args)
+                except TypeError, err:
+                    self.send("invalid arguments: %s" % err)
 
     def writer(self):
         while 1:
-            data = self.out_queue.get()
+            data = self.write_queue.get()
             if data is None: # should close write side
                 break
-            self.socket.send(data)
+            try:
+                self.socket.send(data)
+            except socket.error:
+                break
+
         print "writer closed"
+        self.socket.shutdown(socket.SHUT_WR)
         self.socket.close()
 
     def __repr__(self):
@@ -369,18 +415,14 @@ def check_match():
 
 def main():
     server = eventlet.listen(('0.0.0.0', 6000))
-    pool = eventlet.GreenPool()
-    queue = eventlet.queue.Queue()
-    pool.spawn_n(cmd_dispatch, queue)
     pool.spawn_n(status)
     pool.spawn_n(check_match)
 
     while 1:
         try:
             socket, address = server.accept()
-            conn = Connection(socket, queue)
-            pool.spawn_n(conn.reader)
-            pool.spawn_n(conn.writer)
+            conn = Connection(socket)
+            conn.send("\n\nwelcome to rocket-scissor-spacegoo. see http://??? for more information on how to play\n\n")
         except (SystemExit, KeyboardInterrupt):
             break
 
