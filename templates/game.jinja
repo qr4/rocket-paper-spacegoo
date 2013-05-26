@@ -31,8 +31,8 @@
       <h3>{{ num_rounds }} rounds played</h3>
       <svg id='timegraph'></svg>
       <svg id='planets'></svg>
-      <table class='table rounds'>
-        <thead>
+      <table class='table rounds fixed-header'>
+        <thead class='header'>
           <tr>
             <th>Round</th>
             <th>Total Fleets</th>
@@ -81,6 +81,8 @@
   {{ super() }}
   <script src="/static/js/d3.v3.js"></script>
   <script>
+    $('table.fixed-header').fixedHeader();
+
     var rounds = [
       {% for round in rounds %}
         {{round|tojson|safe}},
@@ -155,7 +157,6 @@
       for (var idx = 0; idx < planets.length; idx++) {
         var planet = planets[idx];
         planet.size = d3.sum(planet.production);
-        console.log(planet.size);
       }
 
       // https://gist.github.com/mbostock/1305111
