@@ -120,7 +120,7 @@
           // .attr("transform", "translate(0, 200)");
 
       var x = d3.time.scale().domain([0, rounds.length]).range([0, width]);
-      var y = d3.time.scale().domain([0, max_ships]).range([height, 0]);
+      var y = d3.scale.linear().domain([0, max_ships]).range([height, 0]);
 
       var line = d3.svg.line()
         .x(function(d,i) { return x(i); })
