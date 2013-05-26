@@ -11,12 +11,12 @@
   <h1>
     Game #{{game_id}}: 
     {% if elodiff > 0 %}
-      <a class'winner player1' href='{{url_for('player', username=player1)}}'>{{player1}}</a>
+      <a class='winner player1' href='{{url_for('player', username=player1)}}'>{{player1}}</a>
       <sub>vs</sub>
       <a class='loser player2' href='{{url_for('player', username=player2)}}'>{{player2}}</a>
       +{{ "%.3f"|format(elodiff)}}
     {% else %}
-      <a class'winner player2' href='{{url_for('player', username=player2)}}'>{{player2}}</a>
+      <a class='winner player2' href='{{url_for('player', username=player2)}}'>{{player2}}</a>
       <sub>vs</sub>
       <a class='loser player1' href='{{url_for('player', username=player1)}}'>{{player1}}</a>
       +{{ "%.3f"|format(-elodiff)}}
@@ -138,8 +138,8 @@
     function make_planets() {
       var height = 500;
       var width = 940;
-      var planet_size = 40;
       var size_scale = 15;
+      var planet_canvas_size = 100;
 
       var svg = d3.select("#planets")
           .attr("width", width + "px")
@@ -147,61 +147,63 @@
         .append("g")
           .attr("transform", "translate(" + width/2 + "," + height/2 + ")");
 
-      var round = 3;
+      var round = 0;
       var planets = rounds[round].data.planets;
-
       var color = d3.scale.category20();
+      var max_production = 18;
+
+      for (var idx = 0; idx < planets.length; idx++) {
+        var planet = planets[idx];
+        planet.size = d3.sum(planet.production);
+        console.log(planet.size);
+      }
 
       // https://gist.github.com/mbostock/1305111
       var planet = svg.selectAll(".planet")
-          .data(planets.map(function(planet, idx) {
-            return planet.production;
-          }))
+          .data(planets)
         .enter().append("svg:svg")
           .attr("class", "planet")
-          .attr("width", planet_size)
-          .attr("height", planet_size)
+          .attr("width", planet_canvas_size)
+          .attr("height", planet_canvas_size)
           .attr("background-color", "red")
           .attr("x", function(planet, i) {
-            return planets[i].x * -size_scale - planet_size/2;
+            return planets[i].x * -size_scale - planet_canvas_size/2;
           })
           .attr("y", function(planet, i) {
-            return planets[i].y * size_scale - planet_size/2;
+            return planets[i].y *  size_scale - planet_canvas_size/2;
           })
           .append("svg:g")
-          .attr("transform", "translate(" + planet_size/2 + "," + planet_size/2 + ")");
+          .attr("transform", function(planet) {
+            return "translate(" + planet_canvas_size/2 + "," + planet_canvas_size/2 + ")";
+          })
+          .append("svg:g")
+          .attr("transform", function(planet) {
+            return "scale(" + 1.0 / (max_production*2) * planet.size + ")";
+          });
 
-      planet.selectAll("path")
-          .data(d3.layout.pie())
+      planet.append("svg:circle")
+        .attr("class", function(planet) {
+          return "player" + planet.owner_id;
+        })
+        .attr("cx", 0)
+        .attr("cy", 0)
+        .attr("r", planet_canvas_size*1.3);
+
+      var pie_maker = d3.layout.pie();
+      planet.selectAll(".production")
+          .data(function(planet) {
+            return pie_maker(planet.production);
+          })
         .enter().append("svg:path")
+          .attr("class", "production")
           .attr("d", d3.svg.arc()
             .innerRadius(0)
-            .outerRadius(planet_size/2))
-          .style("fill", function(d, i) { return color(i); });
-
-      // g.selectAll("path")
-      //   .data(d3.layout.pie([1,2,3]))
-      //   .enter().append("svg:path")
-      //     .attr("d", d3.svg.arc()
-      //       .innerRadius(4)
-      //       .outerRadius(10))
-      //     .style("fill", "red");
-
-
-      // for (var idx = 0; idx < planets.length; idx++) {
-      //   var planet = planets[idx];
-      //   // var pie = d3.layout.pie(planet.production + [1]);
-      //   var pie = d3.layout.pie([1,2,3]);
-
-      //   var arc = d3.svg.arc()
-      //     .innerRadius(10)
-      //     .outerRadius(20);
-
-      //   g.append("svg:path")
-      //     .attr("fill", "red")
-      //     .attr("d", arc(pie))
-      //     .attr("transform", "translate(" + planet.x + "," + planet.y +")");
-      // }
+            .outerRadius(function(d, i) {
+              return planet_canvas_size;
+            }))
+          .style("fill", function(d, i) { 
+            return ["#DDD", "#AAA", "#999"][i];
+          });
     }
 
     make_timegraph();

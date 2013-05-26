@@ -52,3 +52,14 @@
   fill: none;
 }
              
+#planets {
+  box-shadow: 2px 2px 80px rgba(1,1,1,0.3);
+}
+
+#planets .player1 {
+  fill: steelblue;
+}
+
+#planets .player2 {
+  fill: red;
+}
