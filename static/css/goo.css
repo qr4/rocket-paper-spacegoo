@@ -15,3 +15,40 @@
 .rounds td {
   white-space: nowrap;
 }
+
+.player1 {
+  color: steelblue;
+}
+
+.player2 {
+  color: red;
+}
+
+#timegraph {
+  /* box-shadow: 2px 2px 8px rgba(1,1,1,0.1); */
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+#planets {
+  background-color: black;
+}
+
+#timegraph path.player1 {
+  stroke: steelblue;
+  stroke-width: 2;
+  fill: none;
+}
+             
+#timegraph path.player2 {
+  stroke: red;
+  stroke-width: 2;
+  fill: none;
+}
+
+#timegraph path.npc{
+  stroke: lightgrey;
+  stroke-width: 2;
+  fill: none;
+}
+             

@@ -19,6 +19,7 @@ pool = eventlet.GreenPool()
 COMMAND_DEADLINE = 3
 MAX_ROUNDS = 500
 START_ELO = 100
+MATCHMAKING_INTERVAL = 1
 
 redis.ping()
 
@@ -446,7 +447,7 @@ def status():
 
 def check_match():
     while 1:
-        eventlet.greenthread.sleep(5)
+        eventlet.greenthread.sleep(MATCHMAKING_INTERVAL)
         MatchMaking.check_should_game_start()
 
 def main():

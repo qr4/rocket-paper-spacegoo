@@ -137,6 +137,7 @@ def game(game_id):
         rank2 = rank2 + 1,
         elodiff = float(elodiff),
         rounds = rounds,
+        num_rounds = len(rounds) - 1,
     )
 
 if __name__ == '__main__':
