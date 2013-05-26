@@ -12,3 +12,6 @@
 .highscore .me {
   background-color: #eee;
 }
+.rounds td {
+  white-space: nowrap;
+}
