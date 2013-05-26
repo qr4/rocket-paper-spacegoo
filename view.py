@@ -20,16 +20,18 @@ def load_texture(filename):
     glBindTexture(GL_TEXTURE_2D, tex)
     
 
-
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR)
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexImage2D(
         GL_TEXTURE_2D, 0, GL_RGBA, width, height,
         0, GL_RGBA, GL_UNSIGNED_BYTE, image.tostring()
     )
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR)
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR)
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+   
+    glEnable(GL_TEXTURE_2D) # fix for some ati cards
     glGenerateMipmapEXT(GL_TEXTURE_2D)
+
     return tex
 
         
@@ -49,7 +51,7 @@ def init(width, height):
     windowheight = height
     windowwidth = width
     global window, planet_tex, ship_tex, goo_tex, asteroid_tex
-    window = pyglet.window.Window(width, height, resizable=True, caption = "zomg a viewer window")
+    window = pyglet.window.Window(width, height, resizable=True, caption = "zomg a shitty viewer window")
     planet_tex = load_texture("assets/planet.png")
     ship_tex = load_texture("assets/ship.png")
     goo_tex = load_texture("assets/goo.png")
@@ -67,6 +69,35 @@ def draw_image():
     glTexCoord2f(0, 0)
     glVertex2f(-1, 1)
     glEnd()
+    
+def draw_slice(startRad,endRad):
+    if endRad-startRad>2.42: #i have no idea what i'm doing
+        #print "angle too big: ", startRad,endRad
+        draw_slice(startRad,(startRad+endRad)/2.0)
+        draw_slice((startRad+endRad)/2.0,endRad)
+        return
+    
+    def drawPoint(p):
+        #print p.x, p.y
+        glTexCoord2f(0.5+0.5*p.x, 0.5+0.5*p.y)
+        glVertex2f(p.x, p.y)
+    #print ""
+        
+    glBegin(GL_QUADS)
+    
+    middle = vector.Point(0, 0)
+    start = vector.Point(math.cos(startRad), math.sin(startRad))
+    end = vector.Point(math.cos(endRad), math.sin(endRad))
+    far = vector.Normalize(start+end)*5.23 #again, i have no idea
+    
+    
+    
+    drawPoint(middle)
+    drawPoint(start)
+    drawPoint(far)
+    drawPoint(end)
+    
+    glEnd()
 
 def color_for_owner(owner):
     if owner == 0:
@@ -75,6 +106,15 @@ def color_for_owner(owner):
         glColor4f(1, 0.5, 0.5, 1)
     else:
         glColor4f(0.5, 1, 0.5, 1)
+        
+def color_for_shiptype_and_owner(stype,owner):
+    multiplier = 1-stype*0.33
+    if owner == 0:
+        glColor4f(0.6, 0.6, 0.6, multiplier)
+    elif owner == 1:
+        glColor4f(1, 0.5, 0.5, multiplier)
+    else:
+        glColor4f(0.5, 1, 0.5, multiplier)
         
 def scale_for_fleetsize(size):
     return math.log(size+1)/2.0
@@ -116,10 +156,19 @@ def update(state):
         
         glPushMatrix()
         glTranslatef(planet['x'], planet['y'], 0)
-        size = scale_for_fleetsize(sum(planet['production']))*3
+        prodsum = sum(planet['production'])
+        size = scale_for_fleetsize(prodsum)*7
         glScalef(size, size, 1)
-        color_for_owner(planet['owner_id'])
-        draw_image()
+        #color_for_owner(planet['owner_id'])
+#        draw_image()
+        radSum = 0.0
+        #glRotatef(180,0,0,1)
+        for i,prod in enumerate(planet['production']):
+            print "prod: ", i, prod, prodsum
+            startRad = radSum
+            radSum += 2*3.14159*(prod*1.0/prodsum) #FUCK YOU PYTHON AND YOUR INTEGER DIVISION
+            color_for_shiptype_and_owner(i,planet['owner_id'])
+            draw_slice(startRad,radSum)
         glPopMatrix()
 
 
