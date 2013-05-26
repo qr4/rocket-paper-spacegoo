@@ -13,20 +13,27 @@ def load_texture(filename):
     glGenTextures(1, pointer(tex))
 
     glBindTexture(GL_TEXTURE_2D, tex)
+    
 
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+
     glTexImage2D(
         GL_TEXTURE_2D, 0, GL_RGBA, width, height,
         0, GL_RGBA, GL_UNSIGNED_BYTE, image.tostring()
     )
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR)
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glGenerateMipmapEXT(GL_TEXTURE_2D)
     return tex
 
 def init(width, height):
-    global window, planet_tex, ship_tex
+    global window, planet_tex, ship_tex, goo_tex, asteroid_tex
     window = pyglet.window.Window(1024, 768)
-    planet_tex = load_texture("planet.png")
-    ship_tex = load_texture("ship.png")
+    planet_tex = load_texture("assets/planet.png")
+    ship_tex = load_texture("assets/ship.png")
+    goo_tex = load_texture("assets/goo.png")
+    asteroid_tex = load_texture("assets/asteroid.png")
 
 def draw_image():
     glBegin(GL_QUADS)
@@ -47,6 +54,9 @@ def color_for_owner(owner):
         glColor4f(1, 0.5, 0.5, 1)
     else:
         glColor4f(0.5, 1, 0.5, 1)
+        
+def scale_for_fleetsize(size):
+    return math.sqrt(size)/3.0
 
 def update(state):
     window.dispatch_events()
@@ -90,7 +100,8 @@ def update(state):
         draw_image()
         glPopMatrix()
 
-    glBindTexture(GL_TEXTURE_2D, ship_tex)
+    ship_textures = [ship_tex,goo_tex,asteroid_tex]
+    
     for fleet in state['fleets']:
         origin = planet_by_id[fleet['origin']]
         target = planet_by_id[fleet['target']]
@@ -98,13 +109,26 @@ def update(state):
         target = vector.Point(target['x'], target['y'])
 
         time_remaining = fleet['eta'] - state['round']
-        pos = target + vector.Normalize(origin - target) * time_remaining
-        size = math.sqrt(sum(fleet['ships']))/3
+        direction = vector.Normalize(origin - target)
+        angle = vector.Angle(direction)
+        pos = target + direction * time_remaining
+        ships = fleet['ships']
+        size = scale_for_fleetsize(sum(ships))
         glPushMatrix()
         glTranslatef(pos.x, pos.y, 0)
-        glScalef(size, size, 1)
+        glRotatef(angle+180,0,0,1)
+        #glScalef(size, size, 1)
         color_for_owner(fleet['owner_id'])
-        draw_image()
+        for i,ship in enumerate(ships):
+            glPushMatrix()
+            glRotatef(i*120,0,0,1)
+            glTranslatef(size*0.5,0,0)
+            glRotatef(i*-120,0,0,1)
+            scale = scale_for_fleetsize(ship)
+            glScalef(scale,scale,1)
+            glBindTexture(GL_TEXTURE_2D, ship_textures[i])
+            draw_image()
+            glPopMatrix()
         glPopMatrix()
 
 
