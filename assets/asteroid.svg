@@ -14,7 +14,7 @@
    id="svg2"
    version="1.1"
    inkscape:version="0.48.4 r9939"
-   sodipodi:docname="ship.svg"
+   sodipodi:docname="asteroid.svg"
    inkscape:export-filename="C:\Users\cupe\rocket-scissor-spacegoo\assets\ship.png"
    inkscape:export-xdpi="90"
    inkscape:export-ydpi="90">
@@ -28,7 +28,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.62162861"
-     inkscape:cx="124.0463"
+     inkscape:cx="-126.9074"
      inkscape:cy="289.16642"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
@@ -50,7 +50,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -68,13 +68,19 @@
        y="540.36218" />
     <path
        sodipodi:type="arc"
-       style="fill:#ffffff;fill-opacity:0.12169309000000000;stroke:#ffffff;stroke-width:42;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       style="fill:#ffffff;fill-opacity:0.12169309;stroke:#ffffff;stroke-width:42;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
        id="path3760"
        sodipodi:cx="361.95245"
        sodipodi:cy="366.41467"
        sodipodi:rx="181.50453"
        sodipodi:ry="181.50453"
        d="m 543.45699,366.41467 a 181.50453,181.50453 0 1 1 -363.00907,0 181.50453,181.50453 0 1 1 363.00907,0 z"
-       transform="translate(-104.56404,435.79814)" />
+       transform="matrix(0.90467309,0,0,0.90467309,-70.060232,470.72732)" />
+    <path
+       style="fill:none;stroke:#ffffff;stroke-width:20.48169327;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1"
+       d="m 147.41511,629.05255 c -57.151033,28.96657 -97.064311,94.89369 -97.064311,171.56399 0,76.67031 39.913278,142.5618 97.064311,171.52836"
+       id="path3760-5"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="csc" />
   </g>
 </svg>
