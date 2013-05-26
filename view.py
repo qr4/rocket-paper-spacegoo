@@ -5,6 +5,11 @@ from pyglet.gl import *
 from ctypes import pointer
 import vector
 
+
+windowheight = 23
+windowwidth = 42
+
+
 def load_texture(filename):
     image = Image.open(filename).convert('RGBA')
 
@@ -27,13 +32,29 @@ def load_texture(filename):
     glGenerateMipmapEXT(GL_TEXTURE_2D)
     return tex
 
+        
+def on_resize(width, height):
+    global windowheight,windowwidth
+    windowheight = height
+    windowwidth = width
+    glViewport(0, 0, width, height)
+    glMatrixMode(gl.GL_PROJECTION)
+    glLoadIdentity()
+    glOrtho(0, width, 0, height, -1, 1)
+    glMatrixMode(gl.GL_MODELVIEW)
+    return pyglet.event.EVENT_HANDLED
+
 def init(width, height):
+    global windowheight,windowwidth
+    windowheight = height
+    windowwidth = width
     global window, planet_tex, ship_tex, goo_tex, asteroid_tex
-    window = pyglet.window.Window(1024, 768)
+    window = pyglet.window.Window(width, height, resizable=True, caption = "zomg a viewer window")
     planet_tex = load_texture("assets/planet.png")
     ship_tex = load_texture("assets/ship.png")
     goo_tex = load_texture("assets/goo.png")
     asteroid_tex = load_texture("assets/asteroid.png")
+    window.on_resize = on_resize  
 
 def draw_image():
     glBegin(GL_QUADS)
@@ -64,11 +85,12 @@ class Fleet():
         self.direction = direction
         self.position = position
         self.player = player
-    
+
 
 def update(state):
     window.dispatch_events()
     window.clear()
+    global windowheight,windowwidth
 
     glClearColor(0.0, 0.0, 0.0, 1.0)
     glEnable(GL_BLEND)
@@ -80,8 +102,10 @@ def update(state):
 
     glPushMatrix()
 
-    glTranslatef(1024/2, 768/2, 0)
-    glScalef(20, 20, 1)
+    glTranslatef(windowwidth/2, windowheight/2, 0)
+    
+    scale = min(windowwidth/1.33,windowheight)/42
+    glScalef(scale, scale, 1)
 
     glColor4f(1,0,0,1)
 
@@ -92,7 +116,7 @@ def update(state):
         
         glPushMatrix()
         glTranslatef(planet['x'], planet['y'], 0)
-        size = math.sqrt(sum(planet['production']))*2
+        size = scale_for_fleetsize(sum(planet['production']))*3
         glScalef(size, size, 1)
         color_for_owner(planet['owner_id'])
         draw_image()
