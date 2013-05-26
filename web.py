@@ -1,5 +1,7 @@
 import sys
+import gzip
 import logging
+import simplejson as json
 from itertools import izip_longest, izip
 
 from flask import Flask
@@ -78,9 +80,65 @@ def player(username):
         num_games = num_games,
     )
 
-@app.route("/game/<game_id>")
+class vec(list):
+    def add_inplace(self, other):
+        for idx, (a, b) in enumerate(izip(self, other)):
+            self[idx] = a + b
+
+@app.route("/game/<int:game_id>")
 def game(game_id):
-    pass
+    p = redis.pipeline()
+    p.hget('game:%s' % game_id, 'p1')
+    p.hget('game:%s' % game_id, 'p2')
+    p.hget('game:%s' % game_id, 'elodiff')
+    player1, player2, elodiff = p.execute()
+
+    p = redis.pipeline()
+    p.zrank('scoreboard', player1)
+    p.zrank('scoreboard', player2)
+    rank1, rank2 = p.execute()
+
+    game_log_name = "log/%08d/%04d.json.gz" % (game_id / 1000, game_id % 1000)
+    game_log = gzip.GzipFile(game_log_name, "rb")
+    rounds = []
+    for line in game_log.readlines():
+        data = json.loads(line)
+        owned_planets = [0, 0, 0]
+        production = [vec([0,0,0]), vec([0,0,0]), vec([0,0,0])]
+        ships = [vec([0,0,0]), vec([0,0,0]), vec([0,0,0])]
+        fleets = [vec([0,0,0]), vec([0,0,0]), vec([0,0,0])]
+        for planet in data['planets']:
+            owned_planets[planet['owner_id']] += 1
+            production[planet['owner_id']].add_inplace(planet['production'])
+            ships[planet['owner_id']].add_inplace(planet['ships'])
+
+        for fleet in data['fleets']:
+            fleets[fleet['owner_id']].add_inplace(fleet['ships'])
+
+        stats = dict(
+            num_fleets = len(data['fleets']),
+            owned_planets = owned_planets,
+            production = production,
+            ships = ships,
+            fleets = fleets,
+        )
+        rounds.append(dict(
+            data = data,
+            stats = stats,
+        ))
+    game_log.close()
+
+    return render_template('game.jinja',
+        game_id = game_id,
+        game_log_name = game_log_name,
+        player1 = player1,
+        player2 = player2,
+        rank1 = rank1 + 1,
+        rank2 = rank2 + 1,
+        elodiff = float(elodiff),
+        rounds = rounds,
+        num_rounds = len(rounds) - 1,
+    )
 
 if __name__ == '__main__':
     logging.basicConfig(stream=sys.stderr, level=logging.INFO)

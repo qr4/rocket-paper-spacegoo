@@ -1,5 +1,8 @@
 import re
+import os
+import gzip
 import time
+import errno
 import eventlet
 import simplejson as json
 import random
@@ -16,6 +19,9 @@ pool = eventlet.GreenPool()
 COMMAND_DEADLINE = 3
 MAX_ROUNDS = 500
 START_ELO = 100
+MATCHMAKING_INTERVAL = 1
+
+redis.ping()
 
 class Authenticator(object):
     def check(self, username, password):
@@ -111,7 +117,17 @@ class Game(object):
     def __init__(self, players):
         assert len(players) == 2
         self.game_id = redis.incr('game_id')
+
         print "starting game %r" % self.game_id
+
+        game_log_name = "log/%08d/%04d.json.gz" % (self.game_id / 1000, self.game_id % 1000)
+        try:
+            os.makedirs(os.path.dirname(game_log_name))
+        except OSError, err:
+            if err.errno != errno.EEXIST:
+                raise
+        self.game_log = file(game_log_name, "wb")
+        self.game_log_gz = gzip.GzipFile(filename="game %012d.json" % self.game_id, mode="wb", fileobj=self.game_log)
 
         self.players = players
 
@@ -169,6 +185,9 @@ class Game(object):
                 self.players[0].username
             )
             elo_diff = - elo_diff
+
+        self.game_log_gz.close()
+        self.game_log.close()
 
         p = redis.pipeline()
         p.hset('game:%d' % self.game_id, 'end', int(time.time()))
@@ -234,7 +253,7 @@ class Game(object):
                 if not player.cmd_issued:
                     player.disqualify("no command sent")
         
-    def get_state(self, for_player):
+    def get_player_state(self, for_player):
         state = self.engine.dump()
         state['player_id'] = for_player.player_id
         state['game_over'] = self.game_over
@@ -248,10 +267,23 @@ class Game(object):
         ]
         return state
 
+    def get_log_state(self):
+        state = self.engine.dump()
+        state['game_over'] = self.game_over
+        state['winner'] = self.winner
+        state['players'] = [
+            OrderedDict([
+                ('id', player.player_id),
+                ('name', player.username),
+            ]) for player in self.players
+        ]
+        return state
+
     def send_state(self):
         for player in self.players:
-            state = self.get_state(player)
-            player.send(json.dumps(state))
+            player.send(json.dumps(self.get_player_state(player)))
+        self.game_log_gz.write(json.dumps(self.get_log_state()))
+        self.game_log_gz.write("\n")
 
 class MatchMaking(object):
     def __init__(self):
@@ -415,7 +447,7 @@ def status():
 
 def check_match():
     while 1:
-        eventlet.greenthread.sleep(5)
+        eventlet.greenthread.sleep(MATCHMAKING_INTERVAL)
         MatchMaking.check_should_game_start()
 
 def main():

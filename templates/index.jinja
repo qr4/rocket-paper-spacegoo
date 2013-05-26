@@ -31,7 +31,7 @@
         {% for game in last_games %}
           <tr>
             <td>
-              <a href='{{url_for('game', game_id=game.game_id)}}'>{{ game.game_id}}</a>
+              <a href='{{url_for('game', game_id=game.game_id)}}'>game {{game.game_id}}</a>
             </td>
             <td>
               <a class='winner' href='{{url_for('player', username=game.player1)}}'>{{ game.player1}}</a> 
