@@ -103,3 +103,10 @@ anmelden.
 Flotten kommen im Anschluss an die Runde am Zielplanet an. Beispiel: Ist eta
 als Runde 10 angegeben, so kommt die Flotte nach Abgabe der Befehle fuer Runde
 10 an. In Runde 11 existiert die Flotte dann nicht mehr.
+
+Planeten gehoeren immer einem Spieler. Zu beginnt gehoert jedem Spieler
+mindestens ein Planet. Die anderen Planeten gehoeren dem Spieler mit der
+player_id 0. Auf Planeten die diesem NPC Spieler gehoeren ist zwar eine
+Produktion angegeben, allerdings waechst die Anzahl der Schiffe dort nicht an.
+Dies passiert erst, wenn einer der beiden echten Spieler den Planet
+uebernimmt.
