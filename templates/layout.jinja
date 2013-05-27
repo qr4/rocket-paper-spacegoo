@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    {% block head %}
+      <meta charset="utf-8">
+      <title>Rocket, Scissor Spacegoo</title>
+      <link href="/static/css/bootstrap.css" rel="stylesheet">
+      <link href="/static/css/table-fixed-header.css" rel="stylesheet">
+      <link href="/static/css/goo.css" rel="stylesheet">
+      <style>
+        body {
+          padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
+        }
+      </style>
+    {% endblock %}
+  </head>
+
+  <body>
+    <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="brand" href="/">Rocket Scissor Spacegoo</a>
+          <div class="nav-collapse collapse">
+            <ul class="nav">
+              <li class="active"><a href="/">Home</a></li>
+              <li><a href="https://entropia.de/">Docs</a></li>
+              <li><a href="https://github.com">Sourcecode</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      {% block content %}
+      {% endblock %}
+    </div>
+
+    {% block bottom_scripts %}
+      <script src="/static/js/jquery-1.10.0.js"></script>
+      <script src="/static/js/table-fixed-header.js"></script>
+      <script src="/static/js/goo.js"></script>
+      {#
+      <script src="/static/js/jquery.js"></script>
+      <script src="/static/js/bootstrap-transition.js"></script>
+      <script src="/static/js/bootstrap-alert.js"></script>
+      <script src="/static/js/bootstrap-modal.js"></script>
+      <script src="/static/js/bootstrap-dropdown.js"></script>
+      <script src="/static/js/bootstrap-scrollspy.js"></script>
+      <script src="/static/js/bootstrap-tab.js"></script>
+      <script src="/static/js/bootstrap-tooltip.js"></script>
+      <script src="/static/js/bootstrap-popover.js"></script>
+      <script src="/static/js/bootstrap-button.js"></script>
+      <script src="/static/js/bootstrap-collapse.js"></script>
+      <script src="/static/js/bootstrap-carousel.js"></script>
+      <script src="/static/js/bootstrap-typeahead.js"></script>
+      #}
+    {% endblock %}
+  </body>
+</html>

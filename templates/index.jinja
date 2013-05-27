@@ -1,0 +1,50 @@
+{% extends "layout.jinja" %}
+{% import "macro.jinja" as m %}
+
+{% block content %}
+  <h1>Rocket Scissor Spacegoo</h1>
+  <p class='lead'>
+    Total of {{ num_games }} games played
+  </p>
+  <div class="row">
+    <div class="span6">
+      <h3>Top 40</h3>
+      <table class='table highscore'>
+        {% for username, score in highscores %}
+          <tr>
+            <td style='width: 30px;'>
+              {{ highscore_first + loop.index }}.
+            </td>
+            <td>
+              <a href='{{url_for('player', username=username)}}'>{{username}}</a>
+            </td>
+            <td style='text-align: right;'>
+              {{"%.2f"|format(score)}}
+            </td>
+          </tr>
+        {% endfor %}
+      </table>
+    </div>
+    <div class="span6">
+      <h3>Recent games</h3>
+      <table class='table game'>
+        {% for game in last_games %}
+          <tr>
+            <td>
+              <a href='{{url_for('game', game_id=game.game_id)}}'>game {{game.game_id}}</a>
+            </td>
+            <td>
+              <a class='winner' href='{{url_for('player', username=game.player1)}}'>{{ game.player1}}</a> 
+              <sub>vs</sub>
+              <a class='loser' href='{{url_for('player', username=game.player2)}}'>{{ game.player2}}</a>
+            </td>
+            <td style='text-align: right;'>
+              +{{ "%.2f"|format(game.elodiff) }}
+            </td>
+        {% endfor %}
+      </table>
+    </div>
+  </div>
+  {{ highscore }}
+{% endblock %}
+

@@ -15,6 +15,8 @@ def write(data):
 write('login %s %s' % (USERNAME, PASSWORD))
 while 1:
     data = io.readline()
+    if not data:
+        break
     if data[0] == "{":
         state = json.loads(data)
         winner = state["winner"]
@@ -44,4 +46,4 @@ while 1:
         else:
             write("nop")
             
-            
+print "done" 
