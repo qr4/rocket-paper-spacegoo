@@ -9,8 +9,8 @@ import vector
 windowheight = 23
 windowwidth = 42
 
-server_tex = []
-malware_tex = []
+planet_tex = []
+fleet_tex = []
 
 def load_texture(filename):
     image = Image.open(filename).convert('RGBA')
@@ -52,11 +52,10 @@ def init(width, height):
     global windowheight,windowwidth
     windowheight = height
     windowwidth = width
-    global window, server_tex, malware_tex
+    global window, planet_tex, fleet_tex
     window = pyglet.window.Window(width, height, resizable=True, caption = "zomg a shitty viewer window")
-    load_texture("assets/dos.png")
-    server_tex = map(load_texture,["assets/dos.png", "assets/windows.png", "assets/mac.png"])
-    malware_tex =  map(load_texture,["assets/virus.png","assets/trojan.png","assets/worm.png"])
+    planet_tex = map(load_texture,["assets/planet_goo.png", "assets/planet_asteroids.png", "assets/planet_ships.png"])
+    fleet_tex =  map(load_texture,["assets/goo.png","assets/asteroid.png","assets/ship.png"])
     window.on_resize = on_resize  
 
 def draw_image():
@@ -151,7 +150,7 @@ def update(state):
         glPushMatrix()
         glTranslatef(planet['x'], planet['y'], 0)
         prodsum = sum(planet['production'])
-        size = scale_for_fleetsize(prodsum)*2
+        size = scale_for_fleetsize(prodsum)*3
         glScalef(size, size, 1)
         #color_for_owner(planet['owner_id'])
 #        draw_image()
@@ -159,7 +158,7 @@ def update(state):
         #glRotatef(180,0,0,1)
         for i,prod in enumerate(planet['production']):
             #print "prod: ", i, prod, prodsum
-            glBindTexture(GL_TEXTURE_2D, server_tex[i])
+            glBindTexture(GL_TEXTURE_2D, planet_tex[i])
             startRad = radSum
             radSum += 2*3.14159*(prod*1.0/prodsum) #FUCK YOU PYTHON AND YOUR INTEGER DIVISION
             color_for_owner(planet['owner_id'])
@@ -210,7 +209,7 @@ def update(state):
             glRotatef(i*-120,0,0,1)
             scale = scale_for_fleetsize(ship)
             glScalef(scale,scale,1)
-            glBindTexture(GL_TEXTURE_2D, malware_tex[i])
+            glBindTexture(GL_TEXTURE_2D, fleet_tex[i])
             draw_image()
             glPopMatrix()
         glPopMatrix()
