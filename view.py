@@ -9,6 +9,8 @@ import vector
 windowheight = 23
 windowwidth = 42
 
+server_tex = []
+malware_tex = []
 
 def load_texture(filename):
     image = Image.open(filename).convert('RGBA')
@@ -21,7 +23,7 @@ def load_texture(filename):
     
 
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR)
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR)
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexImage2D(
@@ -50,12 +52,11 @@ def init(width, height):
     global windowheight,windowwidth
     windowheight = height
     windowwidth = width
-    global window, planet_tex, ship_tex, goo_tex, asteroid_tex
+    global window, server_tex, malware_tex
     window = pyglet.window.Window(width, height, resizable=True, caption = "zomg a shitty viewer window")
-    planet_tex = load_texture("assets/planet.png")
-    ship_tex = load_texture("assets/ship.png")
-    goo_tex = load_texture("assets/goo.png")
-    asteroid_tex = load_texture("assets/asteroid.png")
+    load_texture("assets/dos.png")
+    server_tex = map(load_texture,["assets/dos.png", "assets/windows.png", "assets/mac.png"])
+    malware_tex =  map(load_texture,["assets/virus.png","assets/trojan.png","assets/worm.png"])
     window.on_resize = on_resize  
 
 def draw_image():
@@ -107,14 +108,6 @@ def color_for_owner(owner):
     else:
         glColor4f(0.5, 1, 0.5, 1)
         
-def color_for_shiptype_and_owner(stype,owner):
-    multiplier = 1-stype*0.33
-    if owner == 0:
-        glColor4f(0.6, 0.6, 0.6, multiplier)
-    elif owner == 1:
-        glColor4f(1, 0.5, 0.5, multiplier)
-    else:
-        glColor4f(0.5, 1, 0.5, multiplier)
         
 def scale_for_fleetsize(size):
     return math.log(size+1)/2.0
@@ -130,6 +123,7 @@ class Fleet():
 def update(state):
     window.dispatch_events()
     window.clear()
+    
     global windowheight,windowwidth
 
     glClearColor(0.0, 0.0, 0.0, 1.0)
@@ -149,7 +143,7 @@ def update(state):
 
     glColor4f(1,0,0,1)
 
-    glBindTexture(GL_TEXTURE_2D, planet_tex)
+    
     planet_by_id = {}
     for planet in state['planets']:
         planet_by_id[planet['id']] = planet
@@ -157,22 +151,21 @@ def update(state):
         glPushMatrix()
         glTranslatef(planet['x'], planet['y'], 0)
         prodsum = sum(planet['production'])
-        size = scale_for_fleetsize(prodsum)*7
+        size = scale_for_fleetsize(prodsum)*2
         glScalef(size, size, 1)
         #color_for_owner(planet['owner_id'])
 #        draw_image()
         radSum = 0.0
         #glRotatef(180,0,0,1)
         for i,prod in enumerate(planet['production']):
-            print "prod: ", i, prod, prodsum
+            #print "prod: ", i, prod, prodsum
+            glBindTexture(GL_TEXTURE_2D, server_tex[i])
             startRad = radSum
             radSum += 2*3.14159*(prod*1.0/prodsum) #FUCK YOU PYTHON AND YOUR INTEGER DIVISION
-            color_for_shiptype_and_owner(i,planet['owner_id'])
+            color_for_owner(planet['owner_id'])
             draw_slice(startRad,radSum)
         glPopMatrix()
 
-
-    ship_textures = [ship_tex,goo_tex,asteroid_tex]
     fleets= []
     
     #glBindTexture(GL_TEXTURE_2D, ship_tex)
@@ -217,7 +210,7 @@ def update(state):
             glRotatef(i*-120,0,0,1)
             scale = scale_for_fleetsize(ship)
             glScalef(scale,scale,1)
-            glBindTexture(GL_TEXTURE_2D, ship_textures[i])
+            glBindTexture(GL_TEXTURE_2D, malware_tex[i])
             draw_image()
             glPopMatrix()
         glPopMatrix()
