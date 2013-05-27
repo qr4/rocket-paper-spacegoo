@@ -169,6 +169,9 @@ class Game(object):
 
         self.send_state()
 
+        for player in self.players:
+            player.send("This game is now available at http://???/game/%d" % self.game_id)
+
         if winner is None:
             elo_p1, elo_p2, elo_diff = Scoreboard.update_draw(
                 self.players[0].username,

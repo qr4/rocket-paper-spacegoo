@@ -25,7 +25,6 @@ def make_game_list(game_ids):
         p.hget('game:%s' % game_id, 'elodiff')
     games = []
     for game_id, (player1, player2, elodiff) in izip(game_ids, grouper(p.execute(), 3)):
-        print player1, player2, elodiff, game_id
         elodiff = float(elodiff)
         if elodiff < 0:
             player1, player2 = player2, player1
