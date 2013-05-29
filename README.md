@@ -110,3 +110,11 @@ player_id 0. Auf Planeten die diesem NPC Spieler gehoeren ist zwar eine
 Produktion angegeben, allerdings waechst die Anzahl der Schiffe dort nicht an.
 Dies passiert erst, wenn einer der beiden echten Spieler den Planet
 uebernimmt.
+
+Client-Libraries
+----------------
+
+Haskell-Programmierer können das Haskell-Paket
+[`haskell-spacegoo`](https://bitbucket.org/nomeata/haskell-spacegoo) verwenden,
+um komfortabel Clients zu programmieren.
+
