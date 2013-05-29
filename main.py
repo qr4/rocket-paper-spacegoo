@@ -404,6 +404,7 @@ class Connection(object):
             return None
 
         if not re.match("^[a-z 0-9]*$", line):
+            self.send("Invalid data received. Valid bytes: [a-z 0-9]")
             return None
 
         return [token.strip().lower() for token in line.split() if token]
