@@ -89,6 +89,8 @@
       {% endfor %}
     ];
 
+    var current_round = 0;
+
     function make_timegraph() {
       var ships = [[], [], []];
       var max_ships = 0;
@@ -119,7 +121,7 @@
       var g = svg.append("svg:g");
           // .attr("transform", "translate(0, 200)");
 
-      var x = d3.time.scale().domain([0, rounds.length]).range([0, width]);
+      var x = d3.scale.linear().domain([0, rounds.length]).range([0, width]);
       var y = d3.scale.linear().domain([0, max_ships]).range([height, 0]);
 
       var line = d3.svg.line()
@@ -149,42 +151,51 @@
         .append("g")
           .attr("transform", "translate(" + width/2 + "," + height/2 + ")");
 
-      var round = 0;
-      var planets = rounds[round].data.planets;
-      var fleets = rounds[round].data.fleets;
+      var planets = rounds[current_round].data.planets;
       var color = d3.scale.category20();
       var max_production = 18;
+      
+      function update_fleets() {
+        var fleets = rounds[current_round].data.fleets;
 
-      for (var idx = 0; idx < planets.length; idx++) {
-        var planet = planets[idx];
-        planet.size = d3.sum(planet.production);
+        for (var idx = 0; idx < fleets.length; idx++) {
+          var fleet = fleets[idx];
+          var dx = planets[fleet.target].x - planets[fleet.origin].x;
+          var dy = planets[fleet.target].y - planets[fleet.origin].y;
+          var d = Math.ceil(Math.sqrt(dx * dx + dy * dy));
+          var tl = fleet.eta - current_round;
+          var done = 1 - (tl / d);
+          console.log(d, tl, done, dx, dy);
+          fleet.x = planets[fleet.origin].x + done * dx;
+          fleet.y = planets[fleet.origin].y + done * dy;
+        }
+      
+        svg.selectAll(".fleet").remove();
+        svg.selectAll(".fleet").data(fleets)
+           .enter()
+            .append("circle")
+          .attr("cx", function(fleet) { return fleet.x })
+          .attr("cy", function(fleet) { return fleet.y })
+          .attr("cx", function(fleet) {
+            return fleet.x * -size_scale;
+          })
+          .attr("cy", function(fleet) {
+            return fleet.y * size_scale;
+          })
+          .attr("class", function(fleet) {
+            return "fleet player" + fleet.owner_id;
+          })
+         .attr("r", function(fleet) {
+            return Math.sqrt(d3.sum(fleet.ships));
+         });
+
+        var newplanets = rounds[current_round].data.planets;
+        d3.select("#planets").selectAll(".planet").data(newplanets)
+          .select("circle").attr("class", function(planet) {
+            return "player" + planet.owner_id;
+          });
       }
-
-      for (var idx = 0; idx < fleets.length; idx++) {
-        var fleet = fleets[idx];
-	var dx = planets[fleet.target].x - planets[fleet.origin].x;
-	var dy = planets[fleet.target].y - planets[fleet.origin].y;
-	var d = Math.sqrt(dx * dx + dy * dy);
-	var todo = fleet.eta / dx
-	var done = 1 - (fleet.eta / dx)
-	fleet.x = todo * planets[fleet.origin].x + done * planets[fleet.target].x;
-	fleet.y = todo * planets[fleet.origin].y + done * planets[fleet.target].y;
-      }
-
-      var fleet = svg.selectAll(".fleet")
-          .data(rounds[round].data.fleets)
-	.enter()
-	  .append("circle");
-
-      fleet
-        .attr("cx", function(fleet) { return fleet.x })
-        .attr("cy", function(fleet) { return fleet.y })
-        .attr("class", function(fleet) {
-          return "fleet player" + fleet.owner_id;
-        })
-       .attr("r", function(fleet) {
-          return Math.sqrt(d3.sum(fleet.ships));
-       });
+      update_fleets();
 
 
       // https://gist.github.com/mbostock/1305111
@@ -207,7 +218,7 @@
           })
           .append("svg:g")
           .attr("transform", function(planet) {
-            return "scale(" + 1.0 / (max_production*2) * planet.size + ")";
+            return "scale(" + 1.0 / (max_production*2) * d3.sum(planet.production) + ")";
           });
 
       planet.append("svg:circle")
@@ -233,6 +244,14 @@
           .style("fill", function(d, i) { 
             return ["#DDD", "#AAA", "#999"][i];
           });
+      
+
+      var x = d3.scale.linear().domain([0, rounds.length]).range([0, width]);
+      d3.select("#timegraph")
+        .on("mousemove", function () {
+          current_round = Math.floor(x.invert(d3.mouse(this)[0]));
+          update_fleets();
+      });
     }
 
     make_timegraph();
