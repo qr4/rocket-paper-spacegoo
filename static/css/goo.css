@@ -37,6 +37,7 @@
 
 #playpause {
   float: right;
+  cursor: pointer;
 }
 
 #planets {
