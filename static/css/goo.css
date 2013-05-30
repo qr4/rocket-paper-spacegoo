@@ -16,6 +16,11 @@
   white-space: nowrap;
 }
 
+#playpause {
+  text-decoration:none;
+  color: green;
+}
+
 .player1 {
   color: steelblue;
 }

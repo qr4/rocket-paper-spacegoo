@@ -25,6 +25,7 @@
   <p class='lead'>
     {{player1}} is currently rank #{{rank1}}, {{player2}} is currently ranked #{{rank2}}.
     <a href='/{{game_log_name}}'>raw gamelog</a>
+    <a id="playpause">▶</a>
   </p>
   <div class="row">
     <div class="span12">
@@ -81,6 +82,8 @@
   <script>
     $('table.fixed-header').fixedHeader();
 
+    var playspeed = 200;
+
     var rounds = [
       {% for round in rounds %}
         {{round|tojson|safe}},
@@ -93,6 +96,10 @@
     var redraw = function () {
       console.log("redraw called before defined")
     };
+
+    function playing() {
+      return ($('#playpause').text() != '▶');
+    }
 
     function make_timegraph() {
       var height = 200;
@@ -128,24 +135,40 @@
       }
 
       $("#timegraph").width(width).height(height);
-      $.plot($("#timegraph"), data, {
-          crosshair: {
-            mode: "x"
-          },
+      var plot = $.plot($("#timegraph"), data, {
           grid: {
             hoverable: true,
             autoHighlight: false
           },
       });
       $("#timegraph").bind("plothover",  function (event, pos, item) {
-          current_round = Math.floor(pos.x);
-          if (current_round < 0) current_round = 0;
-          if (current_round >= rounds.length) current_round = rounds.length -1;
+	  if (!playing()) {
+	    current_round = Math.floor(pos.x);
+	    if (current_round < 0) current_round = 0;
+	    if (current_round >= rounds.length) current_round = rounds.length -1;
 
-          if (!redrawTimeout) {
-            redrawTimeout = setTimeout(redraw, 50);
-          }
+	    if (!redrawTimeout) {
+	      redrawTimeout = setTimeout(redraw, 50);
+	    }
+	  }
       });
+      plot.hooks.drawOverlay.push(function (plot, ctx) {
+            var plotOffset = plot.getPlotOffset();
+            var pointOffset = plot.pointOffset({x: current_round, y:0});
+           
+            ctx.save();
+            ctx.translate(pointOffset.left, plotOffset.top);
+
+	    ctx.strokeStyle = "black";
+	    ctx.lineWidth = 2;
+	    ctx.lineJoin = "round";
+
+	    ctx.beginPath();
+	    ctx.moveTo(0, 0);
+	    ctx.lineTo(0, plot.height());
+	    ctx.stroke();
+            ctx.restore();
+        });
     }
 
     function make_planets() {
@@ -220,6 +243,8 @@
 
       // Varying content
       redraw = function() {
+	$('#timegraph').data('plot').triggerRedrawOverlay();
+
         c.clearRect(-canvas.width/2,-canvas.height/2,canvas.width,canvas.height);
         c.drawImage(stars_buffer, -canvas.width/2, -canvas.height/2);
 
@@ -286,5 +311,31 @@
 
     make_timegraph();
     make_planets();
+
+    var playInterval= null;
+    var stop_playing = function() {
+	clearInterval(playInterval);
+	$('#playpause').text('▶');
+    }
+    var play = function() {
+      if (current_round < rounds.length -1) {
+	current_round++;
+	redraw();
+      } else {
+	stop_playing();
+      }
+    }
+    $('#playpause').click(function() {
+      if (!playing()) {
+	if (current_round >= rounds.length -1) {
+	  current_round = 0;
+	}
+
+	playInterval = setInterval(play, playspeed);
+	$(this).text('❚❚');
+      } else {
+	stop_playing();
+      }
+    });
   </script>
 {% endblock %}
