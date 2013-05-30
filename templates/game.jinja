@@ -28,10 +28,10 @@
   </p>
   <div class="row">
     <div class="span12">
-      <h3>{{ num_rounds }} rounds played</h3>
+      <!-- <h3>{{ num_rounds }} rounds played</h3> -->
       <div id='timegraph'></div>
-      <canvas id='planets'></div>
       <table class='table rounds fixed-header'>
+      <canvas width="0" height="0" id='planets'></div>
         <thead class='header'>
           <tr>
             <th>Round</th>
@@ -100,7 +100,7 @@
     };
 
     function make_timegraph() {
-      var height = 300;
+      var height = 200;
       var width = 940;
 
       var data = [
