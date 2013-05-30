@@ -155,6 +155,26 @@
       var planet_canvas_size = 50;
       var fleet_canvas_size = 5;
       var max_production = 18;
+      var star_size = 4;
+
+
+      // Off-screen canvas for stars
+      var stars_buffer = document.createElement('canvas');
+      stars_buffer.width = width;
+      stars_buffer.height = height;
+      var c = stars_buffer.getContext("2d");
+      var n_stars = Math.floor(50 + Math.random()*50);
+      for (var n = 0; n < n_stars; n++) {
+	var x = Math.random()*width;
+	var y = Math.random()*height;
+	var r = Math.random() * star_size / 2;
+	c.beginPath();
+	c.fillStyle = "white";
+	c.moveTo(x, y);
+	c.arc(x, y, r, 0, 2*Math.PI, false);
+	c.fill();
+      }
+
 
       // Off-screen canvas for planets
       var planets_buffer = document.createElement('canvas');
@@ -201,6 +221,7 @@
       // Varying content
       redraw = function() {
         c.clearRect(-canvas.width/2,-canvas.height/2,canvas.width,canvas.height);
+        c.drawImage(stars_buffer, -canvas.width/2, -canvas.height/2);
 
         var planets = rounds[current_round].data.planets;
         for (var idx = 0; idx < planets.length; idx++) {
