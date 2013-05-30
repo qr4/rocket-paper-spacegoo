@@ -146,6 +146,7 @@
           current_round = Math.floor(pos.x);
           if (current_round < 0) current_round = 0;
           if (current_round >= rounds.length) current_round = rounds.length -1;
+
           if (!redrawTimeout) {
             redrawTimeout = setTimeout(redraw, 50);
           }
@@ -156,8 +157,8 @@
       var height = 500;
       var width = 940;
       var size_scale = 15;
-      var planet_canvas_size = 100;
-      var fleet_canvas_size = 2;
+      var planet_canvas_size = 50;
+      var fleet_canvas_size = 5;
       var max_production = 18;
 
       // Off-screen canvas for planets
@@ -171,6 +172,7 @@
       for (var idx = 0; idx < planets.length; idx++) {
         var planet = planets[idx];
         var total_production = planet.production[0] + planet.production[1] + planet.production[2];
+	var r = Math.sqrt(total_production / (max_production*2)) * planet_canvas_size;
         var alpha = - Math.PI/2;
         for (var i = 0; i < 3; i++) {
           var beta = alpha + 2 * Math.PI * (planet.production[i]/total_production);
@@ -183,7 +185,7 @@
           bc.arc(
               planet.x * -size_scale,
               planet.y * size_scale,
-              (total_production/(max_production*2) * planet_canvas_size),
+              r,
               alpha,
               beta,
               false
@@ -209,6 +211,7 @@
         for (var idx = 0; idx < planets.length; idx++) {
           var planet = planets[idx];
           var total_production = planet.production[0] + planet.production[1] + planet.production[2];
+	  var r = Math.sqrt(total_production / (max_production*2)) * (planet_canvas_size * 1.1 + 6);
           if (planet.owner_id != 0) {
             c.beginPath();
             c.fillStyle = ["invalid", "steelblue", "red"][planet.owner_id];
@@ -219,8 +222,7 @@
             c.arc(
                 planet.x * -size_scale,
                 planet.y * size_scale,
-                (total_production/(max_production*2) * (planet_canvas_size * 1.3 + 6)),
-                0, 2*Math.PI, false);
+                r, 0, 2*Math.PI, false);
             c.fill();
           }
         }
@@ -240,14 +242,12 @@
           var x = planets[fleet.origin].x + done * dx;
           var y = planets[fleet.origin].y + done * dy;
 
+	  var r = Math.sqrt(total_ships / (max_production*2)) * fleet_canvas_size;
+
           c.beginPath();
           c.fillStyle = ["invalid", "steelblue", "red"][fleet.owner_id];
           c.moveTo(x * - size_scale, y * size_scale );
-          c.arc(
-              x * -size_scale,
-              y * size_scale,
-              (total_ships/(max_production*2) * (fleet_canvas_size)),
-              0, 2*Math.PI, false);
+          c.arc( x * -size_scale, y * size_scale, r, 0, 2*Math.PI, false);
           c.fill();
         }
         redrawTimeout = null;
