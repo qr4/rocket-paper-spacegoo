@@ -29,8 +29,8 @@
   <div class="row">
     <div class="span12">
       <!-- <h3>{{ num_rounds }} rounds played</h3> -->
-      <div id='timegraph'></div>
       <table class='table rounds fixed-header'>
+      <div id='timegraph'></div>
       <canvas width="0" height="0" id='planets'></div>
         <thead class='header'>
           <tr>
@@ -47,30 +47,25 @@
           </tr>
         </thead>
         <tbody>
-          {% for round in rounds %}
+          {% set round = rounds[-1] %}
             <tr>
-              <td>
-                {% if loop.last %}
+              <td id="round">
                   Endstand
-                {% else %}
-                  Round {{loop.index}}
-                {% endif %}
               </td>
-              <td>{{round.stats.num_fleets}}</td>
+              <td id="fleet_total">{{round.stats.num_fleets}}</td>
 
-              <td>{{round.stats.owned_planets[1]}}</td>
-              <td>{{round.stats.owned_planets[2]}}</td>
+              <td id="planets_player1">{{round.stats.owned_planets[1]}}</td>
+              <td id="planets_player2">{{round.stats.owned_planets[2]}}</td>
 
-              <td>{{nice_types(round.stats.ships[1])}}</td>
-              <td>{{nice_types(round.stats.ships[2])}}</td>
+              <td id="ships_player1">{{nice_types(round.stats.ships[1])}}</td>
+              <td id="ships_player2">{{nice_types(round.stats.ships[2])}}</td>
 
-              <td>{{nice_types(round.stats.production[1])}}</td>
-              <td>{{nice_types(round.stats.production[2])}}</td>
+              <td id="production_player1">{{nice_types(round.stats.production[1])}}</td>
+              <td id="production_player2">{{nice_types(round.stats.production[2])}}</td>
 
-              <td>{{nice_types(round.stats.fleets[1])}}</td>
-              <td>{{nice_types(round.stats.fleets[2])}}</td>
+              <td id="fleets_player1">{{nice_types(round.stats.fleets[1])}}</td>
+              <td id="fleets_player2">{{nice_types(round.stats.fleets[2])}}</td>
             </tr>
-          {% endfor %}
         <tbody>
       </table>
     </div>
@@ -250,6 +245,19 @@
           c.arc( x * -size_scale, y * size_scale, r, 0, 2*Math.PI, false);
           c.fill();
         }
+
+	$('#round')             .text(current_round == rounds.length -1 ?
+	                              'Endzustand' : current_round);
+	$('#fleet_total')       .text(rounds[current_round].stats.num_fleets);
+	$('#planets_player1')   .text(rounds[current_round].stats.owned_planets[1]);
+	$('#planets_player2')   .text(rounds[current_round].stats.owned_planets[2]);
+	$('#ships_player1')     .text(rounds[current_round].stats.ships[1]);
+	$('#ships_player2')     .text(rounds[current_round].stats.ships[2]);
+	$('#production_player1').text(rounds[current_round].stats.production[1]);
+	$('#production_player2').text(rounds[current_round].stats.production[2]);
+	$('#fleets_player1')    .text(rounds[current_round].stats.fleets[1]);
+	$('#fleets_player2')    .text(rounds[current_round].stats.fleets[2]);
+
         redrawTimeout = null;
       }
       redraw();
