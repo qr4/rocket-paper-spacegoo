@@ -170,7 +170,7 @@ class Game(object):
         self.send_state()
 
         for player in self.players:
-            player.send("This game is now available at http://???/game/%d" % self.game_id)
+            player.send("This game is now available at http://spacegoo.gpn.entropia.de/game/%d" % self.game_id)
 
         if winner is None:
             elo_p1, elo_p2, elo_diff = Scoreboard.update_draw(
@@ -463,7 +463,7 @@ def main():
         try:
             socket, address = server.accept()
             conn = Connection(socket)
-            conn.send("welcome to rocket-scissor-spacegoo. see http://??? for more information on how to play")
+            conn.send("welcome to rocket-scissor-spacegoo. see http://spacegoo.gpn.entropia.de/ for more information on how to play")
         except (SystemExit, KeyboardInterrupt):
             break
 
