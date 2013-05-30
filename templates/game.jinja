@@ -274,6 +274,9 @@
         for (var idx = 0; idx < fleets.length; idx++) {
           var fleet = fleets[idx];
           var total_ships = fleet.ships[0] + fleet.ships[1] + fleet.ships[2];
+	  if (total_ships == 0) {
+	    continue;
+	  }
 
           var dx = planets[fleet.target].x - planets[fleet.origin].x;
           var dy = planets[fleet.target].y - planets[fleet.origin].y;
@@ -282,14 +285,40 @@
           var done = 1 - (tl / d);
           var x = planets[fleet.origin].x + done * dx;
           var y = planets[fleet.origin].y + done * dy;
-
 	  var r = Math.sqrt(total_ships / (max_production*2)) * fleet_canvas_size;
 
-          c.beginPath();
+	  c.save();
+	  c.translate(x * -size_scale, y * size_scale);
+	  c.rotate(Math.atan2(dx,dy));
+
+	  // Triangle
+	  c.beginPath();
           c.fillStyle = ["invalid", "steelblue", "red"][fleet.owner_id];
-          c.moveTo(x * - size_scale, y * size_scale );
-          c.arc( x * -size_scale, y * size_scale, r, 0, 2*Math.PI, false);
+	  c.moveTo(-(r+1),0);
+	  c.lineTo(0,2*r);
+	  c.lineTo( (r+1),0);
+	  c.closePath();
           c.fill();
+
+	  c.beginPath();
+	  c.moveTo(0,0);
+	  c.arc(0,0,r+1,Math.PI,0,false);
+	  c.closePath();
+	  c.fill();
+
+	  // Pie-Chart at the end
+	  var alpha = Math.PI;
+	  for (var i = 0; i < 3; i++) {
+	    var beta = alpha + Math.PI * (fleet.ships[i]/total_ships);
+	    c.fillStyle = ["#DDD", "#AAA", "#999"][i];
+	    c.beginPath();
+	    c.moveTo(0,0);
+	    c.arc(0,0,r,alpha,beta,false);
+	    c.closePath();
+	    c.fill();
+	    alpha = beta;
+	  }
+	  c.restore();
         }
 
 	$('#round')             .text(current_round == rounds.length -1 ?
