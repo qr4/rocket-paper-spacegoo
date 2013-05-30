@@ -253,7 +253,7 @@
           var dx = planets[fleet.target].x - planets[fleet.origin].x;
           var dy = planets[fleet.target].y - planets[fleet.origin].y;
           var d = Math.ceil(Math.sqrt(dx * dx + dy * dy));
-          var tl = fleet.eta - current_round;
+          var tl = (fleet.eta + 1) - current_round;
           var done = 1 - (tl / d);
           var x = planets[fleet.origin].x + done * dx;
           var y = planets[fleet.origin].y + done * dy;
