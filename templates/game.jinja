@@ -151,6 +151,7 @@
 
       var round = 0;
       var planets = rounds[round].data.planets;
+      var fleets = rounds[round].data.fleets;
       var color = d3.scale.category20();
       var max_production = 18;
 
@@ -158,6 +159,33 @@
         var planet = planets[idx];
         planet.size = d3.sum(planet.production);
       }
+
+      for (var idx = 0; idx < fleets.length; idx++) {
+        var fleet = fleets[idx];
+	var dx = planets[fleet.target].x - planets[fleet.origin].x;
+	var dy = planets[fleet.target].y - planets[fleet.origin].y;
+	var d = Math.sqrt(dx * dx + dy * dy);
+	var todo = fleet.eta / dx
+	var done = 1 - (fleet.eta / dx)
+	fleet.x = todo * planets[fleet.origin].x + done * planets[fleet.target].x;
+	fleet.y = todo * planets[fleet.origin].y + done * planets[fleet.target].y;
+      }
+
+      var fleet = svg.selectAll(".fleet")
+          .data(rounds[round].data.fleets)
+	.enter()
+	  .append("circle");
+
+      fleet
+        .attr("cx", function(fleet) { return fleet.x })
+        .attr("cy", function(fleet) { return fleet.y })
+        .attr("class", function(fleet) {
+          return "fleet player" + fleet.owner_id;
+        })
+       .attr("r", function(fleet) {
+          return Math.sqrt(d3.sum(fleet.ships));
+       });
+
 
       // https://gist.github.com/mbostock/1305111
       var planet = svg.selectAll(".planet")
