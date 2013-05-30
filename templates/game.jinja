@@ -29,7 +29,7 @@
   <div class="row">
     <div class="span12">
       <h3>{{ num_rounds }} rounds played</h3>
-      <svg id='timegraph'></svg>
+      <div id='timegraph'></div>
       <canvas id='planets'></div>
       <table class='table rounds fixed-header'>
         <thead class='header'>
@@ -79,7 +79,10 @@
 
 {% block bottom_scripts %}
   {{ super() }}
-  <script src="/static/js/d3.v3.js"></script>
+  <script src="/static/js/flot/jquery.js"></script>
+  <script src="/static/js/flot/jquery.flot.js"></script>
+  <script src="/static/js/flot/jquery.flot.crosshair.js"></script>
+  <script src="/static/js/table-fixed-header.js"></script>
   <script>
     $('table.fixed-header').fixedHeader();
 
@@ -91,9 +94,28 @@
 
     var current_round = 0;
 
+    var redrawTimeout = null;
+    var redraw = function () {
+      console.log("redraw called before defined")
+    };
+
     function make_timegraph() {
-      var ships = [[], [], []];
-      var max_ships = 0;
+      var height = 300;
+      var width = 940;
+
+      var data = [
+        { label: 'neutral'
+        , color: 'lightgrey'
+        , data: []
+        },
+        { label: '{{player1}}'
+        , color: 'steelblue'
+        , data: []
+        },
+        { label: '{{player2}}'
+        , color: 'red'
+        , data: []
+        }]
 
       for (var idx = 0; idx < rounds.length; idx++) {
         var round = rounds[idx];
@@ -106,37 +128,28 @@
             round.stats.ships[player_id][1] + 
             round.stats.ships[player_id][2];
 
-          ships[player_id].push(total_ships);
-          max_ships = Math.max(max_ships, total_ships);
+          data[player_id].data.push([idx, total_ships]);
         }
       }
 
-      var height = 300;
-      var width = 940;
-
-      var svg = d3.select("#timegraph")
-          .attr("width", width + "px")
-          .attr("height", height + "px");
-
-      var g = svg.append("svg:g");
-          // .attr("transform", "translate(0, 200)");
-
-      var x = d3.scale.linear().domain([0, rounds.length]).range([0, width]);
-      var y = d3.scale.linear().domain([0, max_ships]).range([height, 0]);
-
-      var line = d3.svg.line()
-        .x(function(d,i) { return x(i); })
-        .y(function(d) { return y(d); });
-
-      g.append("svg:path")
-        .attr("d", line(ships[0]))
-        .attr("class", "npc");
-      g.append("svg:path")
-        .attr("d", line(ships[1]))
-        .attr("class", "player1");
-      g.append("svg:path")
-        .attr("d", line(ships[2]))
-        .attr("class", "player2");
+      $("#timegraph").width(width).height(height);
+      $.plot($("#timegraph"), data, {
+          crosshair: {
+            mode: "x"
+          },
+          grid: {
+            hoverable: true,
+            autoHighlight: false
+          },
+      });
+      $("#timegraph").bind("plothover",  function (event, pos, item) {
+          current_round = Math.floor(pos.x);
+          if (current_round < 0) current_round = 0;
+          if (current_round >= rounds.length) current_round = rounds.length -1;
+          if (!redrawTimeout) {
+            redrawTimeout = setTimeout(redraw, 50);
+          }
+      });
     }
 
     function make_planets() {
@@ -189,7 +202,7 @@
       c.translate(width/2, height/2);
 
       // Varying content
-      var redraw = function() {
+      redraw = function() {
         c.clearRect(-canvas.width/2,-canvas.height/2,canvas.width,canvas.height);
 
         var planets = rounds[current_round].data.planets;
@@ -237,16 +250,9 @@
               0, 2*Math.PI, false);
           c.fill();
         }
+        redrawTimeout = null;
       }
       redraw();
-        
-      // Event
-      var x = d3.scale.linear().domain([0, rounds.length]).range([0, width]);
-      d3.select("#timegraph")
-        .on("mousemove", function () {
-          current_round = Math.floor(x.invert(d3.mouse(this)[0]));
-          redraw();
-      });
     }
 
     make_timegraph();

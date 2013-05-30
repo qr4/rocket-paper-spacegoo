@@ -30,24 +30,6 @@
   margin-bottom: 30px;
 }
 
-#timegraph path.player1 {
-  stroke: steelblue;
-  stroke-width: 2;
-  fill: none;
-}
-             
-#timegraph path.player2 {
-  stroke: red;
-  stroke-width: 2;
-  fill: none;
-}
-
-#timegraph path.npc{
-  stroke: lightgrey;
-  stroke-width: 2;
-  fill: none;
-}
-             
 #planets {
   box-shadow: 2px 2px 20px rgba(1,1,1,0.4);
   background-color: black;
