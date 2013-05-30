@@ -5,7 +5,7 @@ import simplejson as json
 from itertools import izip_longest, izip
 
 from flask import Flask
-from flask import render_template
+from flask import render_template, jsonify
 import redis
 
 redis = redis.Redis(host='localhost')
@@ -38,8 +38,7 @@ def make_game_list(game_ids):
         ))
     return games
 
-@app.route("/")
-def index():
+def get_run_info():
     p = redis.pipeline()
     p.zrange('scoreboard', 0, 40, withscores=True)
     p.lrange('games', -40, -1)
@@ -49,8 +48,24 @@ def index():
     highscores = [(username, -score) for username, score in highscores]
     last_games = make_game_list(list(reversed(last_game_ids)))
 
+    return highscores, last_games, num_games
+
+@app.route("/")
+def index():
+    highscores, last_games, num_games = get_run_info()
+
     return render_template('index.jinja',
         highscore_first = 0,
+        highscores = highscores,
+        last_games = last_games,
+        num_games = num_games,
+    )
+
+@app.route("/info.json")
+def info():
+    highscores, last_games, num_games = get_run_info()
+
+    return jsonify(
         highscores = highscores,
         last_games = last_games,
         num_games = num_games,
