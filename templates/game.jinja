@@ -30,7 +30,7 @@
     <div class="span12">
       <h3>{{ num_rounds }} rounds played</h3>
       <svg id='timegraph'></svg>
-      <svg id='planets'></svg>
+      <canvas id='planets'></div>
       <table class='table rounds fixed-header'>
         <thead class='header'>
           <tr>
@@ -138,119 +138,114 @@
         .attr("d", line(ships[2]))
         .attr("class", "player2");
     }
-    
+
     function make_planets() {
       var height = 500;
       var width = 940;
       var size_scale = 15;
       var planet_canvas_size = 100;
-
-      var svg = d3.select("#planets")
-          .attr("width", width + "px")
-          .attr("height", height + "px")
-        .append("g")
-          .attr("transform", "translate(" + width/2 + "," + height/2 + ")");
-
-      var planets = rounds[current_round].data.planets;
-      var color = d3.scale.category20();
+      var fleet_canvas_size = 2;
       var max_production = 18;
-      
-      function update_fleets() {
-        var fleets = rounds[current_round].data.fleets;
 
+      // Off-screen canvas for planets
+      var planets_buffer = document.createElement('canvas');
+      planets_buffer.width = width;
+      planets_buffer.height = height;
+      var bc = planets_buffer.getContext("2d");
+      bc.translate(width/2, height/2);
+
+      var planets = rounds[0].data.planets;
+      for (var idx = 0; idx < planets.length; idx++) {
+        var planet = planets[idx];
+        var total_production = planet.production[0] + planet.production[1] + planet.production[2];
+        var alpha = - Math.PI/2;
+        for (var i = 0; i < 3; i++) {
+          var beta = alpha + 2 * Math.PI * (planet.production[i]/total_production);
+          bc.fillStyle = ["#DDD", "#AAA", "#999"][i];
+          bc.beginPath();
+          bc.moveTo(
+              planet.x * -size_scale,
+              planet.y * size_scale
+              );
+          bc.arc(
+              planet.x * -size_scale,
+              planet.y * size_scale,
+              (total_production/(max_production*2) * planet_canvas_size),
+              alpha,
+              beta,
+              false
+              );
+          bc.closePath();
+          bc.fill();
+          alpha = beta;
+        }
+      }
+
+      // The proper canvas
+      var canvas = document.getElementById("planets");
+      canvas.width = width;
+      canvas.height = height;
+      var c = canvas.getContext("2d");
+      c.translate(width/2, height/2);
+
+      // Varying content
+      var redraw = function() {
+        c.clearRect(-canvas.width/2,-canvas.height/2,canvas.width,canvas.height);
+
+        var planets = rounds[current_round].data.planets;
+        for (var idx = 0; idx < planets.length; idx++) {
+          var planet = planets[idx];
+          var total_production = planet.production[0] + planet.production[1] + planet.production[2];
+          if (planet.owner_id != 0) {
+            c.beginPath();
+            c.fillStyle = ["invalid", "steelblue", "red"][planet.owner_id];
+            c.moveTo(
+                planet.x * -size_scale,
+                planet.y * size_scale
+                );
+            c.arc(
+                planet.x * -size_scale,
+                planet.y * size_scale,
+                (total_production/(max_production*2) * (planet_canvas_size * 1.3 + 6)),
+                0, 2*Math.PI, false);
+            c.fill();
+          }
+        }
+
+        c.drawImage(planets_buffer, -canvas.width/2, -canvas.height/2);
+
+        var fleets = rounds[current_round].data.fleets;
         for (var idx = 0; idx < fleets.length; idx++) {
           var fleet = fleets[idx];
+          var total_ships = fleet.ships[0] + fleet.ships[1] + fleet.ships[2];
+
           var dx = planets[fleet.target].x - planets[fleet.origin].x;
           var dy = planets[fleet.target].y - planets[fleet.origin].y;
           var d = Math.ceil(Math.sqrt(dx * dx + dy * dy));
           var tl = fleet.eta - current_round;
           var done = 1 - (tl / d);
-          console.log(d, tl, done, dx, dy);
-          fleet.x = planets[fleet.origin].x + done * dx;
-          fleet.y = planets[fleet.origin].y + done * dy;
+          var x = planets[fleet.origin].x + done * dx;
+          var y = planets[fleet.origin].y + done * dy;
+
+          c.beginPath();
+          c.fillStyle = ["invalid", "steelblue", "red"][fleet.owner_id];
+          c.moveTo(x * - size_scale, y * size_scale );
+          c.arc(
+              x * -size_scale,
+              y * size_scale,
+              (total_ships/(max_production*2) * (fleet_canvas_size)),
+              0, 2*Math.PI, false);
+          c.fill();
         }
-      
-        svg.selectAll(".fleet").remove();
-        svg.selectAll(".fleet").data(fleets)
-           .enter()
-            .append("circle")
-          .attr("cx", function(fleet) { return fleet.x })
-          .attr("cy", function(fleet) { return fleet.y })
-          .attr("cx", function(fleet) {
-            return fleet.x * -size_scale;
-          })
-          .attr("cy", function(fleet) {
-            return fleet.y * size_scale;
-          })
-          .attr("class", function(fleet) {
-            return "fleet player" + fleet.owner_id;
-          })
-         .attr("r", function(fleet) {
-            return Math.sqrt(d3.sum(fleet.ships));
-         });
-
-        var newplanets = rounds[current_round].data.planets;
-        d3.select("#planets").selectAll(".planet").data(newplanets)
-          .select("circle").attr("class", function(planet) {
-            return "player" + planet.owner_id;
-          });
       }
-      update_fleets();
-
-
-      // https://gist.github.com/mbostock/1305111
-      var planet = svg.selectAll(".planet")
-          .data(planets)
-        .enter().append("svg:svg")
-          .attr("class", "planet")
-          .attr("width", planet_canvas_size)
-          .attr("height", planet_canvas_size)
-          .attr("background-color", "red")
-          .attr("x", function(planet, i) {
-            return planets[i].x * -size_scale - planet_canvas_size/2;
-          })
-          .attr("y", function(planet, i) {
-            return planets[i].y *  size_scale - planet_canvas_size/2;
-          })
-          .append("svg:g")
-          .attr("transform", function(planet) {
-            return "translate(" + planet_canvas_size/2 + "," + planet_canvas_size/2 + ")";
-          })
-          .append("svg:g")
-          .attr("transform", function(planet) {
-            return "scale(" + 1.0 / (max_production*2) * d3.sum(planet.production) + ")";
-          });
-
-      planet.append("svg:circle")
-        .attr("class", function(planet) {
-          return "player" + planet.owner_id;
-        })
-        .attr("cx", 0)
-        .attr("cy", 0)
-        .attr("r", planet_canvas_size*1.3 + 6);
-
-      var pie_maker = d3.layout.pie();
-      planet.selectAll(".production")
-          .data(function(planet) {
-            return pie_maker(planet.production);
-          })
-        .enter().append("svg:path")
-          .attr("class", "production")
-          .attr("d", d3.svg.arc()
-            .innerRadius(0)
-            .outerRadius(function(d, i) {
-              return planet_canvas_size;
-            }))
-          .style("fill", function(d, i) { 
-            return ["#DDD", "#AAA", "#999"][i];
-          });
-      
-
+      redraw();
+        
+      // Event
       var x = d3.scale.linear().domain([0, rounds.length]).range([0, width]);
       d3.select("#timegraph")
         .on("mousemove", function () {
           current_round = Math.floor(x.invert(d3.mouse(this)[0]));
-          update_fleets();
+          redraw();
       });
     }
 

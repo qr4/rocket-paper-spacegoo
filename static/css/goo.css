@@ -55,14 +55,6 @@
   margin-bottom: 30px;
 }
 
-#planets .player1 {
-  fill: steelblue;
-}
-
-#planets .player2 {
-  fill: red;
-}
-
 
 table .header-fixed {
   position: fixed;
