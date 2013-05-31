@@ -17,7 +17,7 @@ from engine import Engine
 redis = redis.Redis(host='localhost')
 pool = eventlet.GreenPool()
 
-COMMAND_DEADLINE = 3
+COMMAND_DEADLINE = 6
 MAX_ROUNDS = 500
 START_ELO = 100
 MATCHMAKING_INTERVAL = 1
