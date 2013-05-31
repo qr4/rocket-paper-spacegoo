@@ -79,14 +79,9 @@
     $('table.fixed-header').fixedHeader();
 
     var playspeed = 100;
+    var rounds = []
 
-    var rounds = [
-      {% for round in rounds %}
-        {{round|tojson|safe}},
-      {% endfor %}
-    ];
-
-    var current_round = rounds.length - 1;
+    var current_round;
 
     var redrawTimeout = null;
     var redraw = function () {
@@ -334,9 +329,6 @@
       redraw();
     }
 
-    make_timegraph();
-    make_planets();
-
     var playInterval= null;
     var stop_playing = function() {
 	clearInterval(playInterval);
@@ -362,5 +354,18 @@
 	stop_playing();
       }
     });
+
+    function setup_game() {
+      make_timegraph();
+      make_planets();
+    }
+
+    $.ajax({  
+	url: "/game/{{ game_id }}/rounds", success: function(data){
+	  rounds = data.rounds;
+	  current_round = rounds.length - 1;
+	  setup_game();
+	}, dataType: "json"});
+
   </script>
 {% endblock %}
