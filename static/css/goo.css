@@ -12,6 +12,9 @@
 .highscore .me {
   background-color: #eee;
 }
+.highscore .inactive , .highscore .inactive a {
+  color: gray;
+}
 .rounds td {
   white-space: nowrap;
 }

@@ -8,6 +8,8 @@ from flask import Flask
 from flask import render_template, jsonify
 import redis
 
+INACTIVE_COUNT = 100
+
 redis = redis.Redis(host='localhost')
 
 app = Flask(__name__)
@@ -44,9 +46,17 @@ def get_run_info():
     p.zrange('scoreboard', 0, 40, withscores=True)
     p.lrange('games', -40, -1)
     p.llen('games')
-    highscores, last_game_ids, num_games = p.execute()
+    raw_highscores, last_game_ids, num_games = p.execute()
 
-    highscores = [(username, -score) for username, score in highscores]
+    highscores = []
+    for username, score in raw_highscores:
+        p = redis.pipeline()
+        p.lindex('player:%s:games' % username, -1)
+        (last_game,) = p.execute()
+        inactive = (int(last_game_ids[-1]) - int(last_game) > INACTIVE_COUNT)
+        print inactive
+        highscores.append([username, -score, inactive] )
+
     last_games = make_game_list(list(reversed(last_game_ids)))
 
     return highscores, last_games, num_games
