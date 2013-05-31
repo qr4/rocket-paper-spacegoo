@@ -4,8 +4,8 @@
 {% block content %}
   <h1>{% if username %}{{username}}{% else %}Rocket Scissor Spacegoo{% endif %}</h1>
   <p class='lead'>
-    Total of {{ num_games }} games played.
-    {% if rank %}Ranked #{{ rank }}.{% endif %}
+    Total of <span id="num_games">{{ num_games }}</span> games played.
+    {% if rank %}Ranked #<span id="rank">{{ rank }}</span>.{% endif %}
   </p>
   <div class="row">
     <div class="span6">
@@ -80,6 +80,11 @@
 
     function newdata(data) {
       //console.log(data);
+
+      $("#num_games").text(data.num_games);
+      if (data.rank) {
+	$("#rank").text(data.rank);
+      }
       
       var highscoretable = $("table.highscore");
       highscoretable.empty();
