@@ -146,6 +146,16 @@ class Game(object):
         self.send_state()
         self.deadline = eventlet.greenthread.spawn_after(COMMAND_DEADLINE, self.deadline_reached)
 
+        p = redis.pipeline()
+        p.hset('game:%d' % self.game_id, 'p1', self.players[0].username)
+        p.hset('game:%d' % self.game_id, 'p2', self.players[1].username)
+
+        p.rpush('games', self.game_id)
+
+        p.rpush('player:%s:games' % self.players[0].username, self.game_id)
+        p.rpush('player:%s:games' % self.players[1].username, self.game_id)
+        p.execute()
+
     def other_player(self, player):
         return self.players[1 - self.players.index(player)]
 
@@ -194,17 +204,10 @@ class Game(object):
 
         p = redis.pipeline()
         p.hset('game:%d' % self.game_id, 'end', int(time.time()))
-        p.hset('game:%d' % self.game_id, 'p1', self.players[0].username)
-        p.hset('game:%d' % self.game_id, 'p2', self.players[1].username)
         p.hset('game:%d' % self.game_id, 'elodiff', elo_diff)
 
         p.zadd('scoreboard', self.players[0].username, -elo_p1)
         p.zadd('scoreboard', self.players[1].username, -elo_p2)
-
-        p.rpush('games', self.game_id)
-
-        p.rpush('player:%s:games' % self.players[0].username, self.game_id)
-        p.rpush('player:%s:games' % self.players[1].username, self.game_id)
         p.execute()
 
         self.players[0].conn.disconnect()

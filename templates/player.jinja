@@ -39,7 +39,11 @@
               <a class='{{('', 'me')[game.player2 == username]}} loser' href='{{url_for('player', username=game.player2)}}'>{{ game.player2}}</a>
             </td>
             <td style='text-align: right;'>
-              +{{ "%.2f"|format(game.elodiff) }}
+			  {% if (game.elodiff) %}
+			+{{ "%.2f"|format(game.elodiff) }}
+			  {% else %}
+				 <span class="running">running</span>
+			  {% endif %}
             </td>
         {% endfor %}
       </table>

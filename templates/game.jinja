@@ -10,16 +10,22 @@
 {% block content %}
   <h1>
     Game #{{game_id}}: 
-    {% if elodiff > 0 %}
-      <a class='winner player1' href='{{url_for('player', username=player1)}}'>{{player1}}</a>
-      <sub>vs</sub>
-      <a class='loser player2' href='{{url_for('player', username=player2)}}'>{{player2}}</a>
-      +{{ "%.3f"|format(elodiff)}}
+    {% if finished %}
+      {% if elodiff > 0 %}
+	<a class='winner player1' href='{{url_for('player', username=player1)}}'>{{player1}}</a>
+	<sub>vs</sub>
+	<a class='loser player2' href='{{url_for('player', username=player2)}}'>{{player2}}</a>
+	+{{ "%.3f"|format(elodiff)}}
+      {% else %}
+	<a class='winner player2' href='{{url_for('player', username=player2)}}'>{{player2}}</a>
+	<sub>vs</sub>
+	<a class='loser player1' href='{{url_for('player', username=player1)}}'>{{player1}}</a>
+	+{{ "%.3f"|format(-elodiff)}}
+      {% endif %}
     {% else %}
-      <a class='winner player2' href='{{url_for('player', username=player2)}}'>{{player2}}</a>
-      <sub>vs</sub>
-      <a class='loser player1' href='{{url_for('player', username=player1)}}'>{{player1}}</a>
-      +{{ "%.3f"|format(-elodiff)}}
+	<a class='player1' href='{{url_for('player', username=player1)}}'>{{player1}}</a>
+	<sub>vs</sub>
+	<a class='player2' href='{{url_for('player', username=player2)}}'>{{player2}}</a>
     {% endif %}
   </h1>
   <p class='lead'>
@@ -30,9 +36,10 @@
   <div class="row">
     <div class="span12">
       <!-- <h3>{{ num_rounds }} rounds played</h3> -->
-      <table class='table rounds fixed-header'>
       <div id='timegraph'></div>
       <canvas width="0" height="0" id='planets'></div>
+      {% if rounds %}
+      <table class='table rounds fixed-header'>
         <thead class='header'>
           <tr>
             <th>Round</th>
@@ -69,6 +76,7 @@
             </tr>
         <tbody>
       </table>
+      {% endif %}
     </div>
   </div>
 {% endblock %}

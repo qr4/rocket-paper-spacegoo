@@ -25,10 +25,11 @@ def make_game_list(game_ids):
         p.hget('game:%s' % game_id, 'elodiff')
     games = []
     for game_id, (player1, player2, elodiff) in izip(game_ids, grouper(p.execute(), 3)):
-        elodiff = float(elodiff)
-        if elodiff < 0:
-            player1, player2 = player2, player1
-            elodiff = -elodiff
+        if elodiff:
+            elodiff = float(elodiff)
+            if elodiff < 0:
+                player1, player2 = player2, player1
+                elodiff = -elodiff
 
         games.append(dict(
             player1 = player1,
@@ -149,7 +150,8 @@ def game(game_id):
         player2 = player2,
         rank1 = rank1 + 1,
         rank2 = rank2 + 1,
-        elodiff = float(elodiff),
+        finished = elodiff is not None,
+        elodiff = (float(elodiff) if elodiff else None),
         rounds = rounds,
         num_rounds = len(rounds) - 1,
     )
