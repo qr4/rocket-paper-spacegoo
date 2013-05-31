@@ -123,6 +123,21 @@ def game(game_id):
     rank1, rank2 = p.execute()
 
     game_log_name = "log/%08d/%04d.json" % (game_id / 1000, game_id % 1000)
+
+    return render_template('game.jinja',
+        game_id = game_id,
+        game_log_name = game_log_name,
+        player1 = player1,
+        player2 = player2,
+        rank1 = rank1 + 1,
+        rank2 = rank2 + 1,
+        finished = elodiff is not None,
+        elodiff = (float(elodiff) if elodiff else None),
+    )
+
+@app.route("/game/<int:game_id>/rounds/<int:fromround>")
+def game_rounds(game_id, fromround):
+    game_log_name = "log/%08d/%04d.json" % (game_id / 1000, game_id % 1000)
     game_log = None
     try:
         game_log = file(game_log_name, "rb")
@@ -131,6 +146,9 @@ def game(game_id):
         game_log = gzip.GzipFile(game_log_name, "rb")
     rounds = []
     for line in game_log.readlines():
+        if fromround > 0:
+            fromround -= 1
+            continue
         data = json.loads(line)
         owned_planets = [0, 0, 0]
         production = [vec([0,0,0]), vec([0,0,0]), vec([0,0,0])]
@@ -157,18 +175,7 @@ def game(game_id):
         ))
     game_log.close()
 
-    return render_template('game.jinja',
-        game_id = game_id,
-        game_log_name = game_log_name,
-        player1 = player1,
-        player2 = player2,
-        rank1 = rank1 + 1,
-        rank2 = rank2 + 1,
-        finished = elodiff is not None,
-        elodiff = (float(elodiff) if elodiff else None),
-        rounds = rounds,
-        num_rounds = len(rounds) - 1,
-    )
+    return jsonify(rounds = rounds)
 
 if __name__ == '__main__':
     logging.basicConfig(stream=sys.stderr, level=logging.INFO)
