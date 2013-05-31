@@ -135,8 +135,8 @@ def game(game_id):
         elodiff = (float(elodiff) if elodiff else None),
     )
 
-@app.route("/game/<int:game_id>/rounds")
-def game_rounds(game_id):
+@app.route("/game/<int:game_id>/rounds/<int:fromround>")
+def game_rounds(game_id, fromround):
     game_log_name = "log/%08d/%04d.json" % (game_id / 1000, game_id % 1000)
     game_log = None
     try:
@@ -145,6 +145,9 @@ def game_rounds(game_id):
         game_log = gzip.GzipFile(game_log_name + ".gz", "rb")
     rounds = []
     for line in game_log.readlines():
+        if fromround > 0:
+            fromround -= 1
+            continue
         data = json.loads(line)
         owned_planets = [0, 0, 0]
         production = [vec([0,0,0]), vec([0,0,0]), vec([0,0,0])]

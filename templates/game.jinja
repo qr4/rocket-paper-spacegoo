@@ -79,6 +79,7 @@
     $('table.fixed-header').fixedHeader();
 
     var playspeed = 100;
+    var polling_freq = 10;
     var rounds = []
 
     var current_round;
@@ -131,6 +132,10 @@
             hoverable: true,
             autoHighlight: false
           },
+	  xaxis: {
+	    min: 0,
+	    max: 500,
+	  }
       });
       $("#timegraph").bind("plothover",  function (event, pos, item) {
 	  if (!playing()) {
@@ -162,6 +167,9 @@
         });
     }
 
+    var stars_buffer;
+    var planets_buffer;
+
     function make_planets() {
       var height = 500;
       var width = 940;
@@ -173,56 +181,60 @@
 
 
       // Off-screen canvas for stars
-      var stars_buffer = document.createElement('canvas');
-      stars_buffer.width = width;
-      stars_buffer.height = height;
-      var c = stars_buffer.getContext("2d");
-      var n_stars = Math.floor(50 + Math.random()*50);
-      for (var n = 0; n < n_stars; n++) {
-	var x = Math.random()*width;
-	var y = Math.random()*height;
-	var r = Math.random() * star_size / 2;
-	c.beginPath();
-	c.fillStyle = "white";
-	c.moveTo(x, y);
-	c.arc(x, y, r, 0, 2*Math.PI, false);
-	c.fill();
+      if (!stars_buffer) {
+	stars_buffer = document.createElement('canvas');
+	stars_buffer.width = width;
+	stars_buffer.height = height;
+	var c = stars_buffer.getContext("2d");
+	var n_stars = Math.floor(50 + Math.random()*50);
+	for (var n = 0; n < n_stars; n++) {
+	  var x = Math.random()*width;
+	  var y = Math.random()*height;
+	  var r = Math.random() * star_size / 2;
+	  c.beginPath();
+	  c.fillStyle = "white";
+	  c.moveTo(x, y);
+	  c.arc(x, y, r, 0, 2*Math.PI, false);
+	  c.fill();
+	}
       }
 
 
       // Off-screen canvas for planets
-      var planets_buffer = document.createElement('canvas');
-      planets_buffer.width = width;
-      planets_buffer.height = height;
-      var bc = planets_buffer.getContext("2d");
-      bc.translate(width/2, height/2);
+      if (!planets_buffer) {
+	planets_buffer = document.createElement('canvas');
+	planets_buffer.width = width;
+	planets_buffer.height = height;
+	var bc = planets_buffer.getContext("2d");
+	bc.translate(width/2, height/2);
 
-      var planets = rounds[0].data.planets;
-      for (var idx = 0; idx < planets.length; idx++) {
-        var planet = planets[idx];
-        var total_production = planet.production[0] + planet.production[1] + planet.production[2];
-	var r = Math.sqrt(total_production / (max_production*2)) * planet_canvas_size;
-        var alpha = - Math.PI/2;
-        for (var i = 0; i < 3; i++) {
-          var beta = alpha + 2 * Math.PI * (planet.production[i]/total_production);
-          bc.fillStyle = ["#DDD", "#AAA", "#999"][i];
-          bc.beginPath();
-          bc.moveTo(
-              planet.x * -size_scale,
-              planet.y * size_scale
-              );
-          bc.arc(
-              planet.x * -size_scale,
-              planet.y * size_scale,
-              r,
-              alpha,
-              beta,
-              false
-              );
-          bc.closePath();
-          bc.fill();
-          alpha = beta;
-        }
+	var planets = rounds[0].data.planets;
+	for (var idx = 0; idx < planets.length; idx++) {
+	  var planet = planets[idx];
+	  var total_production = planet.production[0] + planet.production[1] + planet.production[2];
+	  var r = Math.sqrt(total_production / (max_production*2)) * planet_canvas_size;
+	  var alpha = - Math.PI/2;
+	  for (var i = 0; i < 3; i++) {
+	    var beta = alpha + 2 * Math.PI * (planet.production[i]/total_production);
+	    bc.fillStyle = ["#DDD", "#AAA", "#999"][i];
+	    bc.beginPath();
+	    bc.moveTo(
+		planet.x * -size_scale,
+		planet.y * size_scale
+		);
+	    bc.arc(
+		planet.x * -size_scale,
+		planet.y * size_scale,
+		r,
+		alpha,
+		beta,
+		false
+		);
+	    bc.closePath();
+	    bc.fill();
+	    alpha = beta;
+	  }
+	}
       }
 
       // The proper canvas
@@ -360,12 +372,21 @@
       make_planets();
     }
 
-    $.ajax({  
-	url: "/game/{{ game_id }}/rounds", success: function(data){
-	  rounds = data.rounds;
-	  current_round = rounds.length - 1;
-	  setup_game();
-	}, dataType: "json"});
+    function poll() {
+      $.ajax({  
+	  url: "/game/{{ game_id }}/rounds/" + rounds.length, success: function(data){
+	    if (data.rounds.length > 0) {
+	      console.log("New data", data.rounds.length);
+	      rounds = rounds.concat(data.rounds);
+	      current_round = rounds.length - 1;
+	      setup_game();
+	      if (! rounds[rounds.length-1].game_over) {
+		setTimeout(poll,1000 / polling_freq);
+	      }
+	    }
+	  }, dataType: "json"});
+    }
+    poll();
 
   </script>
 {% endblock %}
