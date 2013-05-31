@@ -10,8 +10,8 @@
     <div class="span6">
       <h3>Top 40</h3>
       <table class='table highscore'>
-        {% for username, score in highscores %}
-          <tr>
+        {% for username, score, inactive in highscores %}
+          <tr {% if inactive %}class="inactive"{% endif %}>
             <td style='width: 30px;'>
               {{ highscore_first + loop.index }}.
             </td>
@@ -39,7 +39,11 @@
               <a class='loser' href='{{url_for('player', username=game.player2)}}'>{{ game.player2}}</a>
             </td>
             <td style='text-align: right;'>
-              +{{ "%.2f"|format(game.elodiff) }}
+			  {% if (game.elodiff) %}
+			    +{{ "%.2f"|format(game.elodiff) }}
+			  {% else %}
+				 <span class="running">running</span>
+			  {% endif %}
             </td>
         {% endfor %}
       </table>

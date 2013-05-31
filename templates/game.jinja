@@ -1,25 +1,24 @@
 {% extends "layout.jinja" %}
-{% import "macro.jinja" as m %}
-
-{% macro nice_types(counts) %}
-  <span>{{counts[0]}}</span>,
-  <span>{{counts[1]}}</span>,
-  <span>{{counts[2]}}</span>
-{% endmacro %}
 
 {% block content %}
   <h1>
     Game #{{game_id}}: 
-    {% if elodiff > 0 %}
-      <a class='winner player1' href='{{url_for('player', username=player1)}}'>{{player1}}</a>
-      <sub>vs</sub>
-      <a class='loser player2' href='{{url_for('player', username=player2)}}'>{{player2}}</a>
-      +{{ "%.3f"|format(elodiff)}}
+    {% if finished %}
+      {% if elodiff > 0 %}
+	<a class='winner player1' href='{{url_for('player', username=player1)}}'>{{player1}}</a>
+	<sub>vs</sub>
+	<a class='loser player2' href='{{url_for('player', username=player2)}}'>{{player2}}</a>
+	+{{ "%.3f"|format(elodiff)}}
+      {% else %}
+	<a class='winner player2' href='{{url_for('player', username=player2)}}'>{{player2}}</a>
+	<sub>vs</sub>
+	<a class='loser player1' href='{{url_for('player', username=player1)}}'>{{player1}}</a>
+	+{{ "%.3f"|format(-elodiff)}}
+      {% endif %}
     {% else %}
-      <a class='winner player2' href='{{url_for('player', username=player2)}}'>{{player2}}</a>
-      <sub>vs</sub>
-      <a class='loser player1' href='{{url_for('player', username=player1)}}'>{{player1}}</a>
-      +{{ "%.3f"|format(-elodiff)}}
+	<a class='player1' href='{{url_for('player', username=player1)}}'>{{player1}}</a>
+	<sub>vs</sub>
+	<a class='player2' href='{{url_for('player', username=player2)}}'>{{player2}}</a>
     {% endif %}
   </h1>
   <p class='lead'>
@@ -30,9 +29,9 @@
   <div class="row">
     <div class="span12">
       <!-- <h3>{{ num_rounds }} rounds played</h3> -->
-      <table class='table rounds fixed-header'>
       <div id='timegraph'></div>
       <canvas width="0" height="0" id='planets'></div>
+      <table class='table rounds fixed-header'>
         <thead class='header'>
           <tr>
             <th>Round</th>
@@ -48,25 +47,22 @@
           </tr>
         </thead>
         <tbody>
-          {% set round = rounds[-1] %}
-            <tr>
-              <td id="round">
-                  Endstand
-              </td>
-              <td id="fleet_total">{{round.stats.num_fleets}}</td>
+	  <tr>
+	    <td id="round"></td>
+	    <td id="fleet_total"></td>
 
-              <td id="planets_player1">{{round.stats.owned_planets[1]}}</td>
-              <td id="planets_player2">{{round.stats.owned_planets[2]}}</td>
+	    <td id="planets_player1"></td>
+	    <td id="planets_player2"></td>
 
-              <td id="ships_player1">{{nice_types(round.stats.ships[1])}}</td>
-              <td id="ships_player2">{{nice_types(round.stats.ships[2])}}</td>
+	    <td id="ships_player1"></td>
+	    <td id="ships_player2"></td>
 
-              <td id="production_player1">{{nice_types(round.stats.production[1])}}</td>
-              <td id="production_player2">{{nice_types(round.stats.production[2])}}</td>
+	    <td id="production_player1"></td>
+	    <td id="production_player2"></td>
 
-              <td id="fleets_player1">{{nice_types(round.stats.fleets[1])}}</td>
-              <td id="fleets_player2">{{nice_types(round.stats.fleets[2])}}</td>
-            </tr>
+	    <td id="fleets_player1"></td>
+	    <td id="fleets_player2"></td>
+	  </tr>
         <tbody>
       </table>
     </div>
@@ -82,15 +78,11 @@
   <script>
     $('table.fixed-header').fixedHeader();
 
-    var playspeed = 200;
+    var playspeed = 100;
+    var polling_freq = 10;
+    var rounds = []
 
-    var rounds = [
-      {% for round in rounds %}
-        {{round|tojson|safe}},
-      {% endfor %}
-    ];
-
-    var current_round = 0;
+    var current_round;
 
     var redrawTimeout = null;
     var redraw = function () {
@@ -140,6 +132,10 @@
             hoverable: true,
             autoHighlight: false
           },
+	  xaxis: {
+	    min: 0,
+	    max: 500,
+	  }
       });
       $("#timegraph").bind("plothover",  function (event, pos, item) {
 	  if (!playing()) {
@@ -171,6 +167,9 @@
         });
     }
 
+    var stars_buffer;
+    var planets_buffer;
+
     function make_planets() {
       var height = 500;
       var width = 940;
@@ -182,56 +181,60 @@
 
 
       // Off-screen canvas for stars
-      var stars_buffer = document.createElement('canvas');
-      stars_buffer.width = width;
-      stars_buffer.height = height;
-      var c = stars_buffer.getContext("2d");
-      var n_stars = Math.floor(50 + Math.random()*50);
-      for (var n = 0; n < n_stars; n++) {
-	var x = Math.random()*width;
-	var y = Math.random()*height;
-	var r = Math.random() * star_size / 2;
-	c.beginPath();
-	c.fillStyle = "white";
-	c.moveTo(x, y);
-	c.arc(x, y, r, 0, 2*Math.PI, false);
-	c.fill();
+      if (!stars_buffer) {
+	stars_buffer = document.createElement('canvas');
+	stars_buffer.width = width;
+	stars_buffer.height = height;
+	var c = stars_buffer.getContext("2d");
+	var n_stars = Math.floor(50 + Math.random()*50);
+	for (var n = 0; n < n_stars; n++) {
+	  var x = Math.random()*width;
+	  var y = Math.random()*height;
+	  var r = Math.random() * star_size / 2;
+	  c.beginPath();
+	  c.fillStyle = "white";
+	  c.moveTo(x, y);
+	  c.arc(x, y, r, 0, 2*Math.PI, false);
+	  c.fill();
+	}
       }
 
 
       // Off-screen canvas for planets
-      var planets_buffer = document.createElement('canvas');
-      planets_buffer.width = width;
-      planets_buffer.height = height;
-      var bc = planets_buffer.getContext("2d");
-      bc.translate(width/2, height/2);
+      if (!planets_buffer) {
+	planets_buffer = document.createElement('canvas');
+	planets_buffer.width = width;
+	planets_buffer.height = height;
+	var bc = planets_buffer.getContext("2d");
+	bc.translate(width/2, height/2);
 
-      var planets = rounds[0].data.planets;
-      for (var idx = 0; idx < planets.length; idx++) {
-        var planet = planets[idx];
-        var total_production = planet.production[0] + planet.production[1] + planet.production[2];
-	var r = Math.sqrt(total_production / (max_production*2)) * planet_canvas_size;
-        var alpha = - Math.PI/2;
-        for (var i = 0; i < 3; i++) {
-          var beta = alpha + 2 * Math.PI * (planet.production[i]/total_production);
-          bc.fillStyle = ["#DDD", "#AAA", "#999"][i];
-          bc.beginPath();
-          bc.moveTo(
-              planet.x * -size_scale,
-              planet.y * size_scale
-              );
-          bc.arc(
-              planet.x * -size_scale,
-              planet.y * size_scale,
-              r,
-              alpha,
-              beta,
-              false
-              );
-          bc.closePath();
-          bc.fill();
-          alpha = beta;
-        }
+	var planets = rounds[0].data.planets;
+	for (var idx = 0; idx < planets.length; idx++) {
+	  var planet = planets[idx];
+	  var total_production = planet.production[0] + planet.production[1] + planet.production[2];
+	  var r = Math.sqrt(total_production / (max_production*2)) * planet_canvas_size;
+	  var alpha = - Math.PI/2;
+	  for (var i = 0; i < 3; i++) {
+	    var beta = alpha + 2 * Math.PI * (planet.production[i]/total_production);
+	    bc.fillStyle = ["#DDD", "#AAA", "#999"][i];
+	    bc.beginPath();
+	    bc.moveTo(
+		planet.x * -size_scale,
+		planet.y * size_scale
+		);
+	    bc.arc(
+		planet.x * -size_scale,
+		planet.y * size_scale,
+		r,
+		alpha,
+		beta,
+		false
+		);
+	    bc.closePath();
+	    bc.fill();
+	    alpha = beta;
+	  }
+	}
       }
 
       // The proper canvas
@@ -274,6 +277,9 @@
         for (var idx = 0; idx < fleets.length; idx++) {
           var fleet = fleets[idx];
           var total_ships = fleet.ships[0] + fleet.ships[1] + fleet.ships[2];
+	  if (total_ships == 0) {
+	    continue;
+	  }
 
           var dx = planets[fleet.target].x - planets[fleet.origin].x;
           var dy = planets[fleet.target].y - planets[fleet.origin].y;
@@ -282,14 +288,40 @@
           var done = 1 - (tl / d);
           var x = planets[fleet.origin].x + done * dx;
           var y = planets[fleet.origin].y + done * dy;
-
 	  var r = Math.sqrt(total_ships / (max_production*2)) * fleet_canvas_size;
 
-          c.beginPath();
+	  c.save();
+	  c.translate(x * -size_scale, y * size_scale);
+	  c.rotate(Math.atan2(dx,dy));
+
+	  // Triangle
+	  c.beginPath();
           c.fillStyle = ["invalid", "steelblue", "red"][fleet.owner_id];
-          c.moveTo(x * - size_scale, y * size_scale );
-          c.arc( x * -size_scale, y * size_scale, r, 0, 2*Math.PI, false);
+	  c.moveTo(-(r+1),0);
+	  c.lineTo(0,2*r);
+	  c.lineTo( (r+1),0);
+	  c.closePath();
           c.fill();
+
+	  c.beginPath();
+	  c.moveTo(0,0);
+	  c.arc(0,0,r+1,Math.PI,0,false);
+	  c.closePath();
+	  c.fill();
+
+	  // Pie-Chart at the end
+	  var alpha = Math.PI;
+	  for (var i = 0; i < 3; i++) {
+	    var beta = alpha + Math.PI * (fleet.ships[i]/total_ships);
+	    c.fillStyle = ["#DDD", "#AAA", "#999"][i];
+	    c.beginPath();
+	    c.moveTo(0,0);
+	    c.arc(0,0,r,alpha,beta,false);
+	    c.closePath();
+	    c.fill();
+	    alpha = beta;
+	  }
+	  c.restore();
         }
 
 	$('#round')             .text(current_round == rounds.length -1 ?
@@ -308,9 +340,6 @@
       }
       redraw();
     }
-
-    make_timegraph();
-    make_planets();
 
     var playInterval= null;
     var stop_playing = function() {
@@ -337,5 +366,27 @@
 	stop_playing();
       }
     });
+
+    function setup_game() {
+      make_timegraph();
+      make_planets();
+    }
+
+    function poll() {
+      $.ajax({  
+	  url: "/game/{{ game_id }}/rounds/" + rounds.length, success: function(data){
+	    if (data.rounds.length > 0) {
+	      console.log("New data", data.rounds.length);
+	      rounds = rounds.concat(data.rounds);
+	      current_round = rounds.length - 1;
+	      setup_game();
+	    }
+	    if (! rounds[rounds.length-1].data.game_over) {
+	      setTimeout(poll,1000 / polling_freq);
+	    }
+	  }, dataType: "json"});
+    }
+    poll();
+
   </script>
 {% endblock %}

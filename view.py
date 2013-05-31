@@ -215,6 +215,12 @@ def update(state):
         glPopMatrix()
 
 
+    playernames = {}
+    for player in state['players']:
+        playernames[player['id']] = player['name']
+    caption = '%s (red)   vs   %s (green)    round: %s' % (playernames[1], playernames[2], state['round'])
+    window.set_caption(caption)
+
     glPopMatrix()
 
     window.flip()

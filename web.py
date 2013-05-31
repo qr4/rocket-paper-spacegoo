@@ -8,6 +8,8 @@ from flask import Flask
 from flask import render_template, jsonify
 import redis
 
+INACTIVE_COUNT = 100
+
 redis = redis.Redis(host='localhost')
 
 app = Flask(__name__)
@@ -25,10 +27,11 @@ def make_game_list(game_ids):
         p.hget('game:%s' % game_id, 'elodiff')
     games = []
     for game_id, (player1, player2, elodiff) in izip(game_ids, grouper(p.execute(), 3)):
-        elodiff = float(elodiff)
-        if elodiff < 0:
-            player1, player2 = player2, player1
-            elodiff = -elodiff
+        if elodiff:
+            elodiff = float(elodiff)
+            if elodiff < 0:
+                player1, player2 = player2, player1
+                elodiff = -elodiff
 
         games.append(dict(
             player1 = player1,
@@ -40,12 +43,19 @@ def make_game_list(game_ids):
 
 def get_run_info():
     p = redis.pipeline()
-    p.zrange('scoreboard', 0, 40, withscores=True)
+    p.zrange('scoreboard', 0, 39, withscores=True)
     p.lrange('games', -40, -1)
     p.llen('games')
-    highscores, last_game_ids, num_games = p.execute()
+    raw_highscores, last_game_ids, num_games = p.execute()
 
-    highscores = [(username, -score) for username, score in highscores]
+    highscores = []
+    for username, score in raw_highscores:
+        p = redis.pipeline()
+        p.lindex('player:%s:games' % username, -1)
+        (last_game,) = p.execute()
+        inactive = (int(last_game_ids[-1]) - int(last_game) > INACTIVE_COUNT)
+        highscores.append([username, -score, inactive] )
+
     last_games = make_game_list(list(reversed(last_game_ids)))
 
     return highscores, last_games, num_games
@@ -112,10 +122,33 @@ def game(game_id):
     p.zrank('scoreboard', player2)
     rank1, rank2 = p.execute()
 
-    game_log_name = "log/%08d/%04d.json.gz" % (game_id / 1000, game_id % 1000)
-    game_log = gzip.GzipFile(game_log_name, "rb")
+    game_log_name = "log/%08d/%04d.json" % (game_id / 1000, game_id % 1000)
+
+    return render_template('game.jinja',
+        game_id = game_id,
+        game_log_name = game_log_name,
+        player1 = player1,
+        player2 = player2,
+        rank1 = rank1 + 1,
+        rank2 = rank2 + 1,
+        finished = elodiff is not None,
+        elodiff = (float(elodiff) if elodiff else None),
+    )
+
+@app.route("/game/<int:game_id>/rounds/<int:fromround>")
+def game_rounds(game_id, fromround):
+    game_log_name = "log/%08d/%04d.json" % (game_id / 1000, game_id % 1000)
+    game_log = None
+    try:
+        game_log = file(game_log_name, "rb")
+    except IOError: 
+        game_log_name = game_log_name + ".gz"
+        game_log = gzip.GzipFile(game_log_name, "rb")
     rounds = []
     for line in game_log.readlines():
+        if fromround > 0:
+            fromround -= 1
+            continue
         data = json.loads(line)
         owned_planets = [0, 0, 0]
         production = [vec([0,0,0]), vec([0,0,0]), vec([0,0,0])]
@@ -142,17 +175,7 @@ def game(game_id):
         ))
     game_log.close()
 
-    return render_template('game.jinja',
-        game_id = game_id,
-        game_log_name = game_log_name,
-        player1 = player1,
-        player2 = player2,
-        rank1 = rank1 + 1,
-        rank2 = rank2 + 1,
-        elodiff = float(elodiff),
-        rounds = rounds,
-        num_rounds = len(rounds) - 1,
-    )
+    return jsonify(rounds = rounds)
 
 if __name__ == '__main__':
     logging.basicConfig(stream=sys.stderr, level=logging.INFO)

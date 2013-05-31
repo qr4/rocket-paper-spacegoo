@@ -6,6 +6,7 @@ import errno
 import eventlet
 import simplejson as json
 import random
+import subprocess
 from collections import OrderedDict
 
 from eventlet.green import socket
@@ -16,7 +17,7 @@ from engine import Engine
 redis = redis.Redis(host='localhost')
 pool = eventlet.GreenPool()
 
-COMMAND_DEADLINE = 3
+COMMAND_DEADLINE = 6
 MAX_ROUNDS = 500
 START_ELO = 100
 MATCHMAKING_INTERVAL = 1
@@ -122,14 +123,13 @@ class Game(object):
 
         print "starting game %r" % self.game_id
 
-        game_log_name = "log/%08d/%04d.json.gz" % (self.game_id / 1000, self.game_id % 1000)
+        self.game_log_name = "log/%08d/%04d.json" % (self.game_id / 1000, self.game_id % 1000)
         try:
-            os.makedirs(os.path.dirname(game_log_name))
+            os.makedirs(os.path.dirname(self.game_log_name))
         except OSError, err:
             if err.errno != errno.EEXIST:
                 raise
-        self.game_log = file(game_log_name, "wb")
-        self.game_log_gz = gzip.GzipFile(filename="game %012d.json" % self.game_id, mode="wb", fileobj=self.game_log)
+        self.game_log = file(self.game_log_name, "wb")
 
         self.players = players
 
@@ -147,6 +147,16 @@ class Game(object):
 
         self.send_state()
         self.deadline = eventlet.greenthread.spawn_after(COMMAND_DEADLINE, self.deadline_reached)
+
+        p = redis.pipeline()
+        p.hset('game:%d' % self.game_id, 'p1', self.players[0].username)
+        p.hset('game:%d' % self.game_id, 'p2', self.players[1].username)
+
+        p.rpush('games', self.game_id)
+
+        p.rpush('player:%s:games' % self.players[0].username, self.game_id)
+        p.rpush('player:%s:games' % self.players[1].username, self.game_id)
+        p.execute()
 
     def other_player(self, player):
         return self.players[1 - self.players.index(player)]
@@ -191,22 +201,17 @@ class Game(object):
             )
             elo_diff = - elo_diff
 
-        self.game_log_gz.close()
         self.game_log.close()
+
+        # This unlinks the gziped file after compressing
+        subprocess.call(["gzip",self.game_log_name])
 
         p = redis.pipeline()
         p.hset('game:%d' % self.game_id, 'end', int(time.time()))
-        p.hset('game:%d' % self.game_id, 'p1', self.players[0].username)
-        p.hset('game:%d' % self.game_id, 'p2', self.players[1].username)
         p.hset('game:%d' % self.game_id, 'elodiff', elo_diff)
 
         p.zadd('scoreboard', self.players[0].username, -elo_p1)
         p.zadd('scoreboard', self.players[1].username, -elo_p2)
-
-        p.rpush('games', self.game_id)
-
-        p.rpush('player:%s:games' % self.players[0].username, self.game_id)
-        p.rpush('player:%s:games' % self.players[1].username, self.game_id)
         p.execute()
 
         self.players[0].conn.disconnect()
@@ -287,8 +292,9 @@ class Game(object):
     def send_state(self):
         for player in self.players:
             player.send(json.dumps(self.get_player_state(player)))
-        self.game_log_gz.write(json.dumps(self.get_log_state()))
-        self.game_log_gz.write("\n")
+        self.game_log.write(json.dumps(self.get_log_state()))
+        self.game_log.write("\n")
+        self.game_log.flush()
 
 class MatchMaking(object):
     def __init__(self):

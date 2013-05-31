@@ -46,10 +46,10 @@ gibt an, dass keinerlei Aktion stattfinden soll.
     send <source_planet_id> <target_planet_id> <num_a> <num_b> <num_c>
 
 gibt an, dass vom eigenen Planet source_planet_id die angegebene Anzahl von
-Schffen zu Planet target_planet_id gesendet werden sollen.
+Schiffen zu Planet target_planet_id gesendet werden sollen.
 
 Sobald beide Spieler ihren Spielzug gemacht haben, geht das Spiel in die
-naechste Runde und beide Spiele bekommen wieder den kompletten Spielzustand
+naechste Runde und beide Spieler bekommen wieder den kompletten Spielzustand
 gesendet.
 
 Ein Spielstand sieht folgendermassen aus:
@@ -64,7 +64,7 @@ Ein Spielstand sieht folgendermassen aus:
           "id": 0,                  
           "owner_id": 1,            // player_id
           "origin": 1,              // planet_id
-          "target": 2,              // plane_id
+          "target": 2,              // planet_id
           "ships": [ 3, 1, 1 ],     // Anzahlen Typ a, b, c
           "eta": 45                 // Ankunftsrunde (s.u.)
         },
