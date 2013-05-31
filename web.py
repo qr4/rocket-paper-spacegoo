@@ -41,24 +41,38 @@ def make_game_list(game_ids):
         ))
     return games
 
-def get_run_info():
-    p = redis.pipeline()
-    p.zrange('scoreboard', 0, 39, withscores=True)
-    p.lrange('games', -40, -1)
-    p.llen('games')
-    raw_highscores, last_game_ids, num_games = p.execute()
+def get_run_info(username = None):
+    if username:
+        rank = redis.zrank('scoreboard', username)
+        highscore_first = max(0, rank - 10)
+
+        p = redis.pipeline()
+        p.zrange('scoreboard', highscore_first, highscore_first + 20, withscores=True)
+        p.lrange('player:%s:games' % username, -40, -1)
+        p.llen('player:%s:games' % username)
+        raw_highscores, last_game_ids, num_games = p.execute()
+    else:
+        rank = None
+        p = redis.pipeline()
+        p.zrange('scoreboard', 0, 39, withscores=True)
+        p.lrange('games', -40, -1)
+        p.llen('games')
+        raw_highscores, last_game_ids, num_games = p.execute()
 
     highscores = []
-    for username, score in raw_highscores:
+    for score_user, score in raw_highscores:
         p = redis.pipeline()
-        p.lindex('player:%s:games' % username, -1)
+        p.lindex('player:%s:games' % score_user, -1)
         (last_game,) = p.execute()
         inactive = (int(last_game_ids[-1]) - int(last_game) > INACTIVE_COUNT)
-        highscores.append([username, -score, inactive] )
+        highscores.append([score_user, -score, inactive] )
 
     last_games = make_game_list(list(reversed(last_game_ids)))
 
-    return highscores, last_games, num_games
+    if username:
+        return highscores, last_games, num_games, (rank+1), highscore_first
+    else:
+        return highscores, last_games, num_games
 
 @app.route("/")
 def index():
@@ -76,6 +90,7 @@ def info():
     highscores, last_games, num_games = get_run_info()
 
     return jsonify(
+        highscore_first = 0,
         highscores = highscores,
         last_games = last_games,
         num_games = num_games,
@@ -83,20 +98,23 @@ def info():
 
 @app.route("/player/<username>")
 def player(username):
-    rank = redis.zrank('scoreboard', username)
-    highscore_first = max(0, rank - 10)
+    highscores, last_games, num_games, rank, highscore_first = get_run_info(username)
 
-    p = redis.pipeline()
-    p.zrange('scoreboard', highscore_first, highscore_first + 20, withscores=True)
-    p.lrange('player:%s:games' % username, -40, -1)
-    p.llen('player:%s:games' % username)
-    highscores, last_game_ids, num_games = p.execute()
+    return render_template('index.jinja',
+        rank = rank,
+        highscore_first = highscore_first,
+        highscores = highscores,
+        username = username,
+        last_games = last_games,
+        num_games = num_games,
+    )
 
-    highscores = [(score_user, -score) for score_user, score in highscores]
-    last_games = make_game_list(list(reversed(last_game_ids)))
+@app.route("/player/<username>/info.json")
+def player_info(username):
+    highscores, last_games, num_games, rank, highscore_first = get_run_info(username)
 
-    return render_template('player.jinja',
-        rank = rank + 1,
+    return jsonify(
+        rank = rank,
         highscore_first = highscore_first,
         highscores = highscores,
         username = username,
