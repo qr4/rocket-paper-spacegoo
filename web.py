@@ -4,7 +4,7 @@ import logging
 import simplejson as json
 from itertools import izip_longest, izip
 
-from flask import Flask
+from flask import Flask, Response
 from flask import render_template, jsonify
 import redis
 
@@ -144,38 +144,12 @@ def game_rounds(game_id, fromround):
     except IOError: 
         game_log_name = game_log_name + ".gz"
         game_log = gzip.GzipFile(game_log_name, "rb")
-    rounds = []
-    for line in game_log.readlines():
-        if fromround > 0:
-            fromround -= 1
-            continue
-        data = json.loads(line)
-        owned_planets = [0, 0, 0]
-        production = [vec([0,0,0]), vec([0,0,0]), vec([0,0,0])]
-        ships = [vec([0,0,0]), vec([0,0,0]), vec([0,0,0])]
-        fleets = [vec([0,0,0]), vec([0,0,0]), vec([0,0,0])]
-        for planet in data['planets']:
-            owned_planets[planet['owner_id']] += 1
-            production[planet['owner_id']].add_inplace(planet['production'])
-            ships[planet['owner_id']].add_inplace(planet['ships'])
-
-        for fleet in data['fleets']:
-            fleets[fleet['owner_id']].add_inplace(fleet['ships'])
-
-        stats = dict(
-            num_fleets = len(data['fleets']),
-            owned_planets = owned_planets,
-            production = production,
-            ships = ships,
-            fleets = fleets,
+    lines = game_log.readlines()
+    return Response (
+            response = "[" + ",".join(lines[fromround:]) + "]",
+            status = 200,
+            mimetype = "application/json",
         )
-        rounds.append(dict(
-            data = data,
-            stats = stats,
-        ))
-    game_log.close()
-
-    return jsonify(rounds = rounds)
 
 if __name__ == '__main__':
     logging.basicConfig(stream=sys.stderr, level=logging.INFO)
