@@ -54,7 +54,6 @@ def get_run_info():
         p.lindex('player:%s:games' % username, -1)
         (last_game,) = p.execute()
         inactive = (int(last_game_ids[-1]) - int(last_game) > INACTIVE_COUNT)
-        print inactive
         highscores.append([username, -score, inactive] )
 
     last_games = make_game_list(list(reversed(last_game_ids)))
