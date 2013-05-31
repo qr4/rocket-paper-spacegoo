@@ -64,7 +64,7 @@ Ein Spielstand sieht folgendermassen aus:
           "id": 0,                  
           "owner_id": 1,            // player_id
           "origin": 1,              // planet_id
-          "target": 2,              // plane_id
+          "target": 2,              // planet_id
           "ships": [ 3, 1, 1 ],     // Anzahlen Typ a, b, c
           "eta": 45                 // Ankunftsrunde (s.u.)
         },
