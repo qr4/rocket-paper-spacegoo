@@ -380,9 +380,9 @@
 	      rounds = rounds.concat(data.rounds);
 	      current_round = rounds.length - 1;
 	      setup_game();
-	      if (! rounds[rounds.length-1].game_over) {
-		setTimeout(poll,1000 / polling_freq);
-	      }
+	    }
+	    if (! rounds[rounds.length-1].data.game_over) {
+	      setTimeout(poll,1000 / polling_freq);
 	    }
 	  }, dataType: "json"});
     }
