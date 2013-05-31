@@ -1,11 +1,4 @@
 {% extends "layout.jinja" %}
-{% import "macro.jinja" as m %}
-
-{% macro nice_types(counts) %}
-  <span>{{counts[0]}}</span>,
-  <span>{{counts[1]}}</span>,
-  <span>{{counts[2]}}</span>
-{% endmacro %}
 
 {% block content %}
   <h1>
@@ -38,7 +31,6 @@
       <!-- <h3>{{ num_rounds }} rounds played</h3> -->
       <div id='timegraph'></div>
       <canvas width="0" height="0" id='planets'></div>
-      {% if rounds %}
       <table class='table rounds fixed-header'>
         <thead class='header'>
           <tr>
@@ -55,28 +47,24 @@
           </tr>
         </thead>
         <tbody>
-          {% set round = rounds[-1] %}
-            <tr>
-              <td id="round">
-                  Endstand
-              </td>
-              <td id="fleet_total">{{round.stats.num_fleets}}</td>
+	  <tr>
+	    <td id="round"></td>
+	    <td id="fleet_total"></td>
 
-              <td id="planets_player1">{{round.stats.owned_planets[1]}}</td>
-              <td id="planets_player2">{{round.stats.owned_planets[2]}}</td>
+	    <td id="planets_player1"></td>
+	    <td id="planets_player2"></td>
 
-              <td id="ships_player1">{{nice_types(round.stats.ships[1])}}</td>
-              <td id="ships_player2">{{nice_types(round.stats.ships[2])}}</td>
+	    <td id="ships_player1"></td>
+	    <td id="ships_player2"></td>
 
-              <td id="production_player1">{{nice_types(round.stats.production[1])}}</td>
-              <td id="production_player2">{{nice_types(round.stats.production[2])}}</td>
+	    <td id="production_player1"></td>
+	    <td id="production_player2"></td>
 
-              <td id="fleets_player1">{{nice_types(round.stats.fleets[1])}}</td>
-              <td id="fleets_player2">{{nice_types(round.stats.fleets[2])}}</td>
-            </tr>
+	    <td id="fleets_player1"></td>
+	    <td id="fleets_player2"></td>
+	  </tr>
         <tbody>
       </table>
-      {% endif %}
     </div>
   </div>
 {% endblock %}
