@@ -113,8 +113,12 @@ def game(game_id):
     p.zrank('scoreboard', player2)
     rank1, rank2 = p.execute()
 
-    game_log_name = "log/%08d/%04d.json.gz" % (game_id / 1000, game_id % 1000)
-    game_log = gzip.GzipFile(game_log_name, "rb")
+    game_log_name = "log/%08d/%04d.json" % (game_id / 1000, game_id % 1000)
+    game_log = None
+    try:
+        game_log = file(game_log_name, "rb")
+    except IOError: 
+        game_log = gzip.GzipFile(game_log_name + ".gz", "rb")
     rounds = []
     for line in game_log.readlines():
         data = json.loads(line)
