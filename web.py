@@ -43,7 +43,7 @@ def make_game_list(game_ids):
 
 def get_run_info():
     p = redis.pipeline()
-    p.zrange('scoreboard', 0, 40, withscores=True)
+    p.zrange('scoreboard', 0, 39, withscores=True)
     p.lrange('games', -40, -1)
     p.llen('games')
     raw_highscores, last_game_ids, num_games = p.execute()
