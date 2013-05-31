@@ -141,7 +141,7 @@ class Game(object):
             player.player_id = idx + 1
         
         for player in self.players:
-            player.send("game starts. other player is %s" % self.other_player(player).username)
+            player.send("game %d starts. other player is %s" % (self.game_id, self.other_player(player).username))
 
         self.engine = Engine(max_rounds=MAX_ROUNDS)
 
