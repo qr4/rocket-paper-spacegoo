@@ -17,7 +17,7 @@ while 1:
     data = io.readline()
     if not data:
         break
-    if data[0] == "{":
+    elif data[0] == "{":
         state = json.loads(data)
         winner = state["winner"]
         own_id = state["player_id"]

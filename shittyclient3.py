@@ -20,7 +20,7 @@ while 1:
     data = io.readline().strip()
     if not data:
         break
-    if data and data[0] == "{":
+    elif data and data[0] == "{":
         write("nop")
     else:
         print data

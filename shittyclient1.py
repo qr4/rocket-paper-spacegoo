@@ -19,7 +19,9 @@ def write(data):
 write('login %s %s' % (USERNAME, PASSWORD))
 while 1:
     data = io.readline().strip()
-    if data and data[0] == "{":
+    if not data:
+        break
+    elif data[0] == "{":
         state = json.loads(data)
         view.update(state)
         # pprint.pprint(state)
