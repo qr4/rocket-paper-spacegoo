@@ -209,7 +209,7 @@ class Engine():
     def generate_map(self):
         max_x = 20
         max_y = 15
-        num_planets = random.randint(1,10)
+        num_planets = random.randint(2,10)
         
         self.insert_central_planet(self.generate_planet())
         for i in range(0,num_planets):
