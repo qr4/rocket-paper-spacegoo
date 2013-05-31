@@ -16,22 +16,6 @@
       {% endif %}
 
       <table class='table highscore'>
-        {% for score_user, score, inactive in highscores %}
-          <tr class="
-		{% if inactive %}inactive{% endif %}
-		{% if score_user == username %}me{% endif %}
-	    ">
-            <td style='width: 30px;'>
-              {{ highscore_first + loop.index }}.
-            </td>
-            <td>
-              <a href='{{url_for('player', username=score_user)}}'>{{score_user}}</a>
-            </td>
-            <td style='text-align: right;'>
-              {{"%.2f"|format(score)}}
-            </td>
-          </tr>
-        {% endfor %}
       </table>
     </div>
     <div class="span6">
@@ -41,24 +25,6 @@
 	<h3>Recent games</h3>
       {% endif %}
       <table class='table game'>
-        {% for game in last_games %}
-          <tr>
-            <td>
-              <a href='{{url_for('game', game_id=game.game_id)}}'>game {{game.game_id}}</a>
-            </td>
-            <td>
-              <a class='winner' href='{{url_for('player', username=game.player1)}}'>{{ game.player1}}</a> 
-              <sub>vs</sub>
-              <a class='loser' href='{{url_for('player', username=game.player2)}}'>{{ game.player2}}</a>
-            </td>
-            <td style='text-align: right;'>
-			  {% if (game.elodiff) %}
-			    +{{ "%.2f"|format(game.elodiff) }}
-			  {% else %}
-				 <span class="running">...</span>
-			  {% endif %}
-            </td>
-        {% endfor %}
       </table>
     </div>
   </div>
