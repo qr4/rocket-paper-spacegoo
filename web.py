@@ -127,7 +127,8 @@ def game(game_id):
     try:
         game_log = file(game_log_name, "rb")
     except IOError: 
-        game_log = gzip.GzipFile(game_log_name + ".gz", "rb")
+        game_log_name = game_log_name + ".gz"
+        game_log = gzip.GzipFile(game_log_name, "rb")
     rounds = []
     for line in game_log.readlines():
         data = json.loads(line)
