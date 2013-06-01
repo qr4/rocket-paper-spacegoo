@@ -2,53 +2,119 @@
 {% import "macro.jinja" as m %}
 
 {% block content %}
-  <h1>Rocket Scissor Spacegoo</h1>
+  <h1>{% if username %}{{username}}{% else %}Rocket Scissor Spacegoo{% endif %}</h1>
   <p class='lead'>
-    Total of {{ num_games }} games played
+    Total of <span id="num_games">{{ num_games }}</span> games played.
+    {% if rank %}Ranked #<span id="rank">{{ rank }}</span>.{% endif %}
   </p>
   <div class="row">
     <div class="span6">
-      <h3>Top 40</h3>
+      {% if username %}
+	<h3>{{ username }}'s scoreboard</h3>
+      {% else %}
+	<h3>Top 40</h3>
+      {% endif %}
+
       <table class='table highscore'>
-        {% for username, score, inactive in highscores %}
-          <tr {% if inactive %}class="inactive"{% endif %}>
-            <td style='width: 30px;'>
-              {{ highscore_first + loop.index }}.
-            </td>
-            <td>
-              <a href='{{url_for('player', username=username)}}'>{{username}}</a>
-            </td>
-            <td style='text-align: right;'>
-              {{"%.2f"|format(score)}}
-            </td>
-          </tr>
-        {% endfor %}
       </table>
     </div>
     <div class="span6">
-      <h3>Recent games</h3>
+      {% if username %}
+        <h3>{{ username }}'s recent games</h3>
+      {% else %}
+	<h3>Recent games</h3>
+      {% endif %}
       <table class='table game'>
-        {% for game in last_games %}
-          <tr>
-            <td>
-              <a href='{{url_for('game', game_id=game.game_id)}}'>game {{game.game_id}}</a>
-            </td>
-            <td>
-              <a class='winner' href='{{url_for('player', username=game.player1)}}'>{{ game.player1}}</a> 
-              <sub>vs</sub>
-              <a class='loser' href='{{url_for('player', username=game.player2)}}'>{{ game.player2}}</a>
-            </td>
-            <td style='text-align: right;'>
-			  {% if (game.elodiff) %}
-			    +{{ "%.2f"|format(game.elodiff) }}
-			  {% else %}
-				 <span class="running">running</span>
-			  {% endif %}
-            </td>
-        {% endfor %}
       </table>
     </div>
   </div>
   {{ highscore }}
 {% endblock %}
 
+
+{% block bottom_scripts %}
+  {{ super() }}
+  <script src="/static/js/flot/jquery.js"></script>
+  <script>
+    var polling_freq = 0.5;
+
+    {% if username %}
+    var username = '{{ username}}';
+    {% else %}
+    var username;
+    {% endif %}
+
+    function newdata(data) {
+      //console.log(data);
+
+      $("#num_games").text(data.num_games);
+      if (data.rank) {
+	$("#rank").text(data.rank);
+      }
+      
+      var highscoretable = $("table.highscore");
+      highscoretable.empty();
+      var idx;
+      for (idx = 0; idx < data.highscores.length; idx++) {
+      	var entry = data.highscores[idx];
+	var name = entry[0];
+	var score = entry[1];
+	var inactive = entry[2];
+      	highscoretable.append(
+	   "<tr class='" + 
+	    (inactive ? 'inactive ' : '') +
+	    (name == username ? 'me' : '') +
+	   "'>"+
+	    "<td style='width: 30px;'>" +
+	      (data.highscore_first + idx + 1) + "." +
+	    "</td>" + 
+            "<td>" + 
+              "<a href='/player/" + name + "'>" + name + "</a>" + 
+            "</td>"+
+            "<td style='text-align: right'>" + 
+	      score.toFixed(2) +
+	    "</td>" +
+	  "</tr>"
+	);
+      }
+
+      var gamestable = $("table.game");
+      gamestable.empty();
+      for (idx = 0; idx < data.last_games.length; idx++) {
+      	var entry = data.last_games[idx];
+      	gamestable.append(
+	   "<tr>"+
+            "<td>" + 
+              "<a href='/game/" + entry.game_id + "'>game " + entry.game_id + "</a>" + 
+            "</td>"+
+	    "<td>" +
+	      "<a class='winner' href='/player/" + entry.player1 + "'>" +
+		entry.player1 +
+	      "</a>"+
+              " <sub>vs</sub> " + 
+	      "<a class='loser' href='/player/" + entry.player2 + "'>" +
+		entry.player2 +
+	      "</a>"+
+	    "</td>" + 
+            "<td style='text-align: right'>" + 
+	      ( entry.elodiff ?
+	        "+" + entry.elodiff.toFixed(2) : 
+		'<span class="running">...</span>'
+	      ) +
+	    "</td>" +
+	  "</tr>"
+	);
+      }
+    }
+
+    function poll() {
+      $.ajax({  
+	  url: (username ? "/player/" + username + "/info.json" : "/info.json"), success: function(data){
+	    newdata(data);
+	    setTimeout(poll,1000 / polling_freq);
+	  }, dataType: "json"});
+    }
+    poll();
+
+  </script>
+{% endblock %}

@@ -4,7 +4,7 @@ import logging
 import simplejson as json
 from itertools import izip_longest, izip
 
-from flask import Flask
+from flask import Flask, Response
 from flask import render_template, jsonify
 import redis
 
@@ -41,24 +41,38 @@ def make_game_list(game_ids):
         ))
     return games
 
-def get_run_info():
-    p = redis.pipeline()
-    p.zrange('scoreboard', 0, 39, withscores=True)
-    p.lrange('games', -40, -1)
-    p.llen('games')
-    raw_highscores, last_game_ids, num_games = p.execute()
+def get_run_info(username = None):
+    if username:
+        rank = redis.zrank('scoreboard', username)
+        highscore_first = max(0, rank - 10)
+
+        p = redis.pipeline()
+        p.zrange('scoreboard', highscore_first, highscore_first + 20, withscores=True)
+        p.lrange('player:%s:games' % username, -40, -1)
+        p.llen('player:%s:games' % username)
+        raw_highscores, last_game_ids, num_games = p.execute()
+    else:
+        rank = None
+        p = redis.pipeline()
+        p.zrange('scoreboard', 0, 39, withscores=True)
+        p.lrange('games', -40, -1)
+        p.llen('games')
+        raw_highscores, last_game_ids, num_games = p.execute()
 
     highscores = []
-    for username, score in raw_highscores:
+    for score_user, score in raw_highscores:
         p = redis.pipeline()
-        p.lindex('player:%s:games' % username, -1)
+        p.lindex('player:%s:games' % score_user, -1)
         (last_game,) = p.execute()
         inactive = (int(last_game_ids[-1]) - int(last_game) > INACTIVE_COUNT)
-        highscores.append([username, -score, inactive] )
+        highscores.append([score_user, -score, inactive] )
 
     last_games = make_game_list(list(reversed(last_game_ids)))
 
-    return highscores, last_games, num_games
+    if username:
+        return highscores, last_games, num_games, (rank+1), highscore_first
+    else:
+        return highscores, last_games, num_games
 
 @app.route("/")
 def index():
@@ -76,6 +90,7 @@ def info():
     highscores, last_games, num_games = get_run_info()
 
     return jsonify(
+        highscore_first = 0,
         highscores = highscores,
         last_games = last_games,
         num_games = num_games,
@@ -83,20 +98,23 @@ def info():
 
 @app.route("/player/<username>")
 def player(username):
-    rank = redis.zrank('scoreboard', username)
-    highscore_first = max(0, rank - 10)
+    highscores, last_games, num_games, rank, highscore_first = get_run_info(username)
 
-    p = redis.pipeline()
-    p.zrange('scoreboard', highscore_first, highscore_first + 20, withscores=True)
-    p.lrange('player:%s:games' % username, -40, -1)
-    p.llen('player:%s:games' % username)
-    highscores, last_game_ids, num_games = p.execute()
+    return render_template('index.jinja',
+        rank = rank,
+        highscore_first = highscore_first,
+        highscores = highscores,
+        username = username,
+        last_games = last_games,
+        num_games = num_games,
+    )
 
-    highscores = [(score_user, -score) for score_user, score in highscores]
-    last_games = make_game_list(list(reversed(last_game_ids)))
+@app.route("/player/<username>/info.json")
+def player_info(username):
+    highscores, last_games, num_games, rank, highscore_first = get_run_info(username)
 
-    return render_template('player.jinja',
-        rank = rank + 1,
+    return jsonify(
+        rank = rank,
         highscore_first = highscore_first,
         highscores = highscores,
         username = username,
@@ -144,38 +162,12 @@ def game_rounds(game_id, fromround):
     except IOError: 
         game_log_name = game_log_name + ".gz"
         game_log = gzip.GzipFile(game_log_name, "rb")
-    rounds = []
-    for line in game_log.readlines():
-        if fromround > 0:
-            fromround -= 1
-            continue
-        data = json.loads(line)
-        owned_planets = [0, 0, 0]
-        production = [vec([0,0,0]), vec([0,0,0]), vec([0,0,0])]
-        ships = [vec([0,0,0]), vec([0,0,0]), vec([0,0,0])]
-        fleets = [vec([0,0,0]), vec([0,0,0]), vec([0,0,0])]
-        for planet in data['planets']:
-            owned_planets[planet['owner_id']] += 1
-            production[planet['owner_id']].add_inplace(planet['production'])
-            ships[planet['owner_id']].add_inplace(planet['ships'])
-
-        for fleet in data['fleets']:
-            fleets[fleet['owner_id']].add_inplace(fleet['ships'])
-
-        stats = dict(
-            num_fleets = len(data['fleets']),
-            owned_planets = owned_planets,
-            production = production,
-            ships = ships,
-            fleets = fleets,
+    lines = game_log.readlines()
+    return Response (
+            response = "[" + ",".join(lines[fromround:]) + "]",
+            status = 200,
+            mimetype = "application/json",
         )
-        rounds.append(dict(
-            data = data,
-            stats = stats,
-        ))
-    game_log.close()
-
-    return jsonify(rounds = rounds)
 
 if __name__ == '__main__':
     logging.basicConfig(stream=sys.stderr, level=logging.INFO)

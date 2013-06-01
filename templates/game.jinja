@@ -113,16 +113,17 @@
 
       for (var idx = 0; idx < rounds.length; idx++) {
         var round = rounds[idx];
+	var fleets = [0,0,0];
+	for (var fi = 0; fi < round.fleets.length; fi++) {
+	  var fleet = round.fleets[fi];
+	  fleets[fleet.owner_id] += fleet.ships[0] + fleet.ships[1] + fleet.ships[2];
+	}
+	for (var pi = 0; pi < round.planets.length; pi++) {
+	  var planet = round.planets[pi];
+	  fleets[planet.owner_id] += planet.ships[0] + planet.ships[1] + planet.ships[2];
+	}
         for (var player_id = 0; player_id <=2; player_id++) {
-          var total_ships = 
-            round.stats.fleets[player_id][0] + 
-            round.stats.fleets[player_id][1] + 
-            round.stats.fleets[player_id][2] +
-            round.stats.ships[player_id][0] + 
-            round.stats.ships[player_id][1] + 
-            round.stats.ships[player_id][2];
-
-          data[player_id].data.push([idx, total_ships]);
+          data[player_id].data.push([idx, fleets[player_id]]);
         }
       }
 
@@ -208,7 +209,7 @@
 	var bc = planets_buffer.getContext("2d");
 	bc.translate(width/2, height/2);
 
-	var planets = rounds[0].data.planets;
+	var planets = rounds[0].planets;
 	for (var idx = 0; idx < planets.length; idx++) {
 	  var planet = planets[idx];
 	  var total_production = planet.production[0] + planet.production[1] + planet.production[2];
@@ -251,7 +252,7 @@
         c.clearRect(-canvas.width/2,-canvas.height/2,canvas.width,canvas.height);
         c.drawImage(stars_buffer, -canvas.width/2, -canvas.height/2);
 
-        var planets = rounds[current_round].data.planets;
+        var planets = rounds[current_round].planets;
         for (var idx = 0; idx < planets.length; idx++) {
           var planet = planets[idx];
           var total_production = planet.production[0] + planet.production[1] + planet.production[2];
@@ -273,7 +274,7 @@
 
         c.drawImage(planets_buffer, -canvas.width/2, -canvas.height/2);
 
-        var fleets = rounds[current_round].data.fleets;
+        var fleets = rounds[current_round].fleets;
         for (var idx = 0; idx < fleets.length; idx++) {
           var fleet = fleets[idx];
           var total_ships = fleet.ships[0] + fleet.ships[1] + fleet.ships[2];
@@ -324,17 +325,42 @@
 	  c.restore();
         }
 
+        var round = rounds[current_round];
+	var ships      = [[0,0,0],[0,0,0],[0,0,0]];
+	var planets    = [0,0,0];
+	var fleets     = [0,0,0];
+	var production = [[0,0,0],[0,0,0],[0,0,0]];
+	var add = function (a,b) {
+	  a[0] += b[0];
+	  a[1] += b[1];
+	  a[2] += b[2];
+	}
+
+	for (var fi = 0; fi < round.fleets.length; fi++) {
+	  var fleet = round.fleets[fi];
+	  fleets[fleet.owner_id] += 1;
+	  add(ships[fleet.owner_id], fleet.ships);
+	}
+	for (var pi = 0; pi < round.planets.length; pi++) {
+	  var planet = round.planets[pi];
+	  planets[planet.owner_id] += 1;
+	  add(ships[planet.owner_id], planet.ships);
+	  add(production[planet.owner_id], planet.production);
+	}
 	$('#round')             .text(current_round == rounds.length -1 ?
 	                              'Endzustand' : current_round);
-	$('#fleet_total')       .text(rounds[current_round].stats.num_fleets);
-	$('#planets_player1')   .text(rounds[current_round].stats.owned_planets[1]);
-	$('#planets_player2')   .text(rounds[current_round].stats.owned_planets[2]);
-	$('#ships_player1')     .text(rounds[current_round].stats.ships[1]);
-	$('#ships_player2')     .text(rounds[current_round].stats.ships[2]);
-	$('#production_player1').text(rounds[current_round].stats.production[1]);
-	$('#production_player2').text(rounds[current_round].stats.production[2]);
-	$('#fleets_player1')    .text(rounds[current_round].stats.fleets[1]);
-	$('#fleets_player2')    .text(rounds[current_round].stats.fleets[2]);
+	$('#fleet_total')       .text(
+	  ships[0][0] + ships[0][1] + ships[0][2] + 
+	  ships[1][0] + ships[1][1] + ships[1][2] + 
+	  ships[2][0] + ships[2][1] + ships[2][2]); 
+	$('#planets_player1')   .text(planets[1]);
+	$('#planets_player2')   .text(planets[2]);
+	$('#ships_player1')     .text(ships[1]);
+	$('#ships_player2')     .text(ships[2]);
+	$('#production_player1').text(production[1]);
+	$('#production_player2').text(production[2]);
+	$('#fleets_player1')    .text(fleets[1]);
+	$('#fleets_player2')    .text(fleets[2]);
 
         redrawTimeout = null;
       }
@@ -375,13 +401,13 @@
     function poll() {
       $.ajax({  
 	  url: "/game/{{ game_id }}/rounds/" + rounds.length, success: function(data){
-	    if (data.rounds.length > 0) {
-	      console.log("New data", data.rounds.length);
-	      rounds = rounds.concat(data.rounds);
+	    if (data.length > 0) {
+	      console.log("New data", data.length);
+	      rounds = rounds.concat(data);
 	      current_round = rounds.length - 1;
 	      setup_game();
 	    }
-	    if (! rounds[rounds.length-1].data.game_over) {
+	    if (! rounds[rounds.length-1].game_over) {
 	      setTimeout(poll,1000 / polling_freq);
 	    }
 	  }, dataType: "json"});
