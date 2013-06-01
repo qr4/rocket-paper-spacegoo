@@ -502,6 +502,8 @@
 	  if (game_id != data.last) {
 	    game_id = data.last;
 	    rounds = [];
+	    stars_buffer = null;
+	    planets_buffer = null;
 	    poll();
 	  }
 	  $.ajax({  
