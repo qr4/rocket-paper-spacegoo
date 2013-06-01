@@ -19,11 +19,6 @@
   white-space: nowrap;
 }
 
-#playpause {
-  text-decoration:none;
-  color: green;
-}
-
 .player1 {
   color: steelblue;
 }
@@ -38,9 +33,9 @@
   margin-bottom: 10px;
 }
 
-#playpause {
+.control {
   float: right;
-  cursor: pointer;
+  color: green;
 }
 
 #planets {
