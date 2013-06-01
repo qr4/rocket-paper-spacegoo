@@ -79,6 +79,8 @@ class Player(object):
     def connection_lost(self):
         if self.game and not self.game.game_over:
             self.disqualify("connection lost")
+        else:
+            self.conn.disconnect()
 
     def disqualify(self, reason):
         print "player %r disqualified: %s" % (self, reason)
@@ -214,8 +216,11 @@ class Game(object):
         p.zadd('scoreboard', self.players[1].username, -elo_p2)
         p.execute()
 
-        self.players[0].conn.disconnect()
-        self.players[1].conn.disconnect()
+        def disconnect():
+            self.players[0].conn.disconnect()
+            self.players[1].conn.disconnect()
+        eventlet.greenthread.spawn_after(1, disconnect)
+
 
     def check_round_finished(self):
         # pruefen, ob beide spieler befehle abgegeben haben...
@@ -392,6 +397,8 @@ class Connection(object):
         if self.player:
             MatchMaking.remove_player(self.player)
             self.player.connection_lost()
+        else:
+            self.disconnect()
 
     def disconnect(self):
         self.send("closing connection. see you next time")
@@ -446,7 +453,10 @@ class Connection(object):
                 break
 
         print "writer closed"
-        self.socket.shutdown(socket.SHUT_WR)
+        try:
+            self.socket.shutdown(socket.SHUT_WR)
+        except socket.error:
+            pass
         self.socket.close()
 
     def __repr__(self):
