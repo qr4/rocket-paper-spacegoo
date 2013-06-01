@@ -109,6 +109,15 @@ def player(username):
         num_games = num_games,
     )
 
+@app.route("/player/<username>/latest_game.json")
+def player_latest_game(username):
+    p = redis.pipeline()
+    p.lindex('player:%s:games' % username,-1)
+    (last,) = p.execute()
+    return jsonify(
+        last = last,
+    )
+
 @app.route("/player/<username>/info.json")
 def player_info(username):
     highscores, last_games, num_games, rank, highscore_first = get_run_info(username)
