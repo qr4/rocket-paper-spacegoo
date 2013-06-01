@@ -2,6 +2,7 @@
 
 {% block content %}
   <h1>
+    {% if follow_username %}Following {{ follow_username }}:<br/>{% endif %}
     Game #<span id="game_id"></span>: 
     <a id='name1'></a>
     <sub>vs</sub>
@@ -70,6 +71,7 @@
     var info_polling_freq = 1;
     var rounds = []
 
+    var game_id;
     var player1;
     var player2;
     var elodiff;
@@ -406,7 +408,7 @@
 
     function poll() {
       $.ajax({  
-	  url: "/game/{{ game_id }}/rounds/" + rounds.length, success: function(data){
+	  url: "/game/" + game_id + "/rounds/" + rounds.length, success: function(data){
 	    if (data.length > 0) {
 	      rounds = rounds.concat(data);
 	      current_round = rounds.length - 1;
@@ -420,6 +422,7 @@
 
     function setup_game_info(data) {
       var first_data = ! player1;
+      game_id = data.game_id;
       player1 = data.player1;
       player2 = data.player2;
       elodiff = data.elodiff;
@@ -463,12 +466,33 @@
 
     function poll_info() {
       $.ajax({  
-	  url: "/game/{{ game_id }}/info.json", success: function(data){
+	  url: "/game/" + game_id + "/info.json", success: function(data){
 	    setup_game_info(data);
 	    setTimeout(poll_info,1000 / info_polling_freq);
 	  }, dataType: "json"});
     }
-    poll_info();
 
+    function poll_latest_id() {
+      $.ajax({  
+	url: "/player/{{ follow_username }}/latest_game.json", success: function(data){
+	  if (game_id != data.last) {
+	    game_id = data.last;
+	    rounds = [];
+	    poll();
+	  }
+	  $.ajax({  
+	      url: "/game/" + game_id + "/info.json", success: function(data){
+		setup_game_info(data);
+	      }, dataType: "json"});
+	  setTimeout(poll_latest_id,1000 / info_polling_freq);
+	}, dataType: "json"});
+    }
+
+    {% if game_id %}
+      game_id = {{ game_id }};
+      poll_info();
+    {% else %}
+      poll_latest_id();
+    {% endif %}
   </script>
 {% endblock %}
