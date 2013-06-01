@@ -392,6 +392,14 @@
 	stop_playing();
       }
     }
+    $("body").keydown(function(e) {
+      if(e.keyCode == 37) { // left
+	$("#back").click();
+      }
+      else if(e.keyCode == 39) { // right
+	$("#forward").click();
+      }
+    });
     $('#forward').click(function() {
       if (current_round < rounds.length -1) {
 	current_round++;
