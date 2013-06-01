@@ -318,7 +318,7 @@
         }
 
 	// Last round
-	if (current_round == rounds.length-1) {
+	if (rounds[current_round].game_over) {
 	  var winner = rounds[current_round].winner;
 	  if (!winner) { winner = 0};
 	  c.fillStyle = ["lightgrey", "sleelblue", "red"][winner];
