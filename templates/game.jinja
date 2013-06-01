@@ -434,9 +434,12 @@
       $.ajax({  
 	  url: "/game/" + game_id + "/rounds/" + rounds.length, success: function(data){
 	    if (data.length > 0) {
-	      rounds = rounds.concat(data);
-	      current_round = rounds.length - 1;
-	      setup_game();
+	      // Race-Condition-Avoiding
+	      if (data[0].round == rounds.length) {
+		rounds = rounds.concat(data);
+		current_round = rounds.length - 1;
+		setup_game();
+	      }
 	    }
 	    if (! rounds[rounds.length-1].game_over) {
 	      setTimeout(poll,1000 / polling_freq);
@@ -502,6 +505,8 @@
 	  if (game_id != data.last) {
 	    game_id = data.last;
 	    rounds = [];
+	    stars_buffer = null;
+	    planets_buffer = null;
 	    poll();
 	  }
 	  $.ajax({  
