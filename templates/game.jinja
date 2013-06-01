@@ -2,33 +2,20 @@
 
 {% block content %}
   <h1>
-    Game #{{game_id}}: 
-    {% if finished %}
-      {% if elodiff > 0 %}
-	<a class='winner player1' href='{{url_for('player', username=player1)}}'>{{player1}}</a>
-	<sub>vs</sub>
-	<a class='loser player2' href='{{url_for('player', username=player2)}}'>{{player2}}</a>
-	+{{ "%.3f"|format(elodiff)}}
-      {% else %}
-	<a class='winner player2' href='{{url_for('player', username=player2)}}'>{{player2}}</a>
-	<sub>vs</sub>
-	<a class='loser player1' href='{{url_for('player', username=player1)}}'>{{player1}}</a>
-	+{{ "%.3f"|format(-elodiff)}}
-      {% endif %}
-    {% else %}
-	<a class='player1' href='{{url_for('player', username=player1)}}'>{{player1}}</a>
-	<sub>vs</sub>
-	<a class='player2' href='{{url_for('player', username=player2)}}'>{{player2}}</a>
-    {% endif %}
+    Game #<span id="game_id"></span>: 
+    <a id='name1'></a>
+    <sub>vs</sub>
+    <a id='name2'></a>
+    <span id="elodiff"></span>
   </h1>
   <p class='lead'>
-    {{player1}} is currently rank #{{rank1}}, {{player2}} is currently ranked #{{rank2}}.
-    <a href='/{{game_log_name}}'>raw gamelog</a>
+    <span class="name1"></span> currently has rank #<span id="rank1"></span>,
+    <span class="name2"></span> currently has rank #<span id="rank2"></span>.
+    <a id="gameloglink"'>raw gamelog</a>
     <a id="playpause" title="play/pause">▶</a>
   </p>
   <div class="row">
     <div class="span12">
-      <!-- <h3>{{ num_rounds }} rounds played</h3> -->
       <div id='timegraph'></div>
       <canvas width="0" height="0" id='planets'></div>
       <table class='table rounds fixed-header'>
@@ -36,14 +23,14 @@
           <tr>
             <th>Round</th>
             <th>Total Fleets</th>
-            <th class='player1'>Planets<br>{{player1}}</th>
-            <th class='player2'>Planets<br>{{player2}}</th>
-            <th class='player1'>Ships<br>{{player1}}</th>
-            <th class='player2'>Ships<br>{{player2}}</th>
-            <th class='player1'>Production<br>{{player1}}</th>
-            <th class='player2'>Production<br>{{player2}}</th>
-            <th class='player1'>Fleets<br>{{player1}}</th>
-            <th class='player2'>Fleets<br>{{player2}}</th>
+            <th class='player1'>Planets<br><span class="name1"></span></th>
+            <th class='player2'>Planets<br><span class="name2"></span></th>
+            <th class='player1'>Ships<br><span class="name1"></span></th>
+            <th class='player2'>Ships<br><span class="name2"></span></th>
+            <th class='player1'>Production<br><span class="name1"></span></th>
+            <th class='player2'>Production<br><span class="name2"></span></th>
+            <th class='player1'>Fleets<br><span class="name1"></span></th>
+            <th class='player2'>Fleets<br><span class="name2"></span></th>
           </tr>
         </thead>
         <tbody>
@@ -80,7 +67,12 @@
 
     var playspeed = 100;
     var polling_freq = 10;
+    var info_polling_freq = 1;
     var rounds = []
+
+    var player1;
+    var player2;
+    var elodiff;
 
     var current_round;
 
@@ -102,11 +94,11 @@
         , color: 'lightgrey'
         , data: []
         },
-        { label: '{{player1}}'
+        { label: player1
         , color: 'steelblue'
         , data: []
         },
-        { label: '{{player2}}'
+        { label: player2
         , color: 'red'
         , data: []
         }]
@@ -325,6 +317,20 @@
 	  c.restore();
         }
 
+	// Last round
+	if (rounds[current_round].game_over) {
+	  var winner = rounds[current_round].winner;
+	  if (!winner) { winner = 0};
+	  c.fillStyle = ["lightgrey", "sleelblue", "red"][winner];
+	  c.font = "bold 60px sans-serif";
+	  c.textAlign = "center";
+	  c.textBaseline = "ideographic";
+	  c.fillText([
+	    "draw!",
+	    player1 + " wins!",
+	    player2 + " wins!"][winner], 0, 0);
+	}
+
         var round = rounds[current_round];
 	var ships      = [[0,0,0],[0,0,0],[0,0,0]];
 	var planets    = [0,0,0];
@@ -402,7 +408,6 @@
       $.ajax({  
 	  url: "/game/{{ game_id }}/rounds/" + rounds.length, success: function(data){
 	    if (data.length > 0) {
-	      console.log("New data", data.length);
 	      rounds = rounds.concat(data);
 	      current_round = rounds.length - 1;
 	      setup_game();
@@ -412,7 +417,58 @@
 	    }
 	  }, dataType: "json"});
     }
-    poll();
+
+    function setup_game_info(data) {
+      var first_data = ! player1;
+      player1 = data.player1;
+      player2 = data.player2;
+      elodiff = data.elodiff;
+      $("#game_id").text(data.game_id);
+      $("#gameloglink").attr('href', "/" + data.game_log_name);
+      if (data.finished) {
+	if (elodiff > 0) {
+	  $('#name1').attr('href', '/player/' + player1)
+	             .text(player1)
+		     .attr('class','winner player1');
+	  $('#name2').attr('href', '/player/' + player2)
+	             .text(player2)
+		     .attr('class','loser player2');
+	  $('#elodiff').show().text("+" + elodiff.toFixed(3));
+	} else {
+	  $('#name1').attr('href', '/player/' + player2)
+	             .text(player2)
+		     .attr('class','winner player2');
+	  $('#name2').attr('href', '/player/' + player1)
+	             .text(player1)
+		     .attr('class','loser player1');
+	  $('#elodiff').show().text("+" + (-elodiff.toFixed(3)));
+	}
+      } else {
+	  $('#name1').attr('href', '/player/' + player1)
+	             .text(player1)
+		     .attr('class','player1');
+	  $('#name2').attr('href', '/player/' + player2)
+	             .text(player2)
+		     .attr('class','player2');
+	  $('#elodiff').hide();
+      }
+      $('.name1').text(player1);
+      $('#rank1').text(data.rank1);
+      $('.name2').text(player2);
+      $('#rank2').text(data.rank2);
+
+      if (first_data)
+	poll();
+    }
+
+    function poll_info() {
+      $.ajax({  
+	  url: "/game/{{ game_id }}/info.json", success: function(data){
+	    setup_game_info(data);
+	    setTimeout(poll_info,1000 / info_polling_freq);
+	  }, dataType: "json"});
+    }
+    poll_info();
 
   </script>
 {% endblock %}
