@@ -72,6 +72,7 @@
 
     var player1;
     var player2;
+    var elodiff;
 
     var current_round;
 
@@ -316,6 +317,20 @@
 	  c.restore();
         }
 
+	// Last round
+	if (current_round == rounds.length-1) {
+	  var winner = rounds[current_round].winner;
+	  if (!winner) { winner = 0};
+	  c.fillStyle = ["lightgrey", "sleelblue", "red"][winner];
+	  c.font = "bold 60px sans-serif";
+	  c.textAlign = "center";
+	  c.textBaseline = "ideographic";
+	  c.fillText([
+	    "draw!",
+	    player1 + " wins!",
+	    player2 + " wins!"][winner], 0, 0);
+	}
+
         var round = rounds[current_round];
 	var ships      = [[0,0,0],[0,0,0],[0,0,0]];
 	var planets    = [0,0,0];
@@ -407,17 +422,18 @@
       var first_data = ! player1;
       player1 = data.player1;
       player2 = data.player2;
+      elodiff = data.elodiff;
       $("#game_id").text(data.game_id);
       $("#gameloglink").attr('href', "/" + data.game_log_name);
       if (data.finished) {
-	if (data.elodiff > 0) {
+	if (elodiff > 0) {
 	  $('#name1').attr('href', '/player/' + player1)
 	             .text(player1)
 		     .attr('class','winner player1');
 	  $('#name2').attr('href', '/player/' + player2)
 	             .text(player2)
 		     .attr('class','loser player2');
-	  $('#elodiff').show().text("+" + data.elodiff.toFixed(3));
+	  $('#elodiff').show().text("+" + elodiff.toFixed(3));
 	} else {
 	  $('#name1').attr('href', '/player/' + player2)
 	             .text(player2)
@@ -425,7 +441,7 @@
 	  $('#name2').attr('href', '/player/' + player1)
 	             .text(player1)
 		     .attr('class','loser player1');
-	  $('#elodiff').show().text("+" + (-data.elodiff.toFixed(3)));
+	  $('#elodiff').show().text("+" + (-elodiff.toFixed(3)));
 	}
       } else {
 	  $('#name1').attr('href', '/player/' + player1)
