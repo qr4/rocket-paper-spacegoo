@@ -176,14 +176,6 @@ class Game(object):
         self.game_over = True
         self.winner = winner
 
-        for player in self.players:
-            player.send("game ended: %s. final state follows" % reason)
-
-        self.send_state()
-
-        for player in self.players:
-            player.send("This game is now available at http://spacegoo.gpn.entropia.de/game/%d" % self.game_id)
-
         if winner is None:
             elo_p1, elo_p2, elo_diff = Scoreboard.update_draw(
                 self.players[0].username,
@@ -200,6 +192,14 @@ class Game(object):
                 self.players[0].username
             )
             elo_diff = - elo_diff
+
+        self.players[0].send("game ended: %s, %.2f ELO for you. final state follows" % (reason, elo_diff))
+        self.players[1].send("game ended: %s, %.2f ELO for you. final state follows" % (reason, -elo_diff))
+
+        self.send_state()
+
+        for player in self.players:
+            player.send("This game is now available at http://spacegoo.gpn.entropia.de/game/%d" % self.game_id)
 
         self.game_log.close()
 
