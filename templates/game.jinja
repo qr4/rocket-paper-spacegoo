@@ -3,7 +3,7 @@
 {% block content %}
   <h1>
     {% if follow_username %}Following {{ follow_username }}:<br/>{% endif %}
-    Game #<span id="game_id"></span>: 
+    Game #<a id="game_id"></a>: 
     <a id='name1'></a>
     <sub>vs</sub>
     <a id='name2'></a>
@@ -426,7 +426,7 @@
       player1 = data.player1;
       player2 = data.player2;
       elodiff = data.elodiff;
-      $("#game_id").text(data.game_id);
+      $("#game_id").text(game_id).attr('href',"/game/" + game_id);
       $("#gameloglink").attr('href', "/" + data.game_log_name);
       if (data.finished) {
 	if (elodiff > 0) {
