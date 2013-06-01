@@ -129,6 +129,12 @@ class vec(list):
 
 @app.route("/game/<int:game_id>")
 def game(game_id):
+    return render_template('game.jinja',
+        game_id = game_id,
+    )
+
+@app.route("/game/<int:game_id>/info.json")
+def game_info(game_id):
     p = redis.pipeline()
     p.hget('game:%s' % game_id, 'p1')
     p.hget('game:%s' % game_id, 'p2')
@@ -142,7 +148,7 @@ def game(game_id):
 
     game_log_name = "log/%08d/%04d.json" % (game_id / 1000, game_id % 1000)
 
-    return render_template('game.jinja',
+    return jsonify(
         game_id = game_id,
         game_log_name = game_log_name,
         player1 = player1,
