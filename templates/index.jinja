@@ -6,6 +6,7 @@
   <p class='lead'>
     Total of <span id="num_games">{{ num_games }}</span> games played.
     {% if rank %}Ranked #<span id="rank">{{ rank }}</span>.{% endif %}
+    {% if username %}View <a href="/player/{{username}}/live">{{username}}'s games</a> live.{% endif %}
   </p>
   <div class="row">
     <div class="span6">

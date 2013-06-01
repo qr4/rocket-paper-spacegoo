@@ -109,6 +109,12 @@ def player(username):
         num_games = num_games,
     )
 
+@app.route("/player/<username>/live")
+def player_live(username):
+    return render_template('game.jinja',
+        follow_username = username,
+    )
+
 @app.route("/player/<username>/latest_game.json")
 def player_latest_game(username):
     p = redis.pipeline()
