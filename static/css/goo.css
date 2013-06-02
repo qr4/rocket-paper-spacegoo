@@ -9,6 +9,13 @@
   padding: 3px;
   border-radius: 3px;
 }
+#contrib {
+  background-color: red;
+  color: white;
+  border-radius: 3px;
+  padding: 5px 15px;
+  margin-left: 20px;
+}
 .highscore .me {
   background-color: #eee;
 }
