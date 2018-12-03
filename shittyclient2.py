@@ -24,11 +24,11 @@ while 1:
         if winner:
             print "################", own_id, " ", winner, "#############"
             sys.exit()
-        
+
            # if player["draw"] and player["id"] == own_id:
            #     print "wtf, draw?!"
         if random.randrange(0,100) < 30:
-           
+
             homeplanet = None
             enemy = None
             for planet in state["planets"]:
@@ -45,5 +45,5 @@ while 1:
                 write("nop")
         else:
             write("nop")
-            
-print "done" 
+
+print "done"

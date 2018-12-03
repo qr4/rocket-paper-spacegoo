@@ -9,7 +9,7 @@ USERNAME = "dividuum"
 PASSWORD = "bar"
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.connect(('192.168.1.142', 6000))
+s.connect(('127.0.0.1', 6000))
 io = s.makefile('rw')
 
 def write(data):
@@ -20,6 +20,7 @@ write('login %s %s' % (USERNAME, PASSWORD))
 while 1:
     data = io.readline().strip()
     if not data:
+        continue;
         break
     elif data[0] == "{":
         state = json.loads(data)
@@ -43,12 +44,12 @@ while 1:
             print len(my_planets)
             best_planet = my_planets[-1][1]
             target_planet = random.choice(enemy_planets)
-            
+
             write("send %s %s %d %d %d" % (
-                best_planet['id'], 
-                target_planet['id'], 
+                best_planet['id'],
+                target_planet['id'],
                 best_planet['ships'][0]/6,
-                best_planet['ships'][1]/6, 
+                best_planet['ships'][1]/6,
                 best_planet['ships'][2]/6))
     else:
         print data

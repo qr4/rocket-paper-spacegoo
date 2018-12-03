@@ -50,8 +50,8 @@ class Scoreboard(object):
         Eb = 1.0 / (1 + 10.0 ** ((Ra - Rb)/400.0))
         Ra_new = Ra + 10 * (score_a - Ea)
         Rb_new = Rb + 10 * (score_b - Eb)
-        redis.zadd('elo', p_a, Ra_new)
-        redis.zadd('elo', p_b, Rb_new)
+        redis.zadd('elo', {p_a: Ra_new})
+        redis.zadd('elo', {p_b: Rb_new})
         return Ra_new, Rb_new, Ra_new - Ra
 
     def get_score(self, player):
@@ -141,7 +141,7 @@ class Game(object):
         for idx, player in enumerate(self.players):
             player.game = self
             player.player_id = idx + 1
-        
+
         for player in self.players:
             player.send("game %d starts. other player is %s" % (self.game_id, self.other_player(player).username))
 
@@ -212,8 +212,8 @@ class Game(object):
         p.hset('game:%d' % self.game_id, 'end', int(time.time()))
         p.hset('game:%d' % self.game_id, 'elodiff', elo_diff)
 
-        p.zadd('scoreboard', self.players[0].username, -elo_p1)
-        p.zadd('scoreboard', self.players[1].username, -elo_p2)
+        p.zadd('scoreboard', {self.players[0].username: -elo_p1})
+        p.zadd('scoreboard', {self.players[1].username: -elo_p2})
         p.execute()
 
         def disconnect():
@@ -243,7 +243,7 @@ class Game(object):
                 )
             else:
                 self.game_end(
-                    self.engine.winner, 
+                    self.engine.winner,
                     "player %d won" % self.engine.winner
                 )
             return
@@ -252,7 +252,7 @@ class Game(object):
 
         for player in self.players:
             player.send("waiting for you command")
-       
+
         self.deadline = eventlet.greenthread.spawn_after(COMMAND_DEADLINE, self.deadline_reached)
         for player in self.players:
             player.cmd_issued = False
@@ -267,7 +267,7 @@ class Game(object):
             for player in self.players:
                 if not player.cmd_issued:
                     player.disqualify("no command sent")
-        
+
     def get_player_state(self, for_player):
         state = self.engine.dump()
         state['player_id'] = for_player.player_id
