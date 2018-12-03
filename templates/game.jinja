@@ -3,7 +3,7 @@
 {% block content %}
   <h1>
     {% if follow_username %}Following {{ follow_username }}:<br/>{% endif %}
-    Game #<a id="game_id"></a>: 
+    Game #<a id="game_id"></a>:
     <a id='name1'></a>
     <sub>vs</sub>
     <a id='name2'></a>
@@ -150,7 +150,7 @@
       plot.hooks.drawOverlay.push(function (plot, ctx) {
             var plotOffset = plot.getPlotOffset();
             var pointOffset = plot.pointOffset({x: current_round, y:0});
-           
+
             ctx.save();
             ctx.translate(pointOffset.left, plotOffset.top);
 
@@ -254,8 +254,47 @@
         for (var idx = 0; idx < planets.length; idx++) {
           var planet = planets[idx];
           var total_production = planet.production[0] + planet.production[1] + planet.production[2];
-	  var r = Math.sqrt(total_production / (max_production*2)) * (planet_canvas_size * 1.1 + 6);
+	  var planet_r = Math.sqrt(total_production / (max_production*2)) * planet_canvas_size;
+
+          // ship numbers per type
+          for (var type = 0; type < 3; type++) {
+            var r = Math.log(planet.ships[type] / max_production + 1) * fleet_canvas_size + planet_r + 2;
+            c.beginPath();
+            c.fillStyle = [["#DDD", "#AAA", "#999"], ["#33F", "#00F", "#009"], ["#F77", "#F33", "#F00"]][planet.owner_id][type];
+            c.moveTo(
+                planet.x * -size_scale,
+                planet.y * size_scale
+                );
+            c.arc(
+                planet.x * -size_scale,
+                planet.y * size_scale,
+                r, Math.PI * (2/3 * type - 0.5), Math.PI * (2/3*(type+1) - 0.5), false);
+            c.fill();
+          }
+
+          // separator between ships and planet
+          c.beginPath();
+          c.fillStyle = "black";
+          c.moveTo(
+              planet.x * -size_scale,
+              planet.y * size_scale
+              );
+          c.arc(
+              planet.x * -size_scale,
+              planet.y * size_scale,
+              planet_r + 2, 0, 2 * Math.PI, false);
+          c.fill();
+        }
+
+        c.drawImage(planets_buffer, -canvas.width/2, -canvas.height/2);
+
+        // semi-transparent planet owner overlay
+        c.globalAlpha = 0.5;
+        for (var idx = 0; idx < planets.length; idx++) {
+          var planet = planets[idx];
           if (planet.owner_id != 0) {
+            var total_production = planet.production[0] + planet.production[1] + planet.production[2];
+            var planet_r = Math.sqrt(total_production / (max_production*2)) * planet_canvas_size;
             c.beginPath();
             c.fillStyle = ["invalid", "steelblue", "red"][planet.owner_id];
             c.moveTo(
@@ -265,12 +304,11 @@
             c.arc(
                 planet.x * -size_scale,
                 planet.y * size_scale,
-                r, 0, 2*Math.PI, false);
+                planet_r, 0, 2 * Math.PI, false);
             c.fill();
           }
         }
-
-        c.drawImage(planets_buffer, -canvas.width/2, -canvas.height/2);
+        c.globalAlpha = 1;
 
         var fleets = rounds[current_round].fleets;
         for (var idx = 0; idx < fleets.length; idx++) {
@@ -362,9 +400,9 @@
 	$('#round')             .text(current_round == rounds.length -1 ?
 	                              'Endzustand' : current_round);
 	$('#fleet_total')       .text(
-	  ships[0][0] + ships[0][1] + ships[0][2] + 
-	  ships[1][0] + ships[1][1] + ships[1][2] + 
-	  ships[2][0] + ships[2][1] + ships[2][2]); 
+	  ships[0][0] + ships[0][1] + ships[0][2] +
+	  ships[1][0] + ships[1][1] + ships[1][2] +
+	  ships[2][0] + ships[2][1] + ships[2][2]);
 	$('#planets_player1')   .text(planets[1]);
 	$('#planets_player2')   .text(planets[2]);
 	$('#ships_player1')     .text(ships[1]);
@@ -431,7 +469,7 @@
     }
 
     function poll() {
-      $.ajax({  
+      $.ajax({
 	  url: "/game/" + game_id + "/rounds/" + rounds.length, success: function(data){
 	    if (data.length > 0) {
 	      // Race-Condition-Avoiding
@@ -492,7 +530,7 @@
     }
 
     function poll_info() {
-      $.ajax({  
+      $.ajax({
 	  url: "/game/" + game_id + "/info.json", success: function(data){
 	    setup_game_info(data);
 	    setTimeout(poll_info,1000 / info_polling_freq);
@@ -500,7 +538,7 @@
     }
 
     function poll_latest_id() {
-      $.ajax({  
+      $.ajax({
 	url: "/player/{{ follow_username }}/latest_game.json", success: function(data){
 	  if (game_id != data.last) {
 	    game_id = data.last;
@@ -509,7 +547,7 @@
 	    planets_buffer = null;
 	    poll();
 	  }
-	  $.ajax({  
+	  $.ajax({
 	      url: "/game/" + game_id + "/info.json", success: function(data){
 		setup_game_info(data);
 	      }, dataType: "json"});
