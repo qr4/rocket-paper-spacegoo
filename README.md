@@ -108,9 +108,43 @@ contain already present ships. As soon as a "real" player takes control of the p
 starts to produce ships.
 
 
-Battle
+Battle-code
 ---------------
+```def battle_round(attacker,defender):
+   # only an asymetric round, this needs to be called twice
+   numships = len(attacker)
+   defender = defender[::]
+   for def_type in range(0,numships):
+       for att_type in range(0,numships):
+           multiplier = 0.1
+           absolute = 1
+           if (def_type-att_type)%numships == 1:
+               multiplier = 0.25
+               absolute = 2
+           if (def_type-att_type)%numships == numships-1:
+               multiplier = 0.01
+           defender[def_type] -= (attacker[att_type]*multiplier) + (attacker[att_type] > 0) * absolute
+       defender[def_type] = max(0,defender[def_type])
+   return defender
+def battle(s1,s2):
+   ships1 = s1[::]
+   ships2 = s2[::]
+   while sum(ships1) > 0 and sum(ships2) >0:
+       new1 = battle_round(ships2,ships1)
+       ships2 = battle_round(ships1,ships2)
+       ships1 = new1
+       #print ships1,ships2
+       
+   ships1 = map(int,ships1)
+   ships2 = map(int,ships2)
+   #print ships1,ships2
+   return ships1, ships2```
+   
 
+Kind-of-explanatory images:
+----------------
+![](Spacegoo_01_prinzip.png)
+![](Spacegoo_02_kampfsystem.png)
 
 Client-Libraries
 ----------------
