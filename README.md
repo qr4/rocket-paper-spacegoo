@@ -1,4 +1,4 @@
-Programmierspiel GPN13
+Programmierspiel GPN13 / Programming game GPN13
 ======================
 Disclaimer
 ---------
@@ -134,6 +134,8 @@ def battle_round(attacker,defender):
            defender[def_type] -= (attacker[att_type]*multiplier) + (attacker[att_type] > 0) * absolute
        defender[def_type] = max(0,defender[def_type])
    return defender
+```
+```
 def battle(s1,s2):
    ships1 = s1[::]
    ships2 = s2[::]
