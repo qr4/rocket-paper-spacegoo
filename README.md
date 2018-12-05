@@ -143,13 +143,13 @@ def battle(s1,s2):
 
 Kind-of-explanatory images:
 ----------------
-![](Spacegoo_01_prinzip.png)
-![](Spacegoo_02_kampfsystem.png)
+![principle](Spacegoo_01_prinzip.png)
+![battle system](Spacegoo_02_kampfsystem.png)
 
 Client-Libraries
 ----------------
 
 Haskell developers should check out
-[`haskell-spacegoo`](https://bitbucket.org/nomeata/haskell-spacegoo)
+[haskell-spacegoo](https://bitbucket.org/nomeata/haskell-spacegoo)
 to easily programm clients
 
