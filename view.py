@@ -1,6 +1,6 @@
 import math
 import pyglet
-import Image
+from PIL import Image
 from pyglet.gl import *
 from ctypes import pointer
 import vector
@@ -20,7 +20,7 @@ def load_texture(filename):
     glGenTextures(1, pointer(tex))
 
     glBindTexture(GL_TEXTURE_2D, tex)
-    
+
 
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR)
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
@@ -28,15 +28,15 @@ def load_texture(filename):
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexImage2D(
         GL_TEXTURE_2D, 0, GL_RGBA, width, height,
-        0, GL_RGBA, GL_UNSIGNED_BYTE, image.tostring()
+        0, GL_RGBA, GL_UNSIGNED_BYTE, image.tobytes()
     )
-   
+
     glEnable(GL_TEXTURE_2D) # fix for some ati cards
     glGenerateMipmapEXT(GL_TEXTURE_2D)
 
     return tex
 
-        
+
 def on_resize(width, height):
     global windowheight,windowwidth
     windowheight = height
@@ -56,7 +56,7 @@ def init(width, height):
     window = pyglet.window.Window(width, height, resizable=True, caption = "zomg a shitty viewer window")
     planet_tex = map(load_texture,["assets/planet_goo.png", "assets/planet_asteroids.png", "assets/planet_ships.png"])
     fleet_tex =  map(load_texture,["assets/goo.png","assets/asteroid.png","assets/ship.png"])
-    window.on_resize = on_resize  
+    window.on_resize = on_resize
 
 def draw_image():
     glBegin(GL_QUADS)
@@ -69,34 +69,32 @@ def draw_image():
     glTexCoord2f(0, 0)
     glVertex2f(-1, 1)
     glEnd()
-    
+
 def draw_slice(startRad,endRad):
     if endRad-startRad>2.42: #i have no idea what i'm doing
         #print "angle too big: ", startRad,endRad
         draw_slice(startRad,(startRad+endRad)/2.0)
         draw_slice((startRad+endRad)/2.0,endRad)
         return
-    
+
     def drawPoint(p):
-        #print p.x, p.y
         glTexCoord2f(0.5+0.5*p.x, 0.5+0.5*p.y)
         glVertex2f(p.x, p.y)
-    #print ""
-        
+
     glBegin(GL_QUADS)
-    
+
     middle = vector.Point(0, 0)
     start = vector.Point(math.cos(startRad), math.sin(startRad))
     end = vector.Point(math.cos(endRad), math.sin(endRad))
     far = vector.Normalize(start+end)*5.23 #again, i have no idea
-    
-    
-    
+
+
+
     drawPoint(middle)
     drawPoint(start)
     drawPoint(far)
     drawPoint(end)
-    
+
     glEnd()
 
 def color_for_owner(owner):
@@ -106,8 +104,8 @@ def color_for_owner(owner):
         glColor4f(1, 0.5, 0.5, 1)
     else:
         glColor4f(0.5, 1, 0.5, 1)
-        
-        
+
+
 def scale_for_fleetsize(size):
     return math.log(size+1)/2.0
 
@@ -122,7 +120,7 @@ class Fleet():
 def update(state):
     window.dispatch_events()
     window.clear()
-    
+
     global windowheight,windowwidth
 
     glClearColor(0.0, 0.0, 0.0, 1.0)
@@ -136,17 +134,17 @@ def update(state):
     glPushMatrix()
 
     glTranslatef(windowwidth/2, windowheight/2, 0)
-    
+
     scale = min(windowwidth/1.33,windowheight)/42
     glScalef(scale, scale, 1)
 
     glColor4f(1,0,0,1)
 
-    
+
     planet_by_id = {}
     for planet in state['planets']:
         planet_by_id[planet['id']] = planet
-        
+
         glPushMatrix()
         glTranslatef(planet['x'], planet['y'], 0)
         prodsum = sum(planet['production'])
@@ -166,16 +164,16 @@ def update(state):
         glPopMatrix()
 
     fleets= []
-    
+
     #glBindTexture(GL_TEXTURE_2D, ship_tex)
     for planet in state['planets']:
         pos = vector.Point(planet['x'], planet['y'])
         direction = vector.Point(1,0)
         fleet = Fleet(planet['ships'], pos, direction, planet['owner_id'] )
         fleets.append(fleet)
-        
 
-    
+
+
     for fleet in state['fleets']:
         origin = planet_by_id[fleet['origin']]
         target = planet_by_id[fleet['target']]
@@ -184,13 +182,13 @@ def update(state):
 
         time_remaining = fleet['eta'] - state['round']
         direction = vector.Normalize(origin - target)
-        
+
         pos = target + direction * time_remaining
         owner = fleet['owner_id']
         ships = fleet['ships']
         fleets.append(Fleet(ships,pos,direction,owner))
-        
-        
+
+
     for fleet in fleets:
         owner = fleet.player
         ships = fleet.ships
@@ -224,5 +222,3 @@ def update(state):
     glPopMatrix()
 
     window.flip()
-
-

@@ -9,42 +9,42 @@ class Vector:
 
     def __eq__(self, val):
         return isinstance(val, Vector) and self.x == val.x and self.y == val.y
-        
+
     def __add__(self, val):
         return Point( self[0] + val[0], self[1] + val[1] )
-    
+
     def __sub__(self,val):
         return Point( self[0] - val[0], self[1] - val[1] )
-    
+
     def __iadd__(self, val):
         self.x = val[0] + self.x
         self.y = val[1] + self.y
         return self
-        
+
     def __isub__(self, val):
         self.x = self.x - val[0]
         self.y = self.y - val[1]
         return self
-    
+
     def __div__(self, val):
         return Point( self[0] / val, self[1] / val )
 
     def __truediv__(self, val):
         return self.__div__(val)
-    
+
     def __mul__(self, val):
         return Point( self[0] * val, self[1] * val )
-    
+
     def __idiv__(self, val):
         self[0] = self[0] / val
         self[1] = self[1] / val
         return self
-        
+
     def __imul__(self, val):
         self[0] = self[0] * val
         self[1] = self[1] * val
         return self
-                
+
     def __getitem__(self, key):
         if( key == 0):
             return self.x
@@ -54,7 +54,7 @@ class Vector:
             return 0
         else:
             raise StopIteration #return 0 #raise Exception("Invalid key to Point")
-        
+
     def __setitem__(self, key, value):
         if( key == 0):
             self.x = value
@@ -65,11 +65,11 @@ class Vector:
 
     def __repr__(self):
         return self.__str__()
-        
+
     def __str__(self):
         return "(" + str(self.x) + "," + str(self.y) + ")"
 Point = Vector
-        
+
 def DistanceSqrd( point1, point2 ):
     'Returns the distance between two points squared. Marginally faster than Distance()'
     return ( (point1[0]-point2[0])**2 + (point1[1]-point2[1])**2)

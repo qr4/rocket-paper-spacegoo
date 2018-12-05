@@ -2,7 +2,7 @@ from collections import OrderedDict
 from math import *
 import random
 
-  
+
 class Planet():
     def __init__(self,id,owner_id,production,posx,posy):
         self.id = id
@@ -11,12 +11,12 @@ class Planet():
         self.ships = map(lambda s: s*10 + 10, production)
         self.posx = posx
         self.posy = posy
-        
+
     def distance(self,other_planet):
         xdiff = self.posx - other_planet.posx
         ydiff = self.posy - other_planet.posy
         return int(ceil(sqrt(xdiff*xdiff + ydiff*ydiff)))
-    
+
     def dump(self):
         state = OrderedDict([
             ("id", self.id),
@@ -27,9 +27,9 @@ class Planet():
             ("production", self.production)
         ])
         return state
-    
+
 '''
-def battle_round(attacker,defender):  
+def battle_round(attacker,defender):
     #das gute 3,1,1-schema.
     #nur eine asymmetrische runde. das hier muss mal also zweimal aufrufen.
     numships = len(attacker)
@@ -63,7 +63,7 @@ def battle_round(attacker,defender):
         defender[def_type] = max(0,defender[def_type])
     return defender
 
-    
+
 
 def battle(s1,s2):
     ships1 = s1[::]
@@ -73,7 +73,7 @@ def battle(s1,s2):
         ships2 = battle_round(ships1,ships2)
         ships1 = new1
         #print ships1,ships2
-        
+
     ships1 = map(int,ships1)
     ships2 = map(int,ships2)
     #print ships1,ships2
@@ -95,9 +95,9 @@ def battle_round(attacker,defender):
     damages = [0]*3
     for att_type in range(0,3):
         #attacker chooses group of ships to shoot at:
-        
+
         for att_type in range(0,3):
-            
+
 
 
 def battle(s1,s2):
@@ -106,17 +106,17 @@ def battle(s1,s2):
     while sum(ships1) > 0 and sum(ships2) >0:
         damages1to2 = battle_round(s1,s2)
         damages2to1 = battle_round(s2,s1)
-        
-            
-        
-        
+
+
+
+
         print ships1,ships2
-        
+
     return ships1, ships2
         #new2 = ships2
-        
+
 '''
-    
+
 class Fleet():
     def __init__(self,id,owner_id,origin,target,ships,current_round):
         self.eta = current_round + origin.distance(target)
@@ -126,7 +126,7 @@ class Fleet():
         origin.ships = map(lambda infleet,onplanet: onplanet-infleet, self.ships,origin.ships)
         self.id = id
         self.owner_id = owner_id
-    
+
     def land(self):
         # print "fleet landing"
         if self.target.owner_id == self.owner_id:
@@ -153,7 +153,7 @@ class Fleet():
              ("eta", self.eta),
         ])
         return state
-        
+
     def combine(self, other):
         for idx, count in enumerate(other.ships):
             self.ships[idx] += count
@@ -187,8 +187,8 @@ class Engine():
         random.shuffle(production)
         print production
         return production
-            
-            
+
+
     def does_planet_fit(self,x,y):
         mindist = 100023
         for planet in self.planets:
@@ -197,7 +197,7 @@ class Engine():
             dist = sqrt(xdiff*xdiff + ydiff*ydiff)
             mindist = min(mindist,dist)
         return (mindist > 3.0)
-    
+
     def find_fitting_position(self,max_x, max_y):
         x = 0
         y = 0
@@ -205,19 +205,19 @@ class Engine():
             x = random.randint(-max_x,max_x)
             y = random.randint(-max_y,max_y)
         return x,y
-        
+
     def generate_map(self):
         max_x = 20
         max_y = 15
         num_planets = random.randint(2,10)
-        
+
         self.insert_central_planet(self.generate_planet())
         for i in range(0,num_planets):
             x,y = self.find_fitting_position(max_x, max_y)
             self.insert_symmetric_planets(x,y,self.generate_planet(), start_planets=((i==0) or (i < num_planets/2) and (random.randint(0,10) < 2)))
-        
+
         #print self.planets
-       
+
         '''
         self.insert_symmetric_planets(15,10,[5,0,0], start_planets=True)
         self.insert_symmetric_planets(15,-10,[2,0,0])
@@ -226,7 +226,7 @@ class Engine():
         self.insert_central_planet([0,0,4])
         '''
 
-        
+
     def __init__(self,max_rounds = 500):
         self.planets = []
         self.generate_map()
@@ -235,7 +235,7 @@ class Engine():
         self.next_fleet_id = 0
         self.max_rounds = max_rounds
         self.winner = None #can also be "draw" or a player_id
-    
+
     def send_fleet(self,player_id,origin_id,target_id,ships):
         if not (0 <= origin_id < len(self.planets)):
             return
@@ -243,24 +243,24 @@ class Engine():
             return
         origin = self.planets[origin_id]
         target = self.planets[target_id]
-        
-        
+
+
         if not player_id == origin.owner_id:
             return
-        
+
         self.fleets.append(Fleet(self.next_fleet_id, player_id, origin, target,ships,self.round))
         self.next_fleet_id+=1
-        
-        
+
+
     def do_round(self):
         # print "DINGDINGDING ROUND ", self.round
-        
+
         for i,planet in enumerate(self.planets):
             # print "planet ", i, "owner ", planet.owner_id, " :"
             if not planet.owner_id == 0:
                 planet.ships = map(lambda s,p: s+p, planet.ships, planet.production)
             # print planet.ships
-        
+
         players_alive = []
         land_on_planet = {}
         highest_owner = 1
@@ -295,18 +295,18 @@ class Engine():
                 players_alive.append(player)
 
         self.round +=1
-        
+
         if len(players_alive) == 1:
             self.winner = players_alive[0]
             # print "WINNER: ", self.winner
             return
-        
+
         if self.round >= self.max_rounds:
             self.winner = "draw"
             # print "DRAW!"
             return
-            
-            
+
+
     def dump(self):
         state = OrderedDict([
             ("planets", map(lambda p: p.dump(), self.planets)),
@@ -315,10 +315,10 @@ class Engine():
             ("max_rounds", self.max_rounds),
         ])
         return state
-            
-    
+
+
 if __name__ == "__main__":
     engine = Engine()
     engine.do_round()
     print engine.dump()
-    
+
