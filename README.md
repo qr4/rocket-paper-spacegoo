@@ -92,6 +92,7 @@ An example gamestate looks as follows:
         ...
       ],
     }
+```
 
 The game is over as soon as `game_over` is set to true. After such a state is
 received, the game is finished and the player will be disconnected from the server.
@@ -110,7 +111,8 @@ starts to produce ships.
 
 Battle-code
 ---------------
-```def battle_round(attacker,defender):
+```
+def battle_round(attacker,defender):
    # only an asymetric round, this needs to be called twice
    numships = len(attacker)
    defender = defender[::]
@@ -138,7 +140,8 @@ def battle(s1,s2):
    ships1 = map(int,ships1)
    ships2 = map(int,ships2)
    #print ships1,ships2
-   return ships1, ships2```
+   return ships1, ships2
+   ```
    
 
 Kind-of-explanatory images:
