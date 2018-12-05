@@ -1,59 +1,57 @@
 Programmierspiel GPN13
 ======================
 
-Worum es geht: 2 Spieler spielen solange bis maximale Anzahl von Runden
-erreicht wurde oder einer der Spieler keine Raumschiffe und Planeten mehr
-besitzt. Jeder Spieler hat zu Spielbeginn mindestens einen Startplaneten.
-Jeder Planet hat eine feste Produktion, welche angibt, wieviele Raumschiffe
-pro Runde dort dazukommen. 
+What its about: 2 players play either a maximum number of rounds or until
+one player is eliminated (has no planets and no ships lefr). Every player
+starts with at least one start planet. Every planet has a fixed ship production
+amount, which determines how many new ships will be created in each tick.
 
-Beide Spieler verbinden sich per TCP Socket zum zentralen Spielserver. Sobald
-2 oder mehrere Spieler verfuegbar sind, werden diese in ein Spiel geschickt.
-Pro Runde bekommt jeder der beiden Spieler den kompletten Spielzustand als
-JSON gesendet. Es gibt 2 gueltige Spielzuege: Es kann von einem der eigenen
-Planeten eine Menge von Raumschiffen zu einem anderen Planet losgeschickt
-werden. Oder es kann in der Runde keine Aktion stattfinden. Wird innerhalb von
-3 Sekunden kein Spielzug uebermittelt, so wird der Spieler dafuer
-disqualifiziert.
+Both players connect per TCP socket to a central gameserver. If there are at
+least 2 players connected to the server, they will be placed against each other.
+In each round / tick, both players receive the whole gamestate as JSON.
+There are two possible moves: You can either send an arbitrary amount of ships
+from a planet you own to another planet or you can pass. If you do not provide
+a valid input within 3 seconds, you will be disqualified and your opponent
+wins the game.
 
-Flotten bewegen mehrere Runden, bis sie ihren Zielplanet erreichen. Die
-Flugzeit haengt von der Entfernung zwischen den Planeten ab. Kommen Flotten
-auf einem Planet an, so kaempfen diese, bis ein Spieger uebrig bleibt. Gewinnt
-der Angreifer, so geht der Planet in den Besitz des Angreifers ueber.
+Fleets take several rounds until they reach their destination. The duration
+is determined by the distance between the planets. If multiple fleets arrive
+at the same planet, they will fight until only ships of a single player remain.
+If the attacker wins the encounter, the plant changes its affiliation the said player
+and starts producing ships according the the producing amount of the planet.
 
-Protokoll
+Protocol
 ---------
 
-Auf den Spielserver per TCP verbinden. Als erster Befehl muss
+Connect to the game server via TCP. The first send command must be
 
     login <username> <passwort>
 
-geschickt werden. Beim ersten verbinden werden username/passwort gespeichert
-und muessen dann beim naechsten Mal einloggen identisch wiederverwendet
-werden. Es gibt kein Passwort reset oder Account loeschen.
+If the credentials are now known yet, a new account is created. There exists no
+password reset, nor the possibility to delete the account.
 
-Weitere beliebige Ausgaben folgen, bis irgendwann ein Spiel anfaengt. In
-diesem Moment bekommen beide Spieler den kompletten Spielzustand per JSON
-zugeschickt. Spielzustande sind immer per einleitendem '{' erkennbar.
+Afterwards, arbitrary data is send until a game starts. In this moment, both players
+receive the complete gamestate as JSON. Game states always start with a '{'.
+You must send a reply within 3 seconds after receiving a gamestate.
 
-Als Antwort auf einen Spielzustand muss innerhalb von 3 Sekunden eine Antwort
-an den Server geschickt werden. Es gibt 2 Antworten:
+There are two valid replies:
 
     nop
 
-gibt an, dass keinerlei Aktion stattfinden soll. 
+means that you do not want to take any action in the current tick / round.
 
     send <source_planet_id> <target_planet_id> <num_a> <num_b> <num_c>
 
-gibt an, dass vom eigenen Planet source_planet_id die angegebene Anzahl von
-Schiffen zu Planet target_planet_id gesendet werden sollen.
+means that you want to send a fleet from a planet with id `source_planet_id` which
+you control to a planet with id `target_planet_id`. The num_{a,b,c} thereby represent
+the amount of ships of each category which will compose the fleet.
 
-Sobald beide Spieler ihren Spielzug gemacht haben, geht das Spiel in die
-naechste Runde und beide Spieler bekommen wieder den kompletten Spielzustand
-gesendet.
+As soon as both players made their move, the game will move into the next round / tick
+and both players will receive the updated gamestate.
 
-Ein Spielstand sieht folgendermassen aus:
+An example gamestate looks as follows:
 
+```
     {
       "game_over": false,
       "winner": null,               // player_id
@@ -61,12 +59,12 @@ Ein Spielstand sieht folgendermassen aus:
       "max_rounds": 500,
       "fleets": [
         {
-          "id": 0,                  
+          "id": 0,
           "owner_id": 1,            // player_id
           "origin": 1,              // planet_id
           "target": 2,              // planet_id
-          "ships": [ 3, 1, 1 ],     // Anzahlen Typ a, b, c
-          "eta": 45                 // Ankunftsrunde (s.u.)
+          "ships": [ 3, 1, 1 ],     // Amount of ships of type a, b, c
+          "eta": 45                 // the round this fleet will arrive at its destination
         },
         ...
       ],
@@ -86,35 +84,38 @@ Ein Spielstand sieht folgendermassen aus:
         {
           "id": 0,
           "owner_id": 0,            // player_id
-          "y": 0,                   
+          "y": 0,
           "x": 0,
-          "ships": [ 20, 20, 20 ],  // aktuelle Schiffsanzahl Typ a, b, c
-          "production": [ 1, 1, 1 ] // Produktion/Runde Typ a, b, c
+          "ships": [ 20, 20, 20 ],  // current amount of ships of type a,b,c
+          "production": [ 1, 1, 1 ] // production of ships in each round/tick of type a, b, c
         },
         ...
       ],
     }
 
-Das Spiel ist beendet, sobald in game_over true steht.  Nachdem ein solcher
-State vom Spieler empfangen wurde, gilt das Spiel als beendet und der Spieler
-wird vom Server getrennt. Der Spieler kann sich daraufhin direkt wieder neu
-anmelden. 
+The game is over as soon as `game_over` is set to true. After such a state is
+received, the game is finished and the player will be disconnected from the server.
+The player can then connect again to the server for another match.
 
-Flotten kommen im Anschluss an die Runde am Zielplanet an. Beispiel: Ist eta
-als Runde 10 angegeben, so kommt die Flotte nach Abgabe der Befehle fuer Runde
-10 an. In Runde 11 existiert die Flotte dann nicht mehr.
+Fleets arrive at the end of a round at a target planet: E.g. If the ETA is round 10,
+then all ships of the fleet will arrive after the input for round 10 was provided and
+processed. In round 11 the fleet does not exist anymore.
 
-Planeten gehoeren immer einem Spieler. Zu beginnt gehoert jedem Spieler
-mindestens ein Planet. Die anderen Planeten gehoeren dem Spieler mit der
-player_id 0. Auf Planeten die diesem NPC Spieler gehoeren ist zwar eine
-Produktion angegeben, allerdings waechst die Anzahl der Schiffe dort nicht an.
-Dies passiert erst, wenn einer der beiden echten Spieler den Planet
-uebernimmt.
+Planets always belong to a single player. In the beginning each player starts with at
+least a single planet on a point symmetric map. The other planets are considered neutral
+and belong to a player with the `player_id` 0. These planets do not produce ships, but may
+contain already present ships. As soon as a "real" player takes control of the planet, it
+starts to produce ships.
+
+
+Battle
+---------------
+
 
 Client-Libraries
 ----------------
 
-Haskell-Programmierer können das Haskell-Paket
-[`haskell-spacegoo`](https://bitbucket.org/nomeata/haskell-spacegoo) verwenden,
-um komfortabel Clients zu programmieren.
+Haskell developers should check out
+[`haskell-spacegoo`](https://bitbucket.org/nomeata/haskell-spacegoo)
+to easily programm clients
 
