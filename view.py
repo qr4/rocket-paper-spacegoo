@@ -5,7 +5,6 @@ from pyglet.gl import *
 from ctypes import pointer
 import vector
 
-
 windowheight = 23
 windowwidth = 42
 

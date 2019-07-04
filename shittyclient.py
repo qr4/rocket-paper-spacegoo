@@ -1,11 +1,10 @@
 import socket, json
 import random, pprint
 
-
 import view
 view.init(1024, 768)
 
-USERNAME = "dividuum"
+USERNAME = "random_bot"
 PASSWORD = "bar"
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -15,18 +14,21 @@ io = s.makefile('rw')
 def write(data):
     io.write('%s\n' % (data,))
     io.flush()
+    print "SENDING ", data
 
 write('login %s %s' % (USERNAME, PASSWORD))
+
 while 1:
     data = io.readline().strip()
     if not data:
-        continue;
+        continue
         break
     elif data[0] == "{":
         state = json.loads(data)
         view.update(state)
         # pprint.pprint(state)
-        if state['winner'] is not None:
+
+        if state['winner'] is not None or state['game_over']:
             print "final: %s" % state['winner']
             break
 

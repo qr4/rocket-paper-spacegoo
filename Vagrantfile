@@ -13,7 +13,7 @@ redis-server
 SCRIPT
 
 $startServer= <<SCRIPT
-tmux kill-session -t "rss"
+tmux kill-session -t "rss" || true
 tmux new -d -n "web" -s "rss" -c "/vagrant" "pipenv run python web.py"
 tmux neww -d -n "server" -c "/vagrant" "pipenv run python main.py"
 SCRIPT

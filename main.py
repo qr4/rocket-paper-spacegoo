@@ -206,7 +206,7 @@ class Game(object):
         self.game_log.close()
 
         # This unlinks the gziped file after compressing
-        subprocess.call(["gzip",self.game_log_name])
+        subprocess.call(["gzip", "-f", self.game_log_name])
 
         p = redis.pipeline()
         p.hset('game:%d' % self.game_id, 'end', int(time.time()))
@@ -418,8 +418,8 @@ class Connection(object):
         if not line: # eof
             return None
 
-        if not re.match("^[a-z 0-9]*$", line):
-            self.send("Invalid data received. Valid bytes: [a-z 0-9]")
+        if not re.match("^[a-z 0-9A-Z_\-]*$", line):
+            self.send("Invalid data received. Valid bytes: [a-z 0-9A-Z_\-]")
             return None
 
         return [token.strip().lower() for token in line.split() if token]

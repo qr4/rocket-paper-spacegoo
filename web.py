@@ -180,7 +180,7 @@ def game_rounds(game_id, fromround):
     game_log = None
     try:
         game_log = file(game_log_name, "rb")
-    except IOError: 
+    except IOError:
         game_log_name = game_log_name + ".gz"
         game_log = gzip.GzipFile(game_log_name, "rb")
     lines = game_log.readlines()
@@ -190,9 +190,22 @@ def game_rounds(game_id, fromround):
             mimetype = "application/json",
         )
 
+@app.route("/log/<path:log_path>")
+def logs(log_path):
+    game_log_name = "log/" + log_path
+    try:
+        game_log = file(game_log_name, "rb")
+    except IOError:
+        game_log_name = game_log_name + ".gz"
+        game_log = gzip.GzipFile(game_log_name, "rb")
+    lines = game_log.readlines()
+    return Response (
+            response = "[" + ",".join(lines) + "]",
+            status = 200,
+            mimetype = "application/json",
+        )
+
+
 if __name__ == '__main__':
     logging.basicConfig(stream=sys.stderr, level=logging.INFO)
     app.run(host='0.0.0.0', port=8080, debug=True)
-
-
-
