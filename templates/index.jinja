@@ -35,7 +35,7 @@
 
 {% block bottom_scripts %}
   {{ super() }}
-  <script src="/static/js/flot/jquery.js"></script>
+  <script src="/static/js/flot/source/jquery.js"></script>
   <script>
     var polling_freq = 0.5;
 
@@ -52,7 +52,7 @@
       if (data.rank) {
 	$("#rank").text(data.rank);
       }
-      
+
       var highscoretable = $("table.highscore");
       highscoretable.empty();
       var idx;
@@ -62,17 +62,17 @@
 	var score = entry[1];
 	var inactive = entry[2];
       	highscoretable.append(
-	   "<tr class='" + 
+	   "<tr class='" +
 	    (inactive ? 'inactive ' : '') +
 	    (name == username ? 'me' : '') +
 	   "'>"+
 	    "<td style='width: 30px;'>" +
 	      (data.highscore_first + idx + 1) + "." +
-	    "</td>" + 
-            "<td>" + 
-              "<a href='/player/" + name + "'>" + name + "</a>" + 
+	    "</td>" +
+            "<td>" +
+              "<a href='/player/" + name + "'>" + name + "</a>" +
             "</td>"+
-            "<td style='text-align: right'>" + 
+            "<td style='text-align: right'>" +
 	      score.toFixed(2) +
 	    "</td>" +
 	  "</tr>"
@@ -85,21 +85,21 @@
       	var entry = data.last_games[idx];
       	gamestable.append(
 	   "<tr>"+
-            "<td>" + 
-              "<a href='/game/" + entry.game_id + "'>game " + entry.game_id + "</a>" + 
+            "<td>" +
+              "<a href='/game/" + entry.game_id + "'>game " + entry.game_id + "</a>" +
             "</td>"+
 	    "<td>" +
 	      "<a class='winner' href='/player/" + entry.player1 + "'>" +
 		entry.player1 +
 	      "</a>"+
-              " <sub>vs</sub> " + 
+              " <sub>vs</sub> " +
 	      "<a class='loser' href='/player/" + entry.player2 + "'>" +
 		entry.player2 +
 	      "</a>"+
-	    "</td>" + 
-            "<td style='text-align: right'>" + 
+	    "</td>" +
+            "<td style='text-align: right'>" +
 	      ( entry.elodiff ?
-	        "+" + entry.elodiff.toFixed(2) : 
+	        "+" + entry.elodiff.toFixed(2) :
 		'<span class="running">...</span>'
 	      ) +
 	    "</td>" +
@@ -109,7 +109,7 @@
     }
 
     function poll() {
-      $.ajax({  
+      $.ajax({
 	  url: (username ? "/player/" + username + "/info.json" : "/info.json"), success: function(data){
 	    newdata(data);
 	    setTimeout(poll,1000 / polling_freq);

@@ -2,8 +2,15 @@ Programmierspiel GPN13 / Programming game GPN13
 ======================
 Disclaimer
 ---------
-All credit for this game goes to the original creators (https://bitbucket.org/dividuum/rocket-scissor-spacegoo). 
-This is mainly a fork of said repo which makes the game 
+All credit for this game goes to the original creators (https://bitbucket.org/dividuum/rocket-scissor-spacegoo).
+This is mainly a fork of said repo which makes the game
+
+Assets
+------
+ship.png - http://eol.org/info/443
+planet.png - http://en.wikipedia.org/wiki/File:Water_ice_clouds_hanging_above_Tharsis_PIA02653.jpg
+vector.py - https://raw.github.com/nickretallack/bunnies/master/vector.py
+
 easier runable on a modern machine (updated dependencies, vagrant, english language, minor fixes).
 ---------
 
@@ -119,21 +126,23 @@ Battle-code
 ---------------
 ```
 def battle_round(attacker,defender):
-   # only an asymetric round, this needs to be called twice
-   numships = len(attacker)
-   defender = defender[::]
-   for def_type in range(0,numships):
-       for att_type in range(0,numships):
-           multiplier = 0.1
-           absolute = 1
-           if (def_type-att_type)%numships == 1:
-               multiplier = 0.25
-               absolute = 2
-           if (def_type-att_type)%numships == numships-1:
-               multiplier = 0.01
-           defender[def_type] -= (attacker[att_type]*multiplier) + (attacker[att_type] > 0) * absolute
-       defender[def_type] = max(0,defender[def_type])
-   return defender
+    # only an asymetric round. this needs to be called twice
+    numships = len(attacker)
+    defender = defender[::]
+    for def_type in range(0,numships):
+        for att_type in range(0,numships):
+            if def_type == att_type:
+                multiplier = 0.1
+                absolute = 1
+            if (def_type-att_type)%numships == 1:
+                multiplier = 0.25
+                absolute = 2
+            if (def_type-att_type)%numships == numships-1:
+                multiplier = 0.01
+                absolute = 1
+            defender[def_type] -= max((attacker[att_type]*multiplier), (attacker[att_type] > 0) * absolute)
+        defender[def_type] = max(0,defender[def_type])
+    return defender
 ```
 ```
 def battle(s1,s2):
@@ -144,13 +153,13 @@ def battle(s1,s2):
        ships2 = battle_round(ships1,ships2)
        ships1 = new1
        #print ships1,ships2
-       
+
    ships1 = map(int,ships1)
    ships2 = map(int,ships2)
    #print ships1,ships2
    return ships1, ships2
    ```
-   
+
 
 Kind-of-explanatory images:
 ----------------

@@ -8,13 +8,15 @@ USERNAME = "random_bot"
 PASSWORD = "bar"
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.connect(('127.0.0.1', 6000))
+s.connect(('localhost', 6000))
 io = s.makefile('rw')
+
 
 def write(data):
     io.write('%s\n' % (data,))
     io.flush()
-    print "SENDING ", data
+    print("SENDING ", data)
+
 
 write('login %s %s' % (USERNAME, PASSWORD))
 
@@ -29,7 +31,7 @@ while 1:
         # pprint.pprint(state)
 
         if state['winner'] is not None or state['game_over']:
-            print "final: %s" % state['winner']
+            print("final: %s" % state['winner'])
             break
 
         player_id = state['player_id']
@@ -43,7 +45,7 @@ while 1:
         elif not enemy_planets:
             write("nop")
         else:
-            print len(my_planets)
+            print(len(my_planets))
             best_planet = my_planets[-1][1]
             target_planet = random.choice(enemy_planets)
 
@@ -54,4 +56,4 @@ while 1:
                 best_planet['ships'][1]/6,
                 best_planet['ships'][2]/6))
     else:
-        print data
+        print(data)
