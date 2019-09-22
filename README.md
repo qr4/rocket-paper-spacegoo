@@ -4,6 +4,7 @@ Disclaimer
 ---------
 All credit for this game goes to the original creators (https://bitbucket.org/dividuum/rocket-scissor-spacegoo).
 This is mainly a fork of said repo which makes the game
+easier runable on a modern machine (updated dependencies, vagrant, english language, minor fixes).
 
 Assets
 ------
@@ -11,11 +12,10 @@ ship.png - http://eol.org/info/443
 planet.png - http://en.wikipedia.org/wiki/File:Water_ice_clouds_hanging_above_Tharsis_PIA02653.jpg
 vector.py - https://raw.github.com/nickretallack/bunnies/master/vector.py
 
-easier runable on a modern machine (updated dependencies, vagrant, english language, minor fixes).
 ---------
 
 What its about: 2 players play either a maximum number of rounds or until
-one player is eliminated (has no planets and no ships lefr). Every player
+one player is eliminated (has no planets and no ships left). Every player
 starts with at least one start planet. Every planet has a fixed ship production
 amount, which determines how many new ships will be created in each tick.
 
@@ -163,8 +163,8 @@ def battle(s1,s2):
 
 Kind-of-explanatory images:
 ----------------
-![principle](Spacegoo_01_prinzip.png)
-![battle system](Spacegoo_02_kampfsystem.png)
+![principle](Spacegoo_01_principle.png)
+![battle system](Spacegoo_02_battle_system.png)
 
 Client-Libraries
 ----------------
