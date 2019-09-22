@@ -168,8 +168,8 @@ def game_info(game_id):
         game_log_name = game_log_name,
         player1 = player1,
         player2 = player2,
-        rank1 = rank1 + 1,
-        rank2 = rank2 + 1,
+        rank1 = rank1 or 0 + 1,
+        rank2 = rank2 or 0 + 1,
         finished = elodiff is not None,
         elodiff = (float(elodiff) if elodiff else None),
     )
