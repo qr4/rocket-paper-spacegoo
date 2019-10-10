@@ -1,8 +1,9 @@
+#!/usr/bin/env python3
 import socket, json
 import random, pprint
 
-import view
-view.init(1024, 768)
+#import view
+#view.init(1024, 768)
 
 USERNAME = "random_bot"
 PASSWORD = "bar"
@@ -23,11 +24,12 @@ write('login %s %s' % (USERNAME, PASSWORD))
 while 1:
     data = io.readline().strip()
     if not data:
+        print("waaait")
         continue
         break
     elif data[0] == "{":
         state = json.loads(data)
-        view.update(state)
+#        view.update(state)
         # pprint.pprint(state)
 
         if state['winner'] is not None or state['game_over']:
@@ -38,14 +40,13 @@ while 1:
 
         enemy_planets = [planet for planet in state['planets'] if planet['owner_id'] != player_id]
         my_planets = [(sum(planet['ships']), planet) for planet in state['planets'] if planet['owner_id'] == player_id]
-        my_planets.sort()
+        my_planets.sort(key=lambda d: d[0])
 
         if not my_planets:
             write("nop")
         elif not enemy_planets:
             write("nop")
         else:
-            print(len(my_planets))
             best_planet = my_planets[-1][1]
             target_planet = random.choice(enemy_planets)
 
