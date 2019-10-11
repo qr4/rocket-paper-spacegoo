@@ -13,6 +13,7 @@ image = "*"
 pillow = "*"
 Jinja2 = ">=2.10.1"
 django = ">=1.11.22"
+flask-cors = "*"
 
 [dev-packages]
 

@@ -1,32 +1,33 @@
-import './App.css';
+import "./App.css";
 
 import {Arwes, ThemeProvider, createTheme} from '@arwes/arwes';
 import {Howl} from 'howler';
 import {Route, BrowserRouter as Router, Switch} from 'react-router-dom';
 import React, {useState, useEffect} from 'react';
 
-import {SoundsProvider} from '@arwes/sounds';
+import { SoundsProvider } from "@arwes/sounds";
 
 import { NavBar } from './components/nav_bar';
 import {PlayerPage} from './PlayerPage';
+import { Game } from "./Game";
 
 const players = {
-    ask: new Howl({src: [`${process.env.PUBLIC_URL}/sounds/ask.mp3`]}),
-    click: new Howl({src: [`${process.env.PUBLIC_URL}/sounds/click.mp3`]}),
-    deploy: new Howl({src: [`${process.env.PUBLIC_URL}/sounds/deploy.mp3`]}),
-    error: new Howl({src: [`${process.env.PUBLIC_URL}/sounds/error.mp3`]}),
+    ask: new Howl({ src: [`${process.env.PUBLIC_URL}/sounds/ask.mp3`] }),
+    click: new Howl({ src: [`${process.env.PUBLIC_URL}/sounds/click.mp3`] }),
+    deploy: new Howl({ src: [`${process.env.PUBLIC_URL}/sounds/deploy.mp3`] }),
+    error: new Howl({ src: [`${process.env.PUBLIC_URL}/sounds/error.mp3`] }),
     information: new Howl({
-        src: [`${process.env.PUBLIC_URL}/sounds/information.mp3`],
+        src: [`${process.env.PUBLIC_URL}/sounds/information.mp3`]
     }),
-    typing: new Howl({src: [`${process.env.PUBLIC_URL}/sounds/typing.mp3`]}),
-    warning: new Howl({src: [`${process.env.PUBLIC_URL}/sounds/warning.mp3`]}),
+    typing: new Howl({ src: [`${process.env.PUBLIC_URL}/sounds/typing.mp3`] }),
+    warning: new Howl({ src: [`${process.env.PUBLIC_URL}/sounds/warning.mp3`] })
 };
 const audio = {
-    mute: false,
+    mute: false
 };
 
 function Home() {
-    return '';
+    return "";
 }
 
 const AppWrapper = () => (
@@ -63,6 +64,9 @@ function App({wrapperAnimEntered}) {
             <Switch>
                 <Route path="/player/:playerName">
                     <PlayerPage show={showContent} />
+                </Route>
+                <Route path="/game/:id">
+                    <Game show={showContent}/>
                 </Route>
                 <Route path="/">
                     <Home show={showContent} />

@@ -6,13 +6,16 @@ from itertools import izip_longest, izip
 
 from flask import Flask, Response
 from flask import render_template, jsonify
+from flask_cors import CORS
 import redis
+
 
 INACTIVE_COUNT = 100
 
 redis = redis.Redis(host='localhost')
 
 app = Flask(__name__)
+CORS(app)
 
 def grouper(iterable, n, fillvalue=None):
     args = [iter(iterable)] * n
