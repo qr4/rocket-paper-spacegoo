@@ -1,12 +1,9 @@
 import './App.css';
 
 import {
-  Arwes,
-  ThemeProvider,
-  createTheme,
-  Header,
-  Heading,
-  Logo,
+    Arwes,
+    ThemeProvider,
+    createTheme,
 } from '@arwes/arwes';
 import {Howl} from 'howler';
 import {Route, BrowserRouter as Router, Switch} from 'react-router-dom';
@@ -14,7 +11,7 @@ import React from 'react';
 
 import {SoundsProvider} from '@arwes/sounds';
 
-import { SoundWords } from './components';
+import { NavBar } from './components/header';
 
 const players = {
     ask: new Howl({src: [`${process.env.PUBLIC_URL}/sounds/ask.mp3`]}),
@@ -44,14 +41,7 @@ function App() {
                     background="/background-large.jpg"
                     pattern="/glow.png">
                     <Router>
-                        <Header animate>
-                            <Heading node="span">
-                                <Logo animate size={50} />
-                                <SoundWords animate style={{marginLeft: '5px'}}>
-                                    Rock Paper Scissors
-                                </SoundWords>
-                            </Heading>
-                        </Header>
+                        <NavBar />
                         <Switch>
                             <Route path="/">
                                 <Home />
