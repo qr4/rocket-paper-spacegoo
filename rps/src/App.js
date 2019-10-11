@@ -1,17 +1,14 @@
 import './App.css';
 
-import {
-    Arwes,
-    ThemeProvider,
-    createTheme,
-} from '@arwes/arwes';
+import {Arwes, ThemeProvider, createTheme} from '@arwes/arwes';
 import {Howl} from 'howler';
 import {Route, BrowserRouter as Router, Switch} from 'react-router-dom';
-import React from 'react';
+import React, {useState, useEffect} from 'react';
 
 import {SoundsProvider} from '@arwes/sounds';
 
-import { NavBar } from './components/header';
+import { NavBar } from './components/nav_bar';
+import {PlayerPage} from './PlayerPage';
 
 const players = {
     ask: new Howl({src: [`${process.env.PUBLIC_URL}/sounds/ask.mp3`]}),
@@ -32,26 +29,47 @@ function Home() {
     return '';
 }
 
-function App() {
+const AppWrapper = () => (
+    <ThemeProvider theme={createTheme()}>
+        <SoundsProvider players={players} audio={audio}>
+            <Arwes
+                animate
+                background="/background-large.jpg"
+                pattern="/glow.png">
+                {anim => <App wrapperAnimEntered={anim.entered} />}
+            </Arwes>
+        </SoundsProvider>
+    </ThemeProvider>
+);
+
+function App({wrapperAnimEntered}) {
+    const [showContent, setShowContent] = useState(false);
+    // Add a nice delay to between Heading and Content animation
+    useEffect(
+        () => {
+            if (wrapperAnimEntered && !showContent) {
+                setTimeout(() => {
+                    setShowContent && setShowContent(true);
+                }, 250);
+            }
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [wrapperAnimEntered],
+    );
+
     return (
-        <ThemeProvider theme={createTheme()}>
-            <SoundsProvider players={players} audio={audio}>
-                <Arwes
-                    animate
-                    background="/background-large.jpg"
-                    pattern="/glow.png">
-                    <Router>
-                        <NavBar />
-                        <Switch>
-                            <Route path="/">
-                                <Home />
-                            </Route>
-                        </Switch>
-                    </Router>
-                </Arwes>
-            </SoundsProvider>
-        </ThemeProvider>
+        <Router>
+            <NavBar show={wrapperAnimEntered} />
+            <Switch>
+                <Route path="/player/:playerName">
+                    <PlayerPage show={showContent} />
+                </Route>
+                <Route path="/">
+                    <Home show={showContent} />
+                </Route>
+            </Switch>
+        </Router>
     );
 }
 
-export default App;
+export default AppWrapper;

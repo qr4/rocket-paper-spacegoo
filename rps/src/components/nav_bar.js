@@ -15,12 +15,15 @@ import {SoundWords} from './';
 
 const styles = themes => ({
     root: {
+        marginBottom: themes.margin * 4,
     },
     container: {
         display: 'flex',
-        marginBottom: '2rem',
     },
-    logo: {margin: '0.5rem 1rem 0.5rem 0'},
+    container: {
+        display: 'flex',
+    },
+    logo: {margin: [themes.margin / 2, themes.margin, themes.margin / 2, 0]},
     headingText: {
         marginBottom: 0,
         flexGrow: 1,
