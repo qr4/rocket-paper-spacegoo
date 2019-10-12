@@ -59,7 +59,7 @@ const styles = themes => {
 const reducer = (state, action) => {
     switch (action.type) {
         case 'incrementMove':
-            return {...state, turn: Math.min(game.length, state.turn + 1)};
+            return {...state, turn: Math.min(game.length, state.turn + 1), playback: state.playback && state.turn !== game.length};
         case 'decrementMove':
             return {...state, turn: Math.max(0, state.turn - 1)};
         case 'setMove':
@@ -89,7 +89,7 @@ export const Game = withStyles(styles)(({show, classes}) => {
         setInfo(json);
     }, 1000);
 
-    useInterval(() => playback && dispatch({type: 'increment'}), 10);
+    useInterval(() => playback && dispatch({type: 'incrementMove'}), 10);
 
     const data = [{
         label: 'neutral',
@@ -156,17 +156,17 @@ export const Game = withStyles(styles)(({show, classes}) => {
                     <Loading animate className={classes.headingLoader}/>}>
 
                 <div className={classes.controls}>
-                    <Button animate layer='primary' onClick={() => dispatch({type: 'decrement'})}><FontAwesomeIcon className={classes.controlElements} icon={faChevronLeft} size="lg"/></Button>
-                    <Button animate layer='primary' onClick={() => setPlay(!playback)}>
+                    <Button animate layer='primary' onClick={() => dispatch({type: 'decrementMove'})}><FontAwesomeIcon className={classes.controlElements} icon={faChevronLeft} size="lg"/></Button>
+                    <Button animate layer='primary' onClick={() => dispatch({type: 'togglePlayback'})}>
                         <FontAwesomeIcon fixedWidth className={classes.controlElements} icon={playback ? faPauseCircle : faPlay} size="lg"/>
                     </Button>
-                    <Button animate layer='primary' onClick={() => dispatch({type: 'increment'})}><FontAwesomeIcon className={classes.controlElements} icon={faChevronRight} size="lg"/></Button>
+                    <Button animate layer='primary' onClick={() => dispatch({type: 'incrementMove'})}><FontAwesomeIcon className={classes.controlElements} icon={faChevronRight} size="lg"/></Button>
                 </div>
                 <VictoryChart theme={VictoryTheme.material} width={1200}
                               containerComponent={
                                   <VictoryCursorContainer cursorLabelComponent={<div className={classes.style} />}
                                                           cursorDimension="x"
-                                                          onCursorChange={d => d && dispatch(Math.floor(d))} />
+                                                          onCursorChange={d => d && dispatch({type: 'setMove', value: Math.floor(d)})} />
                               }>
                     {data.map((d, idx) =>
                         (<VictoryLine
