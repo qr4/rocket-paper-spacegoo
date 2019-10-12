@@ -50,7 +50,7 @@ export const NavBar = withStyles(styles)(({show, classes}) => {
     return (
         <Header animate className={classes.root}>
             <Container className={classes.container}>
-                <Heading node="span" className={classes.headingText}>
+                <Heading node="h4" className={classes.headingText}>
                     <Logo className={classes.logo} animate size={50} />
                     <SoundWords animate style={{marginLeft: '5px'}} show={show}>
                         Rock Paper Scissors
