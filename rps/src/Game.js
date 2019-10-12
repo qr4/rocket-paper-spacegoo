@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useReducer} from 'react';
+import React, {useState, useEffect, useReducer, useRef} from 'react';
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
 import {
     faChevronLeft,
@@ -6,25 +6,23 @@ import {
     faPlay,
     faPauseCircle
 } from '@fortawesome/free-solid-svg-icons';
-import {VictoryCursorContainer, VictoryChart, VictoryTheme, VictoryLine} from "victory";
 
-import {Button, Loading, Project, Words, Link, withStyles } from "@arwes/arwes";
-import { game } from "./dummy_data";
+import {Image, Table, Frame, Button, Loading, Project, Words, Link, withStyles } from "@arwes/arwes";
+import { g } from "./dummy_data";
 import {Container} from "./components/container";
 import {useHistory, useParams} from "react-router";
 import {useInterval} from "./hooks/useInterval";
+import {GameGraph} from "./GameGraph";
+import {GameHeader} from "./GameHeader";
+import {GameCanvas} from "./GameCanvas";
 
 
-const BASE_URL = "http://localhost:8080";
+export const BASE_URL = "http://localhost:8080";
 
 const styles = themes => {
     console.log(themes);
     return {
-        cursorLabel: {
-            display: "none"
-        },
         heading: {
-            textTransform: "unset !important",
             "@global": {
                 "h1": {
                     width:"100%",
@@ -37,10 +35,6 @@ const styles = themes => {
             },
             width: "100%",
         },
-        headingLoader: {
-           margin: 0
-        },
-
         controls: {
             display: "flex",
             justifyContent: "center",
@@ -56,14 +50,47 @@ const styles = themes => {
     };
 };
 
+const computeRoundData = (round) => {
+    const ships      = [[0,0,0],[0,0,0],[0,0,0]];
+    const planets    = [0,0,0];
+    const fleets     = [0,0,0];
+    const production = [[0,0,0],[0,0,0],[0,0,0]];
+    const add = (a,b) => {
+        a[0] += b[0];
+        a[1] += b[1];
+        a[2] += b[2];
+    };
+
+    for (let fi = 0; fi < round.fleets.length; fi++) {
+        const fleet = round.fleets[fi];
+        fleets[fleet.owner_id] += 1;
+        add(ships[fleet.owner_id], fleet.ships);
+    }
+    for (let pi = 0; pi < round.planets.length; pi++) {
+        const planet = round.planets[pi];
+        planets[planet.owner_id] += 1;
+        add(ships[planet.owner_id], planet.ships);
+        add(production[planet.owner_id], planet.production);
+    }
+
+    return [
+        round["game_over"] ? "Final Standings" : round.round,
+        ships[0][0] + ships[0][1] + ships[0][2] + ships[1][0] + ships[1][1] + ships[1][2] + ships[2][0] + ships[2][1] + ships[2][2],
+        planets[1], planets[2],
+        ships[1].join(","), ships[2].join(","),
+        production[1].join(","), production[2].join(","),
+        fleets[1],fleets[2]
+    ];
+};
+
 const reducer = (state, action) => {
     switch (action.type) {
         case 'incrementMove':
-            return {...state, turn: Math.min(game.length, state.turn + 1), playback: state.playback && state.turn !== game.length};
+            return {...state, turn: Math.min(state.game.length-1, state.turn + 1), playback: state.playback && state.turn !== state.game.length - 1};
         case 'decrementMove':
             return {...state, turn: Math.max(0, state.turn - 1)};
         case 'setMove':
-            return {...state, turn: action.value};
+            return {...state, turn: action.value, playback: false};
         case 'togglePlayback': {
             return {...state, playback: !state.playback};
         }
@@ -74,87 +101,25 @@ const reducer = (state, action) => {
 
 export const Game = withStyles(styles)(({show, classes}) => {
     const {id} = useParams();
-    const [{turn, playback}, dispatch] = useReducer(reducer, {turn: 0, playback: false});
+    const [{turn, playback, game}, dispatch] = useReducer(reducer, {turn: 0, playback: false, game: g});
     const history = useHistory();
-    const [animateTurn, setAnimateTurn] = useState(true);
     const [info, setInfo] = useState(undefined);
-
-    useEffect(() => {
-        setAnimateTurn(false);
-    });
 
     useInterval(async () => {
         const data = await fetch(`${BASE_URL}/game/${id}/info.json`);
         const json = await data.json();
         setInfo(json);
-    }, 1000);
+    }, info && info.finished ? null : 1000);
 
     useInterval(() => playback && dispatch({type: 'incrementMove'}), 10);
-
-    const data = [{
-        label: 'neutral',
-        color: '#ccc',
-        data: []
-    }, {
-        label: 'player1',
-        color: '#6f6',
-        data: []
-    }, {
-        label: 'player2',
-        color: '#f66',
-        data: []
-    }];
-
-    let maxY = 0;
-    for (let idx = 0; idx < game.length; idx++) {
-        const round = game[idx];
-        const fleets = [0,0,0];
-        for (let fi = 0; fi < round.fleets.length; fi++) {
-            const fleet = round.fleets[fi];
-            fleets[fleet.owner_id] += fleet.ships[0] + fleet.ships[1] + fleet.ships[2];
-        }
-        for (let pi = 0; pi < round.planets.length; pi++) {
-            const planet = round.planets[pi];
-            fleets[planet.owner_id] += planet.ships[0] + planet.ships[1] + planet.ships[2];
-        }
-        for (let player_id = 0; player_id <= 2; player_id++) {
-            data[player_id].data.push({x: idx, y: fleets[player_id]});
-            maxY = Math.max(maxY, fleets[player_id]);
-        }
-    }
-
-    const theme = VictoryTheme.material;
-    theme.axis.style.axis.stroke = "#8bebfe";
-    theme.axis.style.tickLabels.fill = "#8bebfe";
-    theme.axis.style.grid.stroke = "#ccc";
 
     return (
         <Container>
             <Project
                 show={show}
                 className={!info && classes.heading}
-                header={info ?
-                    <>
-                        <div>
-                            <span>Game #</span>
-                            <Link href="javascript:void(0)" onClick={() => history.push("/game/" + id)}>{id}</Link>:&nbsp;
-                            <Link href="javascript:void(0)" onClick={() => history.push("/player/" + info["player1"])}>
-                                <Words animate layer='success'>{game[0].players[0].name}</Words>
-                            </Link>
-                            {" "}<sub>vs</sub>{" "}
-                            <Link href="javascript:void(0)" onClick={() => history.push("/player/" + info["player2"])}>
-                                <Words animate layer='alert'>{game[0].players[1].name}</Words>
-                            </Link>
-                        </div>
-                        <p style={{textTransform: "initial", fontWeight: "400"}}>
-                            <Words animate layer='primary'>
-                                {`${info["player1"]} currently has rank #${info["rank1"]}, ${info["player2"]} currently has rank #${info["rank2"]}`}
-                            </Words>
-                            <Link href={`${BASE_URL}/${info["game_log_name"]}`}>&nbsp;&nbsp;raw gamelog</Link>
-                        </p>
-                    </>:
-                    <Loading animate className={classes.headingLoader}/>}>
-
+                header={<GameHeader info={info} history={history}/>}
+            >
                 <div className={classes.controls}>
                     <Button animate layer='primary' onClick={() => dispatch({type: 'decrementMove'})}><FontAwesomeIcon className={classes.controlElements} icon={faChevronLeft} size="lg"/></Button>
                     <Button animate layer='primary' onClick={() => dispatch({type: 'togglePlayback'})}>
@@ -162,27 +127,51 @@ export const Game = withStyles(styles)(({show, classes}) => {
                     </Button>
                     <Button animate layer='primary' onClick={() => dispatch({type: 'incrementMove'})}><FontAwesomeIcon className={classes.controlElements} icon={faChevronRight} size="lg"/></Button>
                 </div>
-                <VictoryChart theme={VictoryTheme.material} width={1200}
-                              containerComponent={
-                                  <VictoryCursorContainer cursorLabelComponent={<div className={classes.style} />}
-                                                          cursorDimension="x"
-                                                          onCursorChange={d => d && dispatch({type: 'setMove', value: Math.floor(d)})} />
-                              }>
-                    {data.map((d, idx) =>
-                        (<VictoryLine
-                            style={{ data: { stroke: d.color } }}
-                            data={d.data}
-                            key={idx}
-                        />))}
-                    <VictoryLine
-                        style={{data: { stroke: "#8bebfe", strokeWidth: "4px"}}}
-                        data={[{x:turn, y:0}, {x:turn, y: maxY}]}
-                    />
-                </VictoryChart>
-
-                <Words animate={animateTurn}>{"Current turn " + turn}</Words>
+                <GameGraph game={game} turn={turn} dispatch={dispatch}/>
 
             </Project>
+
+            <Frame
+                style={{marginTop: "10px"}}
+                animate
+                level={3}
+                corner={3}
+                layer='primary'>
+
+                {game ?
+                    <GameCanvas turn={game[turn]}/>:
+                    <Loading animate/>
+                }
+            </Frame>
+
+            <Frame
+                style={{marginTop: "10px"}}
+                animate
+                level={3}
+                corner={3}
+                layer='primary'
+            >
+                {info && game && game[turn] ?
+                    <>
+                        <Table animate
+                           headers={[
+                               "Round",
+                               "Total Fleets",
+                               <Words layer="success"><div>Planets</div>{`${info["player1"]}`}</Words>,
+                               <Words layer="alert"><div>Planets</div>{`${info["player2"]}`}</Words>,
+                               <Words layer="success"><div>Ships</div>{`${info["player1"]}`}</Words>,
+                               <Words layer="alert"><div>Ships</div>{`${info["player2"]}`}</Words>,
+                               <Words layer="success"><div>Production</div>{`${info["player1"]}`}</Words>,
+                               <Words layer="alert"><div>Production</div>{`${info["player2"]}`}</Words>,
+                               <Words layer="success"><div>Fleets</div>{`${info["player1"]}`}</Words>,
+                               <Words layer="alert"><div>Fleets</div>{`${info["player2"]}`}</Words>,
+                           ]}
+                           dataset={[computeRoundData(game[turn])]}/>
+                    </>:
+                    <Loading animate/>
+                }
+            </Frame>
+
         </Container>
     );
 });
