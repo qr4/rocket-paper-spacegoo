@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useReducer, useRef} from 'react';
+import React, {useState, useReducer} from 'react';
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
 import {
     faChevronLeft,
@@ -7,7 +7,7 @@ import {
     faPauseCircle
 } from '@fortawesome/free-solid-svg-icons';
 
-import {Image, Table, Frame, Button, Loading, Project, Words, Link, withStyles } from "@arwes/arwes";
+import {Table, Frame, Button, Loading, Project, Words, Link, withStyles } from "@arwes/arwes";
 import { g } from "./dummy_data";
 import {Container} from "./components/container";
 import {useHistory, useParams} from "react-router";
@@ -22,6 +22,15 @@ export const BASE_URL = "http://localhost:8080";
 const styles = themes => {
     console.log(themes);
     return {
+        frames: {
+            marginTop: themes.margin,
+        },
+        header: {
+            paddingLeft: themes.padding
+        },
+        frameContent: {
+            padding: themes.padding,
+        },
         heading: {
             "@global": {
                 "h1": {
@@ -94,6 +103,9 @@ const reducer = (state, action) => {
         case 'togglePlayback': {
             return {...state, playback: !state.playback};
         }
+        case 'updateGame': {
+            return {...state, game: action.value};
+        }
         default:
             throw Error();
     }
@@ -101,7 +113,7 @@ const reducer = (state, action) => {
 
 export const Game = withStyles(styles)(({show, classes}) => {
     const {id} = useParams();
-    const [{turn, playback, game}, dispatch] = useReducer(reducer, {turn: 0, playback: false, game: g});
+    const [{turn, playback, game}, dispatch] = useReducer(reducer, {turn: 0, playback: false, game: undefined});
     const history = useHistory();
     const [info, setInfo] = useState(undefined);
 
@@ -109,66 +121,88 @@ export const Game = withStyles(styles)(({show, classes}) => {
         const data = await fetch(`${BASE_URL}/game/${id}/info.json`);
         const json = await data.json();
         setInfo(json);
-    }, info && info.finished ? null : 1000);
+        dispatch({type: 'updateGame', value: g});
+    }, info && info.finished ? null : 2000);
+
+    useInterval(async () => {
+    });
 
     useInterval(() => playback && dispatch({type: 'incrementMove'}), 10);
 
     return (
         <Container>
-            <Project
+            <Frame
+                animate={true}
+                level={3}
+                corners={4}
                 show={show}
-                className={!info && classes.heading}
-                header={<GameHeader info={info} history={history}/>}
-            >
-                <div className={classes.controls}>
-                    <Button animate layer='primary' onClick={() => dispatch({type: 'decrementMove'})}><FontAwesomeIcon className={classes.controlElements} icon={faChevronLeft} size="lg"/></Button>
-                    <Button animate layer='primary' onClick={() => dispatch({type: 'togglePlayback'})}>
-                        <FontAwesomeIcon fixedWidth className={classes.controlElements} icon={playback ? faPauseCircle : faPlay} size="lg"/>
-                    </Button>
-                    <Button animate layer='primary' onClick={() => dispatch({type: 'incrementMove'})}><FontAwesomeIcon className={classes.controlElements} icon={faChevronRight} size="lg"/></Button>
-                </div>
-                <GameGraph game={game} turn={turn} dispatch={dispatch}/>
-
-            </Project>
+                layer='primary'>
+                {(anim) => <GameHeader className={classes.header} info={info} history={history} show={anim.entered} arwesShow={show}/>}
+            </Frame>
 
             <Frame
-                style={{marginTop: "10px"}}
-                animate
+                animate={true}
                 level={3}
-                corner={3}
+                corners={4}
+                show={show}
                 layer='primary'>
-
-                {game ?
-                    <GameCanvas turn={game[turn]}/>:
-                    <Loading animate/>
+                {(anim) =>
+                    <div className={classes.frameContent}>
+                        {show && <div className={classes.controls}>
+                            <Button animate layer='primary' onClick={() => dispatch({type: 'decrementMove'})} show={anim.entered}>
+                                {anim.entered && <FontAwesomeIcon className={classes.controlElements} icon={faChevronLeft} size="lg"/>}
+                            </Button>
+                            <Button animate layer='primary' onClick={() => dispatch({type: 'togglePlayback'})} show={anim.entered}>
+                                {anim.entered && <FontAwesomeIcon fixedWidth className={classes.controlElements} icon={playback ? faPauseCircle : faPlay} size="lg"/>}
+                            </Button>
+                            <Button animate layer='primary' onClick={() => dispatch({type: 'incrementMove'})} show={anim.entered}>
+                                {anim.entered && <FontAwesomeIcon className={classes.controlElements} icon={faChevronRight} size="lg"/>}
+                            </Button>
+                        </div>}
+                        <GameGraph game={game} turn={turn} dispatch={dispatch} show={anim.entered} arwesShow={show}/>
+                    </div>
                 }
             </Frame>
 
             <Frame
-                style={{marginTop: "10px"}}
+                className={classes.frames}
+                show={show}
+                animate={true}
+                level={3}
+                corners={4}
+                layer='primary'>
+                {(anim) => anim.entered && (game ?
+                        <GameCanvas turn={game[turn]} info={info}/> :
+                        show && <Loading animate/> || null
+                )}
+            </Frame>
+
+            <Frame
+                className={classes.frames}
+                show={show}
                 animate
                 level={3}
-                corner={3}
-                layer='primary'
-            >
-                {info && game && game[turn] ?
-                    <>
-                        <Table animate
-                           headers={[
-                               "Round",
-                               "Total Fleets",
-                               <Words layer="success"><div>Planets</div>{`${info["player1"]}`}</Words>,
-                               <Words layer="alert"><div>Planets</div>{`${info["player2"]}`}</Words>,
-                               <Words layer="success"><div>Ships</div>{`${info["player1"]}`}</Words>,
-                               <Words layer="alert"><div>Ships</div>{`${info["player2"]}`}</Words>,
-                               <Words layer="success"><div>Production</div>{`${info["player1"]}`}</Words>,
-                               <Words layer="alert"><div>Production</div>{`${info["player2"]}`}</Words>,
-                               <Words layer="success"><div>Fleets</div>{`${info["player1"]}`}</Words>,
-                               <Words layer="alert"><div>Fleets</div>{`${info["player2"]}`}</Words>,
-                           ]}
-                           dataset={[computeRoundData(game[turn])]}/>
-                    </>:
-                    <Loading animate/>
+                corners={4}
+                layer='primary'>
+                {(anim) => anim.entered && (info && game && game[turn] ?
+                        <div className={classes.frameContent}>
+                            <Table animate
+                                   headers={[
+                                       "Round",
+                                       "Total Fleets",
+                                       <Words layer="success"><div>Planets</div>{`${info["player1"]}`}</Words>,
+                                       <Words layer="alert"><div>Planets</div>{`${info["player2"]}`}</Words>,
+                                       <Words layer="success"><div>Ships</div>{`${info["player1"]}`}</Words>,
+                                       <Words layer="alert"><div>Ships</div>{`${info["player2"]}`}</Words>,
+                                       <Words layer="success"><div>Production</div>{`${info["player1"]}`}</Words>,
+                                       <Words layer="alert"><div>Production</div>{`${info["player2"]}`}</Words>,
+                                       <Words layer="success"><div>Fleets</div>{`${info["player1"]}`}</Words>,
+                                       <Words layer="alert"><div>Fleets</div>{`${info["player2"]}`}</Words>,
+                                   ]}
+                                   dataset={[computeRoundData(game[turn])]}/>
+                        </div>:
+                        show && <Loading animate/> || null
+                )
                 }
             </Frame>
 

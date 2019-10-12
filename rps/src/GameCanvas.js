@@ -1,6 +1,13 @@
-import React, {useEffect, useRef} from 'react';
+import React, {useEffect, useRef, memo} from 'react';
 
-export const GameCanvas = ({turn}) => {
+let stars_buffer;
+let planets_buffer;
+
+const default_shades = ["#BFBBB8", "#E4E0DC", "#807D7A", ];
+const player1_shades = ["#00BF0A","#00E60B", "#004003"];
+const player2_shades = ["#BF0020", "#E60028", "#800015",];
+
+export const GameCanvas = memo(({turn, info}) => {
     let ref = useRef();
 
     useEffect(() => {
@@ -19,10 +26,6 @@ export const GameCanvas = ({turn}) => {
         const fleet_canvas_size = 5;
         const max_production = 18;
         const star_size = 4;
-
-        let stars_buffer;
-        let planets_buffer;
-
 
         // Off-screen canvas for stars
         if (!stars_buffer) {
@@ -60,7 +63,7 @@ export const GameCanvas = ({turn}) => {
                 let alpha = - Math.PI/2;
                 for (let i = 0; i < 3; i++) {
                     const beta = alpha + 2 * Math.PI * (planet.production[i]/total_production);
-                    bc.fillStyle = ["#DDD", "#AAA", "#999"][i];
+                    bc.fillStyle = default_shades[i];
                     bc.beginPath();
                     bc.moveTo(
                         planet.x * -size_scale,
@@ -87,7 +90,7 @@ export const GameCanvas = ({turn}) => {
             c.translate(width/2, height/2);
 
             c.clearRect(-canvas.width/2,-canvas.height/2,canvas.width,canvas.height);
-            // c.drawImage(stars_buffer, -canvas.width/2, -canvas.height/2);
+            c.drawImage(stars_buffer, -canvas.width/2, -canvas.height/2);
 
             const planets = turn.planets;
             for (let idx = 0; idx < planets.length; idx++) {
@@ -99,7 +102,7 @@ export const GameCanvas = ({turn}) => {
                 for (let type = 0; type < 3; type++) {
                     const r = Math.log(planet.ships[type] / max_production + 1) * fleet_canvas_size + planet_r + 2;
                     c.beginPath();
-                    c.fillStyle = [["#DDD", "#AAA", "#999"], ["#33F", "#00F", "#009"], ["#F77", "#F33", "#F00"]][planet.owner_id][type];
+                    c.fillStyle = [default_shades, player1_shades, player2_shades][planet.owner_id][type];
                     c.moveTo(
                         planet.x * -size_scale,
                         planet.y * size_scale
@@ -128,14 +131,14 @@ export const GameCanvas = ({turn}) => {
             c.drawImage(planets_buffer, -canvas.width/2, -canvas.height/2);
 
             // semi-transparent planet owner overlay
-            c.globalAlpha = 0.5;
+            c.globalAlpha = 0.4;
             for (let idx = 0; idx < planets.length; idx++) {
                 const planet = planets[idx];
-                if (planet.owner_id != 0) {
+                if (planet.owner_id !== 0) {
                     const total_production = planet.production[0] + planet.production[1] + planet.production[2];
                     const planet_r = Math.sqrt(total_production / (max_production*2)) * planet_canvas_size;
                     c.beginPath();
-                    c.fillStyle = ["invalid", "steelblue", "red"][planet.owner_id];
+                    c.fillStyle = ["invalid", "green", "red"][planet.owner_id];
                     c.moveTo(
                         planet.x * -size_scale,
                         planet.y * size_scale
@@ -172,7 +175,7 @@ export const GameCanvas = ({turn}) => {
 
                 // Triangle
                 c.beginPath();
-                c.fillStyle = ["invalid", "steelblue", "red"][fleet.owner_id];
+                c.fillStyle = ["invalid", "green", "red"][fleet.owner_id];
                 c.moveTo(-(r+1),0);
                 c.lineTo(0,2*r);
                 c.lineTo( (r+1),0);
@@ -189,7 +192,7 @@ export const GameCanvas = ({turn}) => {
                 let alpha = Math.PI;
                 for (let i = 0; i < 3; i++) {
                     const beta = alpha + Math.PI * (fleet.ships[i]/total_ships);
-                    c.fillStyle = ["#DDD", "#AAA", "#999"][i];
+                    c.fillStyle = default_shades[i];
                     c.beginPath();
                     c.moveTo(0,0);
                     c.arc(0,0,r,alpha,beta,false);
@@ -202,16 +205,19 @@ export const GameCanvas = ({turn}) => {
 
             // Last round
             if (turn.game_over) {
-                var winner = turn.winner;
-                if (!winner) { winner = 0};
-                c.fillStyle = ["lightgrey", "sleelblue", "red"][winner];
+                let winner = turn.winner;
+                if (!winner) {
+                    winner = 0
+                }
+                c.fillStyle = ["lightgrey", player1_shades[1], player2_shades[1]][winner];
                 c.font = "bold 60px sans-serif";
                 c.textAlign = "center";
                 c.textBaseline = "ideographic";
                 c.fillText([
                     "draw!",
-                    "player1" + " wins!",
-                    "player2" + " wins!"][winner], 0, 0);
+                    info["player1"] + " wins!",
+                    info["player2"] + " wins!"
+                ][winner], 0, 0);
             }
         };
 
@@ -224,4 +230,4 @@ export const GameCanvas = ({turn}) => {
                 width={1200}
                 height={500} />
     );
-};
+});

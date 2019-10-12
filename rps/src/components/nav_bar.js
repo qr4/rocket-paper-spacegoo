@@ -20,9 +20,6 @@ const styles = themes => ({
     container: {
         display: 'flex',
     },
-    container: {
-        display: 'flex',
-    },
     logo: {margin: [themes.margin / 2, themes.margin, themes.margin / 2, 0]},
     headingText: {
         marginBottom: 0,
