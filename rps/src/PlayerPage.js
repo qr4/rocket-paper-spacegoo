@@ -1,7 +1,9 @@
 import {
+    Appear,
     Col,
     Heading,
     Link,
+    Loading,
     Project,
     Row,
     Table,
@@ -9,266 +11,12 @@ import {
     withStyles,
 } from '@arwes/arwes';
 import {useParams, useHistory} from 'react-router-dom';
-import React, {useRef, useState, useEffect} from 'react';
+import React, {memo, useRef, useState, useEffect, useCallback} from 'react';
 
+import {BASE_URL} from './Game';
 import {PageWrapper} from './components/PageWrapper';
 import {SoundWords} from './components';
 import {useInterval} from './hooks/useInterval';
-
-const testData = {
-    highscore_first: 0,
-    highscores: [
-        ['random_bot', 25.0, false],
-        ['ur mum lul', -30.0, false],
-        ['1337Hackorz', -30.0, false],
-        ['The bigger threat', 2034.123987123, false],
-    ],
-    last_games: [
-        {
-            elodiff: 5.0,
-            game_id: '224',
-            player1: 'random_bot',
-            player2: 'random_bot',
-        },
-        {
-            elodiff: 5.0,
-            game_id: '224',
-            player1: 'random_bot',
-            player2: 'random_bot',
-        },
-        {
-            elodiff: 5.0,
-            game_id: '223',
-            player1: 'random_bot',
-            player2: 'random_bot',
-        },
-        {
-            elodiff: 5.0,
-            game_id: '223',
-            player1: 'random_bot',
-            player2: 'random_bot',
-        },
-        {
-            elodiff: 5.0,
-            game_id: '222',
-            player1: 'random_bot',
-            player2: 'random_bot',
-        },
-        {
-            elodiff: 5.0,
-            game_id: '222',
-            player1: 'random_bot',
-            player2: 'random_bot',
-        },
-        {
-            elodiff: 5.0,
-            game_id: '221',
-            player1: 'random_bot',
-            player2: 'random_bot',
-        },
-        {
-            elodiff: 5.0,
-            game_id: '221',
-            player1: 'random_bot',
-            player2: 'random_bot',
-        },
-        {
-            elodiff: 5.0,
-            game_id: '220',
-            player1: 'random_bot',
-            player2: 'random_bot',
-        },
-        {
-            elodiff: 5.0,
-            game_id: '220',
-            player1: 'random_bot',
-            player2: 'random_bot',
-        },
-        {
-            elodiff: 5.0,
-            game_id: '219',
-            player1: 'random_bot',
-            player2: 'random_bot',
-        },
-        {
-            elodiff: 5.0,
-            game_id: '219',
-            player1: 'random_bot',
-            player2: 'random_bot',
-        },
-        {
-            elodiff: 5.0,
-            game_id: '218',
-            player1: 'random_bot',
-            player2: 'random_bot',
-        },
-        {
-            elodiff: 5.0,
-            game_id: '218',
-            player1: 'random_bot',
-            player2: 'random_bot',
-        },
-        {
-            elodiff: 5.0,
-            game_id: '217',
-            player1: 'random_bot',
-            player2: 'random_bot',
-        },
-        {
-            elodiff: 5.0,
-            game_id: '217',
-            player1: 'random_bot',
-            player2: 'random_bot',
-        },
-        {
-            elodiff: 5.0,
-            game_id: '216',
-            player1: 'random_bot',
-            player2: 'random_bot',
-        },
-        {
-            elodiff: 5.0,
-            game_id: '216',
-            player1: 'random_bot',
-            player2: 'random_bot',
-        },
-        {
-            elodiff: 5.0,
-            game_id: '215',
-            player1: 'random_bot',
-            player2: 'random_bot',
-        },
-        {
-            elodiff: 5.0,
-            game_id: '215',
-            player1: 'random_bot',
-            player2: 'random_bot',
-        },
-        {
-            elodiff: 5.0,
-            game_id: '214',
-            player1: 'random_bot',
-            player2: 'random_bot',
-        },
-        {
-            elodiff: 5.0,
-            game_id: '214',
-            player1: 'random_bot',
-            player2: 'random_bot',
-        },
-        {
-            elodiff: 5.0,
-            game_id: '213',
-            player1: 'random_bot',
-            player2: 'random_bot',
-        },
-        {
-            elodiff: 5.0,
-            game_id: '213',
-            player1: 'random_bot',
-            player2: 'random_bot',
-        },
-        {
-            elodiff: 5.0,
-            game_id: '212',
-            player1: 'random_bot',
-            player2: 'random_bot',
-        },
-        {
-            elodiff: 5.0,
-            game_id: '212',
-            player1: 'random_bot',
-            player2: 'random_bot',
-        },
-        {
-            elodiff: 5.0,
-            game_id: '211',
-            player1: 'random_bot',
-            player2: 'random_bot',
-        },
-        {
-            elodiff: 5.0,
-            game_id: '211',
-            player1: 'random_bot',
-            player2: 'random_bot',
-        },
-        {
-            elodiff: 5.0,
-            game_id: '210',
-            player1: 'random_bot',
-            player2: 'random_bot',
-        },
-        {
-            elodiff: 5.0,
-            game_id: '210',
-            player1: 'random_bot',
-            player2: 'random_bot',
-        },
-        {
-            elodiff: 5.0,
-            game_id: '209',
-            player1: 'random_bot',
-            player2: 'random_bot',
-        },
-        {
-            elodiff: 5.0,
-            game_id: '209',
-            player1: 'random_bot',
-            player2: 'random_bot',
-        },
-        {
-            elodiff: 5.0,
-            game_id: '208',
-            player1: 'random_bot',
-            player2: 'random_bot',
-        },
-        {
-            elodiff: 5.0,
-            game_id: '208',
-            player1: 'random_bot',
-            player2: 'random_bot',
-        },
-        {
-            elodiff: 5.0,
-            game_id: '207',
-            player1: 'random_bot',
-            player2: 'random_bot',
-        },
-        {
-            elodiff: 5.0,
-            game_id: '207',
-            player1: 'random_bot',
-            player2: 'random_bot',
-        },
-        {
-            elodiff: 5.0,
-            game_id: '206',
-            player1: 'random_bot',
-            player2: 'random_bot',
-        },
-        {
-            elodiff: 5.0,
-            game_id: '206',
-            player1: 'random_bot',
-            player2: 'random_bot',
-        },
-        {
-            elodiff: 5.0,
-            game_id: '205',
-            player1: 'random_bot',
-            player2: 'random_bot',
-        },
-        {
-            elodiff: 5.0,
-            game_id: '205',
-            player1: 'random_bot',
-            player2: 'random_bot',
-        },
-    ],
-    num_games: 448,
-    rank: 1,
-    username: 'random_bot',
-};
 
 const styles = theme => ({
     versusColumnEntry: {
@@ -276,11 +24,112 @@ const styles = theme => ({
         justifyContent: 'space-evenly',
     },
     summary: {
-        marginBottom: theme.margin,
+        marginTop: theme.margin,
+        marginBottom: theme.margin * 2,
+    },
+    rankLoading: {
+        padding: [0, theme.padding / 2],
     },
 });
 
+const PlayerScoreboard = memo(({show, playerData, classes}) => {
+    const history = useHistory();
+    const [displayedTableItems, setDisplayedTableItems] = useState(0);
+    const refDisplayedTableItems = useRef(0);
+    useInterval(() => {
+        if (
+            playerData &&
+            playerData.last_games &&
+            refDisplayedTableItems.current < playerData.last_games.length
+        ) {
+            setDisplayedTableItems(refDisplayedTableItems.current + 1);
+            refDisplayedTableItems.current = refDisplayedTableItems.current + 1;
+        }
+    }, show ? 100 : null);
+
+    return (
+        <>
+            <Heading node={'h3'}>
+                {`${playerData.username}'s scoreboard`}
+            </Heading>
+            <Table
+                animate
+                headers={[]}
+                dataset={playerData.highscores.map((entry, index) => [
+                    index,
+
+                    <Link onClick={() => history.push(`/player/${entry[0]}`)}>
+                        <Words
+                            animate
+                            show={show && displayedTableItems > index}>
+                            {entry[0]}
+                        </Words>
+                    </Link>,
+
+                    entry[1],
+                ])}
+            />
+        </>
+    );
+});
+
+const PlayerRecentGames = memo(({show, playerData, classes}) => {
+    const [displayedTableItems, setDisplayedTableItems] = useState(0);
+    const refDisplayedTableItems = useRef(0);
+    useInterval(() => {
+        if (
+            playerData &&
+            playerData.last_games &&
+            refDisplayedTableItems.current < playerData.last_games.length
+        ) {
+            setDisplayedTableItems(refDisplayedTableItems.current + 1);
+            refDisplayedTableItems.current = refDisplayedTableItems.current + 1;
+        }
+    }, show ? 100 : null);
+
+    return (
+        <>
+            <Heading node={'h3'}>
+                {`${playerData.username}'s recent games`}
+            </Heading>
+            <Table
+                animate
+                dataset={playerData.last_games.map((entry, index) => [
+                    entry.game_id,
+                    show && (
+                        <div className={classes.versusColumnEntry}>
+                            <SoundWords
+                                layer="success"
+                                animate
+                                show={show && displayedTableItems > index}>
+                                {entry.player1}
+                            </SoundWords>{' '}
+                            <sub>
+                                <SoundWords
+                                    layer="disabled"
+                                    animate
+                                    show={show && displayedTableItems > index}>
+                                    vs
+                                </SoundWords>
+                            </sub>{' '}
+                            <SoundWords
+                                layer="alert"
+                                animate
+                                show={show && displayedTableItems > index}>
+                                {entry.player2}
+                            </SoundWords>
+                        </div>
+                    ),
+                    entry.elodiff,
+                ])}
+            />
+        </>
+    );
+});
+
 export const PlayerPage = withStyles(styles)(({show, classes}) => {
+    const {playerName} = useParams();
+
     const history = useHistory();
     const [showContent, setShowContent] = useState(false);
     // Add a nice delay to between Heading and Content animation
@@ -296,153 +145,106 @@ export const PlayerPage = withStyles(styles)(({show, classes}) => {
         [show],
     );
 
-    const [displayedTableItems, setDisplayedTableItems] = useState(0);
-    const refDisplayedTableItems = useRef(0);
+    const [playerData, setPlayerData] = useState(null);
+    const loadData = useCallback(
+        async () => {
+            const data = await fetch(
+                `${BASE_URL}/player/${playerName}/info.json`,
+            );
+            const json = await data.json();
+            setPlayerData(json);
+        },
+        [playerName],
+    );
+    useInterval(loadData, playerData && playerData.finished ? null : 5000);
+    useEffect(loadData, []);
+
     useInterval(() => {
         if (
-            testData &&
-            testData.last_games &&
-            refDisplayedTableItems.current < testData.last_games.length
+            playerData &&
+            playerData.last_games &&
+            refDisplayedTableItems.current < playerData.last_games.length
         ) {
             setDisplayedTableItems(refDisplayedTableItems.current + 1);
             refDisplayedTableItems.current = refDisplayedTableItems.current + 1;
         }
     }, show ? 100 : null);
 
-    const {playerName} = useParams();
-    const playerData = testData;
     return (
         <PageWrapper>
             <Project show={show} animate header={playerName}>
-                {anim => (
-                    <>
-                        <div className={classes.summary}>
-                            <SoundWords animate show={anim.entered}>
-                                {`Total of ${playerData.num_games} played.`}
-                            </SoundWords>{' '}
-                            <SoundWords animate show={anim.entered}>
-                                Ranked
-                            </SoundWords>{' '}
-                            <SoundWords
-                                animate
-                                show={showContent}
-                                layer={playerData.rank <= 3 ? 'success' : null}>
-                                {`#${
-                                    playerData.rank
-                                        ? playerData.rank.toString()
-                                        : ''
-                                }.`}
-                            </SoundWords>{' '}
-                            <SoundWords animate show={anim.entered}>
-                                View
-                            </SoundWords>{' '}
-                            <Link
-                                onClick={() =>
-                                    history.push(
-                                        `/player/${playerData.username}/live`,
-                                    )
-                                }>
-                                <SoundWords animate show={anim.entered}>
-                                    {`${playerData.username}'s games`}
-                                </SoundWords>
-                            </Link>{' '}
-                            <SoundWords animate show={anim.entered}>
-                                live.
-                            </SoundWords>
-                        </div>
-                        <Row>
-                            <Col s={12} m={12} l={6}>
-                                <Heading node={'h3'}>
-                                    {`${playerData.username}'s scoreboard`}
-                                </Heading>
-                                <Table
-                                    animate
-                                    headers={[]}
-                                    dataset={testData.highscores.map(
-                                        (entry, index) => [
-                                            index,
-
-                                            <Link
-                                                onClick={() =>
-                                                    history.push(
-                                                        `/player/${
-                                                            playerData.username
-                                                        }/live`,
-                                                    )
-                                                }>
-                                                <Words
-                                                    animate
-                                                    show={
-                                                        anim.entered &&
-                                                        displayedTableItems >
-                                                            index
-                                                    }
-                                                    >
-                                                    {entry[0]}
-                                                </Words>
-                                            </Link>,
-
-                                            entry[1],
-                                        ],
-                                    )}
-                                />
-                            </Col>
-                            <Col s={12} m={12} l={6}>
-                                <Heading node={'h3'}>
-                                    {`${playerData.username}'s recent games`}
-                                </Heading>
-                                <Table
-                                    animate
-                                    dataset={testData.last_games.map(
-                                        (entry, index) => [
-                                            entry.game_id,
-                                            anim.entered && (
-                                                <div
-                                                    className={
-                                                        classes.versusColumnEntry
-                                                    }>
-                                                    <SoundWords
-                                                        layer="success"
-                                                        animate
-                                                        show={
-                                                            anim.entered &&
-                                                            displayedTableItems >
-                                                                index
-                                                        }>
-                                                        {entry.player1}
-                                                    </SoundWords>{' '}
-                                                    <sub>
-                                                        <SoundWords
-                                                            layer="disabled"
-                                                            animate
-                                                            show={
-                                                                anim.entered &&
-                                                                displayedTableItems >
-                                                                    index
-                                                            }>
-                                                            vs
-                                                        </SoundWords>
-                                                    </sub>{' '}
-                                                    <SoundWords
-                                                        layer="alert"
-                                                        animate
-                                                        show={
-                                                            anim.entered &&
-                                                            displayedTableItems >
-                                                                index
-                                                        }>
-                                                        {entry.player1}
-                                                    </SoundWords>
-                                                </div>
-                                            ),
-                                            entry.elodiff,
-                                        ],
-                                    )}
-                                />
-                            </Col>
-                        </Row>
-                    </>
-                )}
+                {playerData
+                    ? anim => (
+                          <>
+                              <div className={classes.summary}>
+                                  <SoundWords animate show={show}>
+                                      {`Total of ${
+                                          playerData.num_games
+                                      } played.`}
+                                  </SoundWords>{' '}
+                                  <SoundWords animate show={anim.entered}>
+                                      Ranked
+                                  </SoundWords>{' '}
+                                  {showContent ? (
+                                      <SoundWords
+                                          animate
+                                          show={showContent}
+                                          layer={
+                                              playerData.rank <= 3
+                                                  ? 'success'
+                                                  : null
+                                          }>
+                                          {`#${
+                                              playerData.rank
+                                                  ? playerData.rank.toString()
+                                                  : ''
+                                          }.`}
+                                      </SoundWords>
+                                  ) : (
+                                      show && (
+                                          <span className={classes.rankLoading}>
+                                              <Loading animate small />
+                                          </span>
+                                      )
+                                  )}{' '}
+                                  <SoundWords animate show={anim.entered}>
+                                      View
+                                  </SoundWords>{' '}
+                                  <Link
+                                      onClick={() =>
+                                          history.push(
+                                              `/player/${
+                                                  playerData.username
+                                              }/live`,
+                                          )
+                                      }>
+                                      <SoundWords animate show={anim.entered}>
+                                          {`${playerData.username}'s games`}
+                                      </SoundWords>
+                                  </Link>{' '}
+                                  <SoundWords animate show={anim.entered}>
+                                      live.
+                                  </SoundWords>
+                              </div>
+                              <Row>
+                                  <Col s={12} m={12} l={6}>
+                                      <PlayerScoreboard
+                                          show={showContent}
+                                          classes={classes}
+                                          playerData={playerData}
+                                      />
+                                  </Col>
+                                  <Col s={12} m={12} l={6}>
+                                      <PlayerRecentGames
+                                          show={showContent}
+                                          classes={classes}
+                                          playerData={playerData}
+                                      />
+                                  </Col>
+                              </Row>
+                          </>
+                      )
+                    : show && <Loading />}
             </Project>
         </PageWrapper>
     );
