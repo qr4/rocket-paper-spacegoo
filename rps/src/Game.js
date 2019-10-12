@@ -8,7 +8,6 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 
 import {Table, Frame, Button, Loading, Project, Words, Link, withStyles } from "@arwes/arwes";
-import { g } from "./dummy_data";
 import {Container} from "./components/container";
 import {useHistory, useParams} from "react-router";
 import {useInterval} from "./hooks/useInterval";
@@ -104,7 +103,7 @@ const reducer = (state, action) => {
             return {...state, playback: !state.playback};
         }
         case 'updateGame': {
-            return {...state, game: action.value};
+            return {...state, game: [...(state.game || []), ...action.value]};
         }
         default:
             throw Error();
@@ -121,11 +120,13 @@ export const Game = withStyles(styles)(({show, classes}) => {
         const data = await fetch(`${BASE_URL}/game/${id}/info.json`);
         const json = await data.json();
         setInfo(json);
-        dispatch({type: 'updateGame', value: g});
-    }, info && info.finished ? null : 2000);
+    }, info && info.finished ? null : 1000);
 
     useInterval(async () => {
-    });
+        const data = await fetch(`${BASE_URL}/game/${id}/rounds/${game && game.length || 0}`);
+        const json = await data.json();
+        dispatch({type: 'updateGame', value: json});
+    }, game && game.length && game[game.length -1]['game_over'] ? null : 1000);
 
     useInterval(() => playback && dispatch({type: 'incrementMove'}), 10);
 
