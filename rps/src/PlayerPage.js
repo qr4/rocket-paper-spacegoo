@@ -66,7 +66,7 @@ const PlayerScoreboard = memo(({show, playerData, classes}) => {
                         </Words>
                     </Link>,
 
-                    entry[1],
+                    entry[1].toFixed(3),
                 ])}
             />
         </>
@@ -120,7 +120,9 @@ const PlayerRecentGames = memo(({show, playerData, classes}) => {
                             </SoundWords>
                         </div>
                     ),
-                    entry.elodiff,
+                    entry.elodiff > 0
+                        ? `+${entry.elodiff.toFixed(3)}`
+                        : entry.elodiff,
                 ])}
             />
         </>
@@ -158,17 +160,6 @@ export const PlayerPage = withStyles(styles)(({show, classes}) => {
     );
     useInterval(loadData, playerData && playerData.finished ? null : 5000);
     useEffect(loadData, []);
-
-    useInterval(() => {
-        if (
-            playerData &&
-            playerData.last_games &&
-            refDisplayedTableItems.current < playerData.last_games.length
-        ) {
-            setDisplayedTableItems(refDisplayedTableItems.current + 1);
-            refDisplayedTableItems.current = refDisplayedTableItems.current + 1;
-        }
-    }, show ? 100 : null);
 
     return (
         <PageWrapper>
