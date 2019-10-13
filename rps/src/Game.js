@@ -94,41 +94,85 @@ const computeRoundData = (round) => {
 const reducer = (state, action) => {
     switch (action.type) {
         case 'incrementMove':
-            return {...state, turn: Math.min(state.game.length-1, state.turn + 1), playback: state.playback && state.turn !== state.game.length - 1};
+            if (!state.game || !state.game.length) return state;
+            return {...state, turn: Math.min(state.game.length-1, state.turn + 1)};
+        case 'setMove': {
+            return {...state, turn: action.value};
+        }
         case 'decrementMove':
-            return {...state, turn: Math.max(0, state.turn - 1)};
+            return {...state, turn: Math.max(0, state.turn - 1), playback: false};
         case 'setMove':
             return {...state, turn: action.value, playback: false};
         case 'togglePlayback': {
             return {...state, playback: !state.playback};
         }
+        case 'setPlayback': {
+            return {...state, playback: action.value};
+        }
         case 'updateGame': {
             return {...state, game: [...(state.game || []), ...action.value]};
+        }
+        case 'setGameId': {
+            console.log("setting gameId", action);
+            return {...state, gameId: action.value, game: undefined};
         }
         default:
             throw Error();
     }
 };
 
-export const Game = withStyles(styles)(({show, classes}) => {
-    const {id} = useParams();
-    const [{turn, playback, game}, dispatch] = useReducer(reducer, {turn: 0, playback: false, game: undefined});
+export const Game = withStyles(styles)(({show, classes, showLatest}) => {
+    const {id, playerName} = useParams();
+
+    const [{turn, playback, game, gameId}, dispatch] = useReducer(reducer, {turn: 0, playback: false, game: undefined, gameId: id});
     const history = useHistory();
     const [info, setInfo] = useState(undefined);
 
     useInterval(async () => {
-        const data = await fetch(`${BASE_URL}/game/${id}/info.json`);
+        const data = await fetch(`${BASE_URL}/player/${playerName}/latest_game.json`) ;
         const json = await data.json();
-        setInfo(json);
+
+        if (gameId !== json.last && json.last && (!game || !turn || (game.length && game[turn]["game_over"]) || !playback)) {
+            dispatch({type: 'setGameId', value: json.last});
+            dispatch({type: 'setPlayback', value: true});
+            dispatch({type: 'setMove', value: 0});
+            setInfo(null);
+        }
+    }, playerName === undefined ? null : 3000);
+
+    useInterval(async () => {
+        const data = await fetch(`${BASE_URL}/info.json`) ;
+        const json = await data.json();
+
+        console.log(json);
+        const lastGameId = json && json.last_games && json.last_games.length && json.last_games[0] &&  json.last_games[0].game_id;
+
+        if (gameId !== lastGameId && lastGameId && (!game || !turn || (game.length && game[turn]["game_over"]) || !playback)) {
+            dispatch({type: 'setGameId', value: lastGameId});
+            dispatch({type: 'setPlayback', value: true});
+            dispatch({type: 'setMove', value: 0});
+            setInfo(null);
+        }
+    }, !showLatest ? null : 3000);
+
+    useInterval(async () => {
+        if (gameId !== undefined) {
+            const data = await fetch(`${BASE_URL}/game/${gameId}/info.json`);
+            const json = await data.json();
+            setInfo(json);
+        }
     }, info && info.finished ? null : 1000);
 
     useInterval(async () => {
-        const data = await fetch(`${BASE_URL}/game/${id}/rounds/${game && game.length || 0}`);
-        const json = await data.json();
-        dispatch({type: 'updateGame', value: json});
-    }, game && game.length && game[game.length -1]['game_over'] ? null : 1000);
+        if (gameId !== undefined) {
+            const data = await fetch(`${BASE_URL}/game/${gameId}/rounds/${game && game.length || 0}`);
+            const json = await data.json();
+            dispatch({type: 'updateGame', value: json});
+        }
+    }, game && game.length && game[game.length -1]['game_over'] ? null : 500);
 
-    useInterval(() => playback && dispatch({type: 'incrementMove'}), 10);
+
+    useInterval(() => playback && dispatch({type: 'incrementMove'}), 33);
 
     return (
         <Container>
@@ -138,7 +182,7 @@ export const Game = withStyles(styles)(({show, classes}) => {
                 corners={4}
                 show={show}
                 layer='primary'>
-                {(anim) => <GameHeader className={classes.header} info={info} history={history} show={anim.entered} arwesShow={show}/>}
+                {(anim) => <GameHeader playerName={playerName} className={classes.header} info={info} history={history} show={anim.entered} arwesShow={show}/>}
             </Frame>
 
             <Frame
@@ -173,7 +217,7 @@ export const Game = withStyles(styles)(({show, classes}) => {
                 corners={4}
                 layer='primary'>
                 {(anim) => anim.entered && (game ?
-                        <GameCanvas turn={game[turn]} info={info}/> :
+                        <GameCanvas turn={game[turn]} info={info} gameId={gameId}/> :
                         show && <Loading animate/> || null
                 )}
             </Frame>

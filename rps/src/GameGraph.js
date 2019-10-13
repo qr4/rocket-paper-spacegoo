@@ -50,7 +50,7 @@ export const GameGraph = memo(({game, turn, dispatch, show, arwesShow}) => {
                           containerComponent={
                               <VictoryCursorContainer cursorLabelComponent={<div style={{display: "none"}} />}
                                                       cursorDimension="x"
-                                                      onCursorChange={d => d && dispatch({type: 'setMove', value: Math.floor(d)})} />
+                                                      onCursorChange={d => d && dispatch({type: 'setMove', value: Math.ceil(d)})} />
                           }>
                 {data.map((d, idx) =>
                     (<VictoryLine

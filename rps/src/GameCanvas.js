@@ -2,15 +2,26 @@ import React, {useEffect, useRef, memo} from 'react';
 
 let stars_buffer;
 let planets_buffer;
+let last_gameId;
 
 const default_shades = ["#BFBBB8", "#E4E0DC", "#807D7A", ];
 const player1_shades = ["#00BF0A","#00E60B", "#004003"];
 const player2_shades = ["#BF0020", "#E60028", "#800015",];
 
-export const GameCanvas = memo(({turn, info}) => {
+export const GameCanvas = memo(({turn, info, gameId}) => {
     let ref = useRef();
 
     useEffect(() => {
+        if (!turn || !info || gameId === undefined) {
+            return;
+        }
+
+        if (gameId !== last_gameId) {
+           stars_buffer = null;
+           planets_buffer = null;
+           last_gameId = gameId;
+        }
+
         let canvas = ref.current;
 
         let width = getComputedStyle(canvas).getPropertyValue('width').slice(0, -2);
@@ -48,7 +59,7 @@ export const GameCanvas = memo(({turn, info}) => {
 
 
         // Off-screen canvas for planets
-        if (!planets_buffer) {
+        if (!planets_buffer && turn && turn.planets) {
             planets_buffer = document.createElement('canvas');
             planets_buffer.width = width;
             planets_buffer.height = height;
@@ -90,6 +101,8 @@ export const GameCanvas = memo(({turn, info}) => {
             c.translate(width/2, height/2);
 
             c.clearRect(-canvas.width/2,-canvas.height/2,canvas.width,canvas.height);
+            if (!turn || !turn.planets) return;
+
             c.drawImage(stars_buffer, -canvas.width/2, -canvas.height/2);
 
             const planets = turn.planets;

@@ -15,7 +15,7 @@ import {SoundWords} from './';
 
 const styles = themes => ({
     root: {
-        marginBottom: themes.margin * 4,
+        marginBottom: themes.margin,
     },
     container: {
         display: 'flex',

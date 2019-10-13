@@ -62,8 +62,14 @@ function App({wrapperAnimEntered}) {
         <Router>
             <NavBar show={wrapperAnimEntered} />
             <Switch>
+                <Route path="/player/:playerName/live">
+                    <Game show={showContent} />
+                </Route>
                 <Route path="/player/:playerName">
                     <PlayerPage show={showContent} />
+                </Route>
+                <Route path="/game/latest">
+                    <Game show={showContent} showLatest/>
                 </Route>
                 <Route path="/game/:id">
                     <Game show={showContent}/>
