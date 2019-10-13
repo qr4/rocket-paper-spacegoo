@@ -7,6 +7,8 @@ import {
     Row,
     withStyles,
 } from '@arwes/arwes';
+import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
+import {faChevronRight} from '@fortawesome/free-solid-svg-icons';
 import {useDebounce} from 'use-debounce';
 import {useHistory} from 'react-router-dom';
 import React, {useEffect, useState, useCallback} from 'react';
@@ -32,7 +34,7 @@ const styles = theme => ({
     },
 });
 
-const HomePageRecentGamesTitle = ({classes}) => {
+const HomePageRecentGamesTitle = ({classes, show}) => {
     const history = useHistory();
     return (
         <div className={classes.recentGamesContainer}>
@@ -41,9 +43,12 @@ const HomePageRecentGamesTitle = ({classes}) => {
                 <Link
                     onClick={() => history.push(`/game/latest`)}
                     className={classes.latestLink}>
-                    <SoundWords animate show={true}>
+                    <SoundWords animate show={show}>
                         Watch latest
-                    </SoundWords>
+                    </SoundWords>{' '}
+                      {show && <FontAwesomeIcon
+                            icon={faChevronRight}
+                        />}
                 </Link>
             </div>
         </div>
@@ -82,7 +87,7 @@ const HomePageFrameContent = ({show, classes, gameData}) => {
                 </Col>
                 <Col s={12} m={12} l={6}>
                     <RecentGames
-                        title={<HomePageRecentGamesTitle classes={classes} />}
+                        title={<HomePageRecentGamesTitle show={show} classes={classes} />}
                         show={delayedShow2}
                         lastGamesData={gameData ? gameData.last_games : null}
                     />

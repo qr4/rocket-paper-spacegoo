@@ -6,9 +6,9 @@ import {
     Logo,
     withStyles,
 } from '@arwes/arwes';
-import {useHistory} from 'react-router-dom';
 import {faRocket, faSatellite} from '@fortawesome/free-solid-svg-icons';
-import React from 'react';
+import {useHistory, Link as RouterLink} from 'react-router-dom';
+import React, {useState} from 'react';
 
 import {Container} from './container';
 import {SoundWords} from './';
@@ -42,17 +42,39 @@ const styles = themes => ({
     },
 });
 
+const names = [
+    'Rock Paper Spacegoo',
+    'Rock Paper Scissors',
+    'Rolling Pickles Sensually',
+    'Rethink Play Station',
+    'Radical Peter Spinning',
+    'Rocket Propulsion Solution',
+];
+
 export const NavBar = withStyles(styles)(({show, classes}) => {
     const history = useHistory();
+    const [name, setName] = useState(names[0]);
     return (
         <Header animate className={classes.root}>
             <Container className={classes.container}>
                 <Heading node="h4" className={classes.headingText}>
-                    <Logo className={classes.logo} animate size={50} />
-                    <ArwesLink
-                        href="#"
-                        onClick={() => history.push('/')}>
-                        Rocket Paper Spacegoo
+                    <Logo
+                        className={classes.logo}
+                        animate
+                        size={50}
+                        onClick={() =>
+                            setName(
+                                names[Math.floor(Math.random() * names.length)],
+                            )
+                        }
+                    />
+                    <ArwesLink href="#" onClick={() => history.push('/')}>
+                        <SoundWords
+                            animate
+                            style={{marginLeft: '5px'}}
+                            show={show}>
+                            {name}
+                        </SoundWords>
                     </ArwesLink>
                 </Heading>
                 <div className={classes.linkContainer}>

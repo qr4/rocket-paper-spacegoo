@@ -1,18 +1,25 @@
-import {Heading, Loading, Table, withStyles} from '@arwes/arwes';
-import React, {memo, useRef, useState} from 'react';
+import {Heading, Link, Loading, withStyles} from '@arwes/arwes';
+import {useHistory} from 'react-router-dom';
+import React, { memo, useRef, useState } from 'react';
 
 import {SoundWords} from './';
 import {useInterval} from '../hooks/useInterval';
+import Table from './Table';
 
-const styles = theme => ({
-    versusColumnEntry: {
-        display: 'flex',
-        justifyContent: 'space-evenly',
-    },
-});
+const styles = theme =>
+    console.info(theme.color) || {
+        versusColumnEntry: {
+            display: 'flex',
+            justifyContent: 'space-evenly',
+        },
+        eloLost: {
+            color: theme.color.secondary.light,
+        },
+    };
 
 export const RecentGames = withStyles(styles)(
-    memo(({title, show, lastGamesData, classes}) => {
+    memo(({title, show, lastGamesData, classes, focusedPlayer}) => {
+        const history = useHistory();
         const [displayedTableItems, setDisplayedTableItems] = useState(0);
         const refDisplayedTableItems = useRef(0);
         useInterval(() => {
@@ -29,43 +36,116 @@ export const RecentGames = withStyles(styles)(
         return (
             <>
                 <Heading node={'h3'}>{title}</Heading>
-                {show && (lastGamesData ? (
-                    <Table
-                        animate
-                        dataset={lastGamesData.map((entry, index) => [
-                            entry.game_id,
-                            <div className={classes.versusColumnEntry}>
-                                <SoundWords
-                                    layer="success"
-                                    animate
-                                    show={show && displayedTableItems > index}>
-                                    {entry.player1}
-                                </SoundWords>{' '}
-                                <sub>
-                                    <SoundWords
-                                        layer="disabled"
-                                        animate
-                                        show={
-                                            show && displayedTableItems > index
-                                        }>
-                                        vs
-                                    </SoundWords>
-                                </sub>{' '}
-                                <SoundWords
-                                    layer="alert"
-                                    animate
-                                    show={show && displayedTableItems > index}>
-                                    {entry.player2}
-                                </SoundWords>
-                            </div>,
-                            entry.elodiff > 0
-                                ? `+${entry.elodiff.toFixed(3)}`
-                                : entry.elodiff,
-                        ])}
-                    />
-                ) : (
-                    <Loading />
-                ))}
+                {show &&
+                    (lastGamesData ? (
+                        <Table
+                            animate
+                            dataset={lastGamesData.map(
+                                (
+                                    {game_id, player1, player2, elodiff},
+                                    index,
+                                ) => {
+                                    const [
+                                        leftPlayer,
+                                        rightPlayer,
+                                        elodelta,
+                                    ] =
+                                        !focusedPlayer ||
+                                        focusedPlayer === player1
+                                            ? [player1, player2, elodiff, false]
+                                            : [
+                                                  player2,
+                                                  player1,
+                                                  -elodiff,
+                                              ];
+                                    return {
+                                        key: `${game_id}`,
+                                        value: [
+                                            <Link
+                                                href="javascript:void(0)"
+                                                onClick={() =>
+                                                    history.push(
+                                                        `/game/${game_id}`,
+                                                    )
+                                                }>
+                                                {game_id}
+                                            </Link>,
+                                            <div
+                                                className={
+                                                    classes.versusColumnEntry
+                                                }>
+                                                <Link
+                                                    href="javascript:void(0)"
+                                                    onClick={() =>
+                                                        history.push(
+                                                            `/player/${leftPlayer}`,
+                                                        )
+                                                    }>
+                                                    <SoundWords
+                                                        layer={
+                                                            leftPlayer === player1
+                                                                ? 'success'
+                                                                : 'alert'
+                                                        }
+                                                        animate
+                                                        show={
+                                                            show &&
+                                                            displayedTableItems >
+                                                                index
+                                                        }>
+                                                        {leftPlayer}
+                                                    </SoundWords>
+                                                </Link>{' '}
+                                                <sub>
+                                                    {show &&
+                                                        displayedTableItems >
+                                                            index &&
+                                                        'vs'}
+                                                </sub>{' '}
+                                                <Link
+                                                    href="javascript:void(0)"
+                                                    onClick={() =>
+                                                        history.push(
+                                                            `/player/${rightPlayer}`,
+                                                        )
+                                                    }>
+                                                    <SoundWords
+                                                        layer={
+                                                            rightPlayer === player1
+                                                                ? 'success'
+                                                                : 'alert'
+                                                        }
+                                                        animate
+                                                        show={
+                                                            show &&
+                                                            displayedTableItems >
+                                                                index
+                                                        }>
+                                                        {rightPlayer}
+                                                    </SoundWords>
+                                                </Link>
+                                            </div>,
+                                            <span
+                                                className={
+                                                    elodelta < 0 &&
+                                                    classes.eloLost
+                                                }>
+                                                {elodelta
+                                                    ? elodelta > 0
+                                                      ? `+${elodelta.toFixed(
+                                                            3,
+                                                        )}`
+                                                      : elodelta.toFixed(3)
+                                                    : '---'}
+                                            </span>,
+                                        ],
+                                    };
+                                },
+                            )}
+                        />
+                    ) : (
+                        <Loading />
+                    ))}
             </>
         );
     }),

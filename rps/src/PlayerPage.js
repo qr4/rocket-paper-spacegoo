@@ -1,11 +1,19 @@
-import { Col, Link, Loading, Project, Row, withStyles } from '@arwes/arwes';
+import {
+    Col,
+    Link,
+    Loading,
+    Project,
+    Row,
+    Words,
+    withStyles,
+} from '@arwes/arwes';
 import {useParams, useHistory} from 'react-router-dom';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 
 import {BASE_URL} from './Game';
 import {PageWrapper} from './components/PageWrapper';
-import { PlayerScoreboard } from './components/PlayerScoreboard';
-import { RecentGames } from './components/RecentGames';
+import {PlayerScoreboard} from './components/PlayerScoreboard';
+import {RecentGames} from './components/RecentGames';
 import {SoundWords} from './components';
 import {useInterval} from './hooks/useInterval';
 
@@ -121,7 +129,13 @@ export const PlayerPage = withStyles(styles)(({show, classes}) => {
                               <Row>
                                   <Col s={12} m={12} l={6}>
                                       <PlayerScoreboard
-                                          title={`${playerName}'s scoreboard`}
+                                          title={
+                                              <Words
+                                                  animate
+                                                  show={
+                                                      showContent
+                                                  }>{`${playerName}'s scoreboard`}</Words>
+                                          }
                                           show={showContent}
                                           classes={classes}
                                           scoreboardData={playerData.highscores}
@@ -129,10 +143,17 @@ export const PlayerPage = withStyles(styles)(({show, classes}) => {
                                   </Col>
                                   <Col s={12} m={12} l={6}>
                                       <RecentGames
-                                        title={`${playerName}'s recent games`}
+                                          title={
+                                              <Words
+                                                  animate
+                                                  show={
+                                                      showContent
+                                                  }>{`${playerName}'s recent games`}</Words>
+                                          }
                                           show={showContent}
                                           classes={classes}
                                           lastGamesData={playerData.last_games}
+                                          focusedPlayer={playerName}
                                       />
                                   </Col>
                               </Row>
