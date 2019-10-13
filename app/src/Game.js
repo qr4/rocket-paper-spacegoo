@@ -110,7 +110,15 @@ const reducer = (state, action) => {
             return {...state, playback: action.value};
         }
         case 'updateGame': {
-            return {...state, game: [...(state.game || []), ...action.value]};
+            const newGame = [...(state.game || []), ...action.value];
+            const newGameMap = {};
+            for (const round of newGame) {
+                newGameMap[round.round] = round;
+            }
+
+            const newGamesFiltered = Object.values(newGameMap).sort((r1, r2) => r1.round - r2.round);
+
+            return {...state, game: newGamesFiltered};
         }
         case 'setGameId': {
             console.log("setting gameId", action);
