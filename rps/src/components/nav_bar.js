@@ -49,9 +49,11 @@ export const NavBar = withStyles(styles)(({show, classes}) => {
             <Container className={classes.container}>
                 <Heading node="h4" className={classes.headingText}>
                     <Logo className={classes.logo} animate size={50} />
-                    <SoundWords animate style={{marginLeft: '5px'}} show={show}>
+                    <ArwesLink
+                        href="#"
+                        onClick={() => history.push('/')}>
                         Rocket Paper Spacegoo
-                    </SoundWords>
+                    </ArwesLink>
                 </Heading>
                 <div className={classes.linkContainer}>
                     <ArwesLink
