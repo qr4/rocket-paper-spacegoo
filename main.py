@@ -481,7 +481,7 @@ def main():
         try:
             socket, address = server.accept()
             conn = Connection(socket)
-            conn.send("welcome to rocket-scissor-spacegoo. see https://github.com/qr4/space-scissors-spacegoo for more information on how to play")
+            conn.send("welcome to rocket-paper-spacegoo. see https://github.com/qr4/rocket-paper-spacegoo for more information on how to play")
         except (SystemExit, KeyboardInterrupt):
             break
 

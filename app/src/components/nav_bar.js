@@ -81,7 +81,7 @@ export const NavBar = withStyles(styles)(({show, classes}) => {
                     <ArwesLink
                         className={classes.link}
                         animate
-                        href="https://github.com/qr4/rocket-scissor-spacegoo">
+                        href="https://github.com/qr4/rocket-paper-spacegoo">
                         <FontAwesomeIcon
                             className={classes.linkIcon}
                             icon={faSatellite}
