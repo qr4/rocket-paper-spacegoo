@@ -23,9 +23,6 @@ const styles = themes => {
         frames: {
             marginTop: themes.margin,
         },
-        header: {
-            paddingLeft: themes.padding
-        },
         frameContent: {
             padding: themes.padding,
         },
@@ -197,7 +194,7 @@ export const Game = withStyles(styles)(({show, classes, showLatest}) => {
                 corners={4}
                 show={show}
                 layer='primary'>
-                {(anim) => <GameHeader playerName={playerName} className={classes.header} info={info} history={history} show={anim.entered} arwesShow={show}/>}
+                {(anim) => <GameHeader playerName={playerName} info={info} history={history} show={anim.entered} arwesShow={show}/>}
             </Frame>
 
             <Frame
