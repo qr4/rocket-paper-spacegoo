@@ -50,7 +50,7 @@ export const NavBar = withStyles(styles)(({show, classes}) => {
                 <Heading node="h4" className={classes.headingText}>
                     <Logo className={classes.logo} animate size={50} />
                     <SoundWords animate style={{marginLeft: '5px'}} show={show}>
-                        Rock Paper Scissors
+                        Rocket Paper Spacegoo
                     </SoundWords>
                 </Heading>
                 <div className={classes.linkContainer}>

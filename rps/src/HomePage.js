@@ -113,7 +113,7 @@ export const HomePage = withStyles(styles)(({show, classes}) => {
         <PageWrapper>
             <Heading node="h1">
                 <SoundWords animate show={show}>
-                    Rocket Scissor Spacegoo
+                    Rocket Paper Spacegoo
                 </SoundWords>
             </Heading>
             <Frame animate show={show} layer="primary" corners={5} level={3}>

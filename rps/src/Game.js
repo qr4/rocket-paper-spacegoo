@@ -1,4 +1,4 @@
-import React, {useState, useReducer} from 'react';
+import React, {useState, useReducer, useCallback, useEffect} from 'react';
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
 import {
     faChevronLeft,
@@ -95,7 +95,8 @@ const reducer = (state, action) => {
     switch (action.type) {
         case 'incrementMove':
             if (!state.game || !state.game.length) return state;
-            return {...state, turn: Math.min(state.game.length-1, state.turn + 1)};
+            return {...state, turn: Math.min(state.game.length-1, state.turn + 1),
+                playback: state.playback && (!state.game || !state.turn || state.turn + 1 >= state.game.length || !state.game[state.turn + 1].game_over)};
         case 'setMove': {
             return {...state, turn: action.value};
         }
@@ -123,12 +124,12 @@ const reducer = (state, action) => {
 
 export const Game = withStyles(styles)(({show, classes, showLatest}) => {
     const {id, playerName} = useParams();
-
     const [{turn, playback, game, gameId}, dispatch] = useReducer(reducer, {turn: 0, playback: false, game: undefined, gameId: id});
     const history = useHistory();
     const [info, setInfo] = useState(undefined);
 
-    useInterval(async () => {
+    const loadLatestGameForPlayer = useCallback(async () => {
+        if (playerName === undefined) return;
         const data = await fetch(`${BASE_URL}/player/${playerName}/latest_game.json`) ;
         const json = await data.json();
 
@@ -138,13 +139,15 @@ export const Game = withStyles(styles)(({show, classes, showLatest}) => {
             dispatch({type: 'setMove', value: 0});
             setInfo(null);
         }
-    }, playerName === undefined ? null : 3000);
+    }, [game, turn, playerName, playback, setInfo]);
 
-    useInterval(async () => {
+    useInterval(loadLatestGameForPlayer, playerName === undefined ? null : 3000, true);
+
+    const loadLatestGame = useCallback(async () => {
+        if (!showLatest) return;
         const data = await fetch(`${BASE_URL}/info.json`) ;
         const json = await data.json();
 
-        console.log(json);
         const lastGameId = json && json.last_games && json.last_games.length && json.last_games[0] &&  json.last_games[0].game_id;
 
         if (gameId !== lastGameId && lastGameId && (!game || !turn || (game.length && game[turn]["game_over"]) || !playback)) {
@@ -153,26 +156,31 @@ export const Game = withStyles(styles)(({show, classes, showLatest}) => {
             dispatch({type: 'setMove', value: 0});
             setInfo(null);
         }
-    }, !showLatest ? null : 3000);
+    }, [turn, game, playback, setInfo]);
 
-    useInterval(async () => {
+    useInterval(loadLatestGame, !showLatest ? null : 3000, true);
+
+    const loadInfo = useCallback(async () => {
         if (gameId !== undefined) {
             const data = await fetch(`${BASE_URL}/game/${gameId}/info.json`);
             const json = await data.json();
-            setInfo(json);
+            if (setInfo) setInfo(json);
         }
-    }, info && info.finished ? null : 1000);
+    }, [gameId, setInfo]);
 
-    useInterval(async () => {
+    useInterval(loadInfo, info && info.finished ? null : 1000, true);
+
+    const loadGameData = useCallback(async () => {
         if (gameId !== undefined) {
             const data = await fetch(`${BASE_URL}/game/${gameId}/rounds/${game && game.length || 0}`);
             const json = await data.json();
             dispatch({type: 'updateGame', value: json});
         }
-    }, game && game.length && game[game.length -1]['game_over'] ? null : 500);
+    }, [gameId, game]);
 
+    useInterval(loadGameData, game && game.length && game[game.length -1]['game_over'] ? null : 500, true);
 
-    useInterval(() => playback && dispatch({type: 'incrementMove'}), 33);
+    useInterval(() => playback && dispatch({type: 'incrementMove'}), playback? 10: null);
 
     return (
         <Container>
