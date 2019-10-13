@@ -1,11 +1,12 @@
 import sys
+import os
 import gzip
 import logging
 import simplejson as json
 from itertools import izip_longest, izip
 
 from flask import Flask, Response
-from flask import render_template, jsonify
+from flask import render_template, jsonify, send_from_directory
 from flask_cors import CORS
 import redis
 
@@ -14,7 +15,7 @@ INACTIVE_COUNT = 100
 
 redis = redis.Redis(host='localhost')
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="rps/build/static", template_folder="rps/build")
 CORS(app)
 
 def grouper(iterable, n, fillvalue=None):
@@ -77,18 +78,8 @@ def get_run_info(username = None):
     else:
         return highscores, last_games, num_games
 
-@app.route("/")
-def index():
-    highscores, last_games, num_games = get_run_info()
 
-    return render_template('index.jinja',
-        highscore_first = 0,
-        highscores = highscores,
-        last_games = last_games,
-        num_games = num_games,
-    )
-
-@app.route("/info.json")
+@app.route("/api/info.json")
 def info():
     highscores, last_games, num_games = get_run_info()
 
@@ -99,26 +90,7 @@ def info():
         num_games = num_games,
     )
 
-@app.route("/player/<username>")
-def player(username):
-    highscores, last_games, num_games, rank, highscore_first = get_run_info(username)
-
-    return render_template('index.jinja',
-        rank = rank,
-        highscore_first = highscore_first,
-        highscores = highscores,
-        username = username,
-        last_games = last_games,
-        num_games = num_games,
-    )
-
-@app.route("/player/<username>/live")
-def player_live(username):
-    return render_template('game.jinja',
-        follow_username = username,
-    )
-
-@app.route("/player/<username>/latest_game.json")
+@app.route("/api/player/<username>/latest_game.json")
 def player_latest_game(username):
     p = redis.pipeline()
     p.lindex('player:%s:games' % username,-1)
@@ -127,7 +99,7 @@ def player_latest_game(username):
         last = last,
     )
 
-@app.route("/player/<username>/info.json")
+@app.route("/api/player/<username>/info.json")
 def player_info(username):
     highscores, last_games, num_games, rank, highscore_first = get_run_info(username)
 
@@ -145,13 +117,7 @@ class vec(list):
         for idx, (a, b) in enumerate(izip(self, other)):
             self[idx] = a + b
 
-@app.route("/game/<int:game_id>")
-def game(game_id):
-    return render_template('game.jinja',
-        game_id = game_id,
-    )
-
-@app.route("/game/<int:game_id>/info.json")
+@app.route("/api/game/<int:game_id>/info.json")
 def game_info(game_id):
     p = redis.pipeline()
     p.hget('game:%s' % game_id, 'p1')
@@ -185,7 +151,7 @@ def game_info(game_id):
         elodiff = (float(elodiff) if elodiff else None),
     )
 
-@app.route("/game/<int:game_id>/rounds/<int:fromround>")
+@app.route("/api/game/<int:game_id>/rounds/<int:fromround>")
 def game_rounds(game_id, fromround):
     game_log_name = "log/%08d/%04d.json" % (game_id / 1000, game_id % 1000)
     game_log = None
@@ -201,7 +167,7 @@ def game_rounds(game_id, fromround):
             mimetype = "application/json",
         )
 
-@app.route("/log/<path:log_path>")
+@app.route("/api/log/<path:log_path>")
 def logs(log_path):
     game_log_name = "log/" + log_path
     try:
@@ -215,6 +181,16 @@ def logs(log_path):
             status = 200,
             mimetype = "application/json",
         )
+
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def index(path):
+    path_dir = os.path.abspath("./rps/build/")
+    print(path)
+    if path != "" and os.path.exists(os.path.join(path_dir, path)):
+        return send_from_directory(os.path.join(path_dir), path)
+    else:
+        return send_from_directory(os.path.join(path_dir),'index.html')
 
 
 if __name__ == '__main__':

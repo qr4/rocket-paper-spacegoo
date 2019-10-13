@@ -16,10 +16,9 @@ import {GameHeader} from "./GameHeader";
 import {GameCanvas} from "./GameCanvas";
 
 
-export const BASE_URL = "http://localhost:8080";
+export const BASE_URL = process.env.NODE_ENV === "production" ? "/api" : "http://localhost:8080/api";
 
 const styles = themes => {
-    console.log(themes);
     return {
         frames: {
             marginTop: themes.margin,
