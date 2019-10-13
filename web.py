@@ -160,7 +160,17 @@ def game_info(game_id):
     player1, player2, elodiff = p.execute()
 
     rank1 = redis.zrank('scoreboard', player1)
+    if rank1 is None:
+        rank1 = -1
+    else:
+        rank1  = rank1 + 1
     rank2 = redis.zrank('scoreboard', player2)
+
+    if rank2 is None:
+        rank2 = -1
+    else:
+        rank2  = rank2+ 1
+
 
     game_log_name = "log/%08d/%04d.json" % (game_id / 1000, game_id % 1000)
 
@@ -169,8 +179,8 @@ def game_info(game_id):
         game_log_name = game_log_name,
         player1 = player1,
         player2 = player2,
-        rank1 = rank1 or 0 + 1,
-        rank2 = rank2 or 0 + 1,
+        rank1 = rank1
+        rank2 = rank2
         finished = elodiff is not None,
         elodiff = (float(elodiff) if elodiff else None),
     )
