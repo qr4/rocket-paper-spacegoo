@@ -159,10 +159,8 @@ def game_info(game_id):
     p.hget('game:%s' % game_id, 'elodiff')
     player1, player2, elodiff = p.execute()
 
-    p = redis.pipeline()
-    p.zrank('scoreboard', player1)
-    p.zrank('scoreboard', player2)
-    rank1, rank2 = p.execute()
+    rank1 = redis.zrank('scoreboard', player1)
+    rank2 = redis.zrank('scoreboard', player2)
 
     game_log_name = "log/%08d/%04d.json" % (game_id / 1000, game_id % 1000)
 
