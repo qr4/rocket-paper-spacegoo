@@ -1,20 +1,11 @@
-import {
-    Appear,
-    Col,
-    Heading,
-    Link,
-    Loading,
-    Project,
-    Row,
-    Table,
-    Words,
-    withStyles,
-} from '@arwes/arwes';
+import { Col, Link, Loading, Project, Row, withStyles } from '@arwes/arwes';
 import {useParams, useHistory} from 'react-router-dom';
-import React, {memo, useRef, useState, useEffect, useCallback} from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 import {BASE_URL} from './Game';
 import {PageWrapper} from './components/PageWrapper';
+import { PlayerScoreboard } from './components/PlayerScoreboard';
+import { RecentGames } from './components/RecentGames';
 import {SoundWords} from './components';
 import {useInterval} from './hooks/useInterval';
 
@@ -30,103 +21,6 @@ const styles = theme => ({
     rankLoading: {
         padding: [0, theme.padding / 2],
     },
-});
-
-const PlayerScoreboard = memo(({show, playerData, classes}) => {
-    const history = useHistory();
-    const [displayedTableItems, setDisplayedTableItems] = useState(0);
-    const refDisplayedTableItems = useRef(0);
-    useInterval(() => {
-        if (
-            playerData &&
-            playerData.last_games &&
-            refDisplayedTableItems.current < playerData.last_games.length
-        ) {
-            setDisplayedTableItems(refDisplayedTableItems.current + 1);
-            refDisplayedTableItems.current = refDisplayedTableItems.current + 1;
-        }
-    }, show ? 100 : null);
-
-    return (
-        <>
-            <Heading node={'h3'}>
-                {`${playerData.username}'s scoreboard`}
-            </Heading>
-            <Table
-                animate
-                headers={[]}
-                dataset={playerData.highscores.map((entry, index) => [
-                    index,
-
-                    <Link onClick={() => history.push(`/player/${entry[0]}`)}>
-                        <Words
-                            animate
-                            show={show && displayedTableItems > index}>
-                            {entry[0]}
-                        </Words>
-                    </Link>,
-
-                    entry[1].toFixed(3),
-                ])}
-            />
-        </>
-    );
-});
-
-const PlayerRecentGames = memo(({show, playerData, classes}) => {
-    const [displayedTableItems, setDisplayedTableItems] = useState(0);
-    const refDisplayedTableItems = useRef(0);
-    useInterval(() => {
-        if (
-            playerData &&
-            playerData.last_games &&
-            refDisplayedTableItems.current < playerData.last_games.length
-        ) {
-            setDisplayedTableItems(refDisplayedTableItems.current + 1);
-            refDisplayedTableItems.current = refDisplayedTableItems.current + 1;
-        }
-    }, show ? 100 : null);
-
-    return (
-        <>
-            <Heading node={'h3'}>
-                {`${playerData.username}'s recent games`}
-            </Heading>
-            <Table
-                animate
-                dataset={playerData.last_games.map((entry, index) => [
-                    entry.game_id,
-                    show && (
-                        <div className={classes.versusColumnEntry}>
-                            <SoundWords
-                                layer="success"
-                                animate
-                                show={show && displayedTableItems > index}>
-                                {entry.player1}
-                            </SoundWords>{' '}
-                            <sub>
-                                <SoundWords
-                                    layer="disabled"
-                                    animate
-                                    show={show && displayedTableItems > index}>
-                                    vs
-                                </SoundWords>
-                            </sub>{' '}
-                            <SoundWords
-                                layer="alert"
-                                animate
-                                show={show && displayedTableItems > index}>
-                                {entry.player2}
-                            </SoundWords>
-                        </div>
-                    ),
-                    entry.elodiff > 0
-                        ? `+${entry.elodiff.toFixed(3)}`
-                        : entry.elodiff,
-                ])}
-            />
-        </>
-    );
 });
 
 export const PlayerPage = withStyles(styles)(({show, classes}) => {
@@ -159,7 +53,14 @@ export const PlayerPage = withStyles(styles)(({show, classes}) => {
         [playerName],
     );
     useInterval(loadData, playerData && playerData.finished ? null : 5000);
-    useEffect(loadData, []);
+    useEffect(
+        () => {
+            setPlayerData(null);
+            loadData();
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [playerName],
+    );
 
     return (
         <PageWrapper>
@@ -220,16 +121,18 @@ export const PlayerPage = withStyles(styles)(({show, classes}) => {
                               <Row>
                                   <Col s={12} m={12} l={6}>
                                       <PlayerScoreboard
+                                          title={`${playerName}'s scoreboard`}
                                           show={showContent}
                                           classes={classes}
-                                          playerData={playerData}
+                                          scoreboardData={playerData.highscores}
                                       />
                                   </Col>
                                   <Col s={12} m={12} l={6}>
-                                      <PlayerRecentGames
+                                      <RecentGames
+                                        title={`${playerName}'s recent games`}
                                           show={showContent}
                                           classes={classes}
-                                          playerData={playerData}
+                                          lastGamesData={playerData.last_games}
                                       />
                                   </Col>
                               </Row>

@@ -7,9 +7,10 @@ import React, {useState, useEffect} from 'react';
 
 import { SoundsProvider } from "@arwes/sounds";
 
+import { Game } from "./Game";
+import { HomePage } from './HomePage';
 import { NavBar } from './components/nav_bar';
 import {PlayerPage} from './PlayerPage';
-import { Game } from "./Game";
 
 const players = {
     ask: new Howl({ src: [`${process.env.PUBLIC_URL}/sounds/ask.mp3`] }),
@@ -25,10 +26,6 @@ const players = {
 const audio = {
     mute: false
 };
-
-function Home() {
-    return "";
-}
 
 const AppWrapper = () => (
     <ThemeProvider theme={createTheme()}>
@@ -75,7 +72,7 @@ function App({wrapperAnimEntered}) {
                     <Game show={showContent}/>
                 </Route>
                 <Route path="/">
-                    <Home show={showContent} />
+                    <HomePage show={showContent} />
                 </Route>
             </Switch>
         </Router>
