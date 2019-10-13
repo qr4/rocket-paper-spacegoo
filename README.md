@@ -4,7 +4,7 @@ Disclaimer
 ---------
 All credit for this game goes to the original creators (https://bitbucket.org/dividuum/rocket-scissor-spacegoo).
 This is mainly a fork of said repo which makes the game
-easier runable on a modern machine (updated dependencies, vagrant, english language, minor fixes).
+easier runable on a modern machine (updated dependencies, vagrant, english language, minor fixes). Also a new shiny ui ^_^
 
 Assets
 ------
