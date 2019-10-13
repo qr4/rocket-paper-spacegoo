@@ -15,7 +15,7 @@ INACTIVE_COUNT = 100
 
 redis = redis.Redis(host='localhost')
 
-app = Flask(__name__, static_folder="rps/build/static", template_folder="rps/build")
+app = Flask(__name__, static_folder="app/build/static", template_folder="app/build")
 CORS(app)
 
 def grouper(iterable, n, fillvalue=None):
@@ -185,8 +185,7 @@ def logs(log_path):
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def index(path):
-    path_dir = os.path.abspath("./rps/build/")
-    print(path)
+    path_dir = os.path.abspath("./app/build/")
     if path != "" and os.path.exists(os.path.join(path_dir, path)):
         return send_from_directory(os.path.join(path_dir), path)
     else:
