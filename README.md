@@ -1,4 +1,4 @@
-Programmierspiel GPN13 / Programming game GPN13
+Rocket Paper Spacegoo
 ======================
 Disclaimer
 ---------
