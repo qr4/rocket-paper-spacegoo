@@ -12,6 +12,7 @@ services:
       - redis
     volumes:
       - .data/logs:/opt/server/logs
+      - ./app:/opt/server/repo_app
     networks:
       default:
       internal:
