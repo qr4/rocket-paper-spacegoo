@@ -20,7 +20,7 @@ pool = eventlet.GreenPool()
 
 COMMAND_DEADLINE = 6
 MAX_ROUNDS = 500
-START_ELO = 100
+START_ELO = 1000
 MATCHMAKING_INTERVAL = 1
 
 redis.ping()
