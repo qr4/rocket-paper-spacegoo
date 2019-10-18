@@ -3,6 +3,7 @@ version: '2'
 services:
   server:
     build: .
+    restart: always
     ports:
       - '8080:8080'
       - '6000:6000'
@@ -19,6 +20,7 @@ services:
 
   redis:
     image: 'bitnami/redis:5.0'
+    restart: always
     environment:
       - ALLOW_EMPTY_PASSWORD=yes
       - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL
@@ -31,6 +33,7 @@ services:
 
   caddy:
     image: "wemakeservices/caddy-docker:latest"
+    restart: always
     volumes:
       - ./caddy/certs:/root/.caddy
       - ./caddy/Caddyfile:/etc/Caddyfile
