@@ -13,6 +13,10 @@ code {
 }
 
 @font-face {
-  font-family: 'EarthOrbiter';
-  src: url('/public/earthorbiter.ttf')
+  font-family: 'rps-font';
+  src: url('/fonts/neuropolitical/neuropolitical rg.ttf')
+}
+
+* {
+  font-family: rps-font !important;
 }

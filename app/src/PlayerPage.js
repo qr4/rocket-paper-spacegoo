@@ -80,7 +80,7 @@ export const PlayerPage = withStyles(styles)(({show, classes}) => {
                                   <SoundWords animate show={show}>
                                       {`Total of ${
                                           playerData.num_games
-                                      } played.`}
+                                      } games played.`}
                                   </SoundWords>{' '}
                                   <SoundWords animate show={anim.entered}>
                                       Ranked

@@ -1,4 +1,4 @@
-import React, {useState, useReducer, useCallback, useEffect} from 'react';
+import React, {useState, useReducer, useCallback} from 'react';
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
 import {
     faChevronLeft,
@@ -7,7 +7,7 @@ import {
     faPauseCircle
 } from '@fortawesome/free-solid-svg-icons';
 
-import {Table, Frame, Button, Loading, Project, Words, Link, withStyles } from "@arwes/arwes";
+import {Table, Frame, Button, Loading, Words, withStyles } from "@arwes/arwes";
 import {Container} from "./components/container";
 import {useHistory, useParams} from "react-router";
 import {useInterval} from "./hooks/useInterval";
@@ -93,9 +93,6 @@ const reducer = (state, action) => {
             if (!state.game || !state.game.length) return state;
             return {...state, turn: Math.min(state.game.length-1, state.turn + 1),
                 playback: state.playback && (!state.game || !state.turn || state.turn + 1 >= state.game.length || !state.game[state.turn + 1].game_over)};
-        case 'setMove': {
-            return {...state, turn: action.value};
-        }
         case 'decrementMove':
             return {...state, turn: Math.max(0, state.turn - 1), playback: false};
         case 'setMove':
@@ -143,7 +140,7 @@ export const Game = withStyles(styles)(({show, classes, showLatest}) => {
             dispatch({type: 'setMove', value: 0});
             setInfo(null);
         }
-    }, [game, turn, playerName, playback, setInfo]);
+    }, [game, turn, playerName, playback, setInfo, gameId]);
 
     useInterval(loadLatestGameForPlayer, playerName === undefined ? null : 3000, true);
 
@@ -160,7 +157,7 @@ export const Game = withStyles(styles)(({show, classes, showLatest}) => {
             dispatch({type: 'setMove', value: 0});
             setInfo(null);
         }
-    }, [turn, game, playback, setInfo]);
+    }, [turn, game, playback, setInfo, gameId, showLatest]);
 
     useInterval(loadLatestGame, !showLatest ? null : 3000, true);
 
@@ -246,7 +243,7 @@ export const Game = withStyles(styles)(({show, classes, showLatest}) => {
                             <Table animate
                                    headers={[
                                        "Round",
-                                       "Total Fleets",
+                                       "\u03A3 Fleets",
                                        <Words layer="success"><div>Planets</div>{`${info["player1"]}`}</Words>,
                                        <Words layer="alert"><div>Planets</div>{`${info["player2"]}`}</Words>,
                                        <Words layer="success"><div>Ships</div>{`${info["player1"]}`}</Words>,

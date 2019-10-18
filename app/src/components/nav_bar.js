@@ -7,7 +7,7 @@ import {
     withStyles,
 } from '@arwes/arwes';
 import {faRocket, faSatellite} from '@fortawesome/free-solid-svg-icons';
-import {useHistory, Link as RouterLink} from 'react-router-dom';
+import {useHistory} from 'react-router-dom';
 import React, {useState} from 'react';
 
 import {Container} from './container';
@@ -20,7 +20,10 @@ const styles = themes => ({
     container: {
         display: 'flex',
     },
-    logo: {margin: [themes.margin / 2, themes.margin, themes.margin / 2, 0]},
+    logo: {
+        cursor: 'pointer',
+        margin: [themes.margin / 2, themes.margin, themes.margin / 2, 0]
+    },
     headingText: {
         marginBottom: 0,
         flexGrow: 1,
@@ -43,12 +46,14 @@ const styles = themes => ({
 });
 
 const names = [
-    'Rock Paper Spacegoo',
+    'Rocket Paper Spacegoo',
     'Rock Paper Scissors',
     'Rolling Pickles Sensually',
     'Rethink Play Station',
     'Radical Peter Spinning',
     'Rocket Propulsion Solution',
+    'Rock Paper Shotgun',
+    'Repo Police Syndicate',
 ];
 
 export const NavBar = withStyles(styles)(({show, classes}) => {

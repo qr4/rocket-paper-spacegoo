@@ -6,16 +6,15 @@ import {SoundWords} from './';
 import {useInterval} from '../hooks/useInterval';
 import Table from './Table';
 
-const styles = theme =>
-    console.info(theme.color) || {
-        versusColumnEntry: {
-            display: 'flex',
-            justifyContent: 'space-evenly',
-        },
-        eloLost: {
-            color: theme.color.secondary.light,
-        },
-    };
+const styles = theme => ({
+    versusColumnEntry: {
+        display: 'flex',
+        justifyContent: 'space-evenly',
+    },
+    eloLost: {
+        color: theme.color.secondary.light,
+    },
+});
 
 export const RecentGames = withStyles(styles)(
     memo(({title, show, lastGamesData, classes, focusedPlayer}) => {
@@ -127,8 +126,8 @@ export const RecentGames = withStyles(styles)(
                                             </div>,
                                             <span
                                                 className={
-                                                    elodelta < 0 &&
-                                                    classes.eloLost
+                                                    elodelta < 0 ?
+                                                    classes.eloLost : ''
                                                 }>
                                                 {elodelta
                                                     ? elodelta > 0

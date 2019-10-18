@@ -223,7 +223,7 @@ export const GameCanvas = memo(({turn, info, gameId}) => {
                     winner = 0
                 }
                 c.fillStyle = ["lightgrey", player1_shades[1], player2_shades[1]][winner];
-                c.font = "bold 60px sans-serif";
+                c.font = "bold 60px rps-font";
                 c.textAlign = "center";
                 c.textBaseline = "ideographic";
                 c.fillText([
@@ -240,7 +240,7 @@ export const GameCanvas = memo(({turn, info, gameId}) => {
     return (
             <canvas
                 ref={ref}
-                width={1200}
+                width={1316}
                 height={500} />
     );
 });

@@ -4,7 +4,7 @@ import classnames from 'classnames';
 
 const styles = theme => ({
     root: {
-        maxWidth: 1216,
+        maxWidth: 1316,
         margin: '0 auto',
     },
 });

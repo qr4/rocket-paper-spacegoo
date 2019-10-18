@@ -47,7 +47,7 @@ const Table = withStyles(styles)((props) => {
                     .filter(item => !!item)
                     .map((item, index) => (
                   item.key && item.value ? (
-                      <tr key={item.key}>
+                      <tr key={item.key + index}>
                         {item.value.map((value, index2) => (
                         value.key && value.value ? (
                           <td key={value.key}>{value.value}</td>
