@@ -4,3 +4,4 @@ log/
 .vagrant
 .DS_Store
 dumb.rdb
+.data

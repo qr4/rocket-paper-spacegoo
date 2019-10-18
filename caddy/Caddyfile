@@ -1,0 +1,7 @@
+rps.vhenne.de
+
+log ./access.log
+
+proxy / server:8080 {
+  transparent
+}

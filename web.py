@@ -13,7 +13,8 @@ import redis
 
 INACTIVE_COUNT = 100
 
-redis = redis.Redis(host='localhost')
+redis_url = os.environ.get('REDIS_URL') or 'localhost'
+redis = redis.Redis(host=redis_url)
 
 app = Flask(__name__, static_folder="app/build/static", template_folder="app/build")
 CORS(app)
