@@ -6,8 +6,8 @@ import sys
 # this client takes care of the tcp stuff and passes data to stdout, reads from stdin and passes it
 # back to the server
 
-USERNAME = "random_bot"
-PASSWORD = "bar"
+USERNAME = sys.argv[1]
+PASSWORD = sys.argv[2]
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect(('rps.vhenne.de', 6000))

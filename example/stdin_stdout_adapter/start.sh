@@ -1,4 +1,6 @@
 #!/bin/bash
-[ "$#" -ne 1 ] && echo "USAGE $0 <YOUR PROGRAM>" && exit
+[ "$#" -ne 3 ] && echo "USAGE $0 <YOUR PROGRAM> <user> <password>" && exit
 
-socat EXEC:./stdin_stdout_adapter.py EXEC:$1,nofork
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+socat EXEC:"$DIR/stdin_stdout_adapter.py $2 $3" EXEC:"$1",nofork
