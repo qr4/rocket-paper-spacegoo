@@ -8,6 +8,7 @@ import simplejson as json
 import random
 import subprocess
 from collections import OrderedDict
+from math import*
 
 from eventlet.green import socket
 import redis
@@ -113,7 +114,7 @@ class Player(object):
             return
         self.cmd_issued = True
         self.send("command received. waiting for other player...")
-        self.game.engine.send_fleet(self.player_id, origin_id, target_id, [a,b,c])
+        self.game.engine.send_fleet(self.player_id, origin_id, target_id, [max(0,a),max(0,b),max(0,c)])
         self.game.check_round_finished()
 
     def __repr__(self):
