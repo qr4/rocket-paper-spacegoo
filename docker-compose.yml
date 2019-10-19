@@ -33,7 +33,6 @@ services:
 
   caddy:
     image: "wemakeservices/caddy-docker:latest"
-    restart: always
     volumes:
       - ./caddy/certs:/root/.caddy
       - ./caddy/Caddyfile:/etc/Caddyfile
