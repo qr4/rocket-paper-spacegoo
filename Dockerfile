@@ -3,7 +3,7 @@ FROM node:alpine as builder
 RUN mkdir -p /opt/app
 COPY ./app /opt/app
 WORKDIR /opt/app
-RUN npm install -g yarn && yarn build
+RUN npm install -g yarn && yarn install && yarn build
 
 
 FROM python:2.7-alpine
