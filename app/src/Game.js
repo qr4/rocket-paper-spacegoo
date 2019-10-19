@@ -136,8 +136,8 @@ export const Game = withStyles(styles)(({show, classes, showLatest}) => {
 
         if (gameId !== json.last && json.last && (!game || !turn || (game.length && game[turn]["game_over"]) || !playback)) {
             dispatch({type: 'setGameId', value: json.last});
-            dispatch({type: 'setPlayback', value: true});
             dispatch({type: 'setMove', value: 0});
+            dispatch({type: 'setPlayback', value: true});
             setInfo(null);
         }
     }, [game, turn, playerName, playback, setInfo, gameId]);
@@ -153,8 +153,8 @@ export const Game = withStyles(styles)(({show, classes, showLatest}) => {
 
         if (gameId !== lastGameId && lastGameId && (!game || !turn || (game.length && game[turn]["game_over"]) || !playback)) {
             dispatch({type: 'setGameId', value: lastGameId});
-            dispatch({type: 'setPlayback', value: true});
             dispatch({type: 'setMove', value: 0});
+            dispatch({type: 'setPlayback', value: true});
             setInfo(null);
         }
     }, [turn, game, playback, setInfo, gameId, showLatest]);
