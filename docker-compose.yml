@@ -12,7 +12,7 @@ services:
     depends_on:
       - redis
     volumes:
-      - .data/logs:/opt/server/logs
+      - .data/log:/opt/server/log
       - ./app:/opt/server/repo_app
     networks:
       default:
