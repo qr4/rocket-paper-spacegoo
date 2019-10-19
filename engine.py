@@ -68,7 +68,7 @@ class Fleet():
         self.eta = current_round + origin.distance(target)
         self.origin = origin
         self.target = target
-        self.ships = map(lambda want, onplanet: min(want,onplanet), ships,origin.ships)
+        self.ships = map(lambda want, onplanet: min(max(want,0),onplanet), ships,origin.ships)
         origin.ships = map(lambda infleet,onplanet: onplanet-infleet, self.ships,origin.ships)
         self.id = id
         self.owner_id = owner_id

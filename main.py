@@ -202,7 +202,7 @@ class Game(object):
         self.send_state()
 
         for player in self.players:
-            player.send("This game is now available at http://spacegoo.gpn.entropia.de/game/%d" % self.game_id)
+            player.send("This game is now available at http://rps.vhenne.de/game/%d" % self.game_id)
 
         self.game_log.close()
 
