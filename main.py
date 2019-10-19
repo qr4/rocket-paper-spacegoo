@@ -112,9 +112,12 @@ class Player(object):
         if self.cmd_issued:
             self.disqualify("sent more than one command")
             return
+        if a < 0 or b < 0 or c < 0:
+            self.disqualify("sent negative amount of ships")
+            return
         self.cmd_issued = True
         self.send("command received. waiting for other player...")
-        self.game.engine.send_fleet(self.player_id, origin_id, target_id, [max(0,a),max(0,b),max(0,c)])
+        self.game.engine.send_fleet(self.player_id, origin_id, target_id, [a,b,c])
         self.game.check_round_finished()
 
     def __repr__(self):
