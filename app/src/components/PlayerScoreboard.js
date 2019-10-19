@@ -42,9 +42,9 @@ export const PlayerScoreboard = withStyles(styles)(
                                 <Words
                                     animate
                                     layer={
+                                        entry[2] ? 'secondary':
                                         isGlobalRanking && index < 3
-                                            ? 'success'
-                                            : 'primary'
+                                            ? 'success' : 'primary'
                                     }
                                     className={
                                         isGlobalRanking && index === 0
