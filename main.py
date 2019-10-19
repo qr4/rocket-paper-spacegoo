@@ -328,7 +328,7 @@ class MatchMaking(object):
             while 1:
                 second_idx = int(random.gauss(first_idx, 2))
                 second_idx = max(0, min(len(pairing) - 1, second_idx))
-                if second_idx != first_idx:
+                if second_idx != first_idx and pairing[first_idx][1].username != pairing[second_idx][1].username:
                     break
             if first_idx > second_idx:
                 first_idx, second_idx = second_idx, first_idx
