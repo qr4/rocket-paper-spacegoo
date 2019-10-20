@@ -172,3 +172,9 @@ Haskell developers should check out
 [haskell-spacegoo](https://bitbucket.org/nomeata/haskell-spacegoo)
 to easily programm clients
 
+Bots
+----------------
+- https://github.com/vladhc/space-battles
+- https://github.com/Alexandre-Silva/hackerton-freiheit
+- https://github.com/flodiebold/vitalis-hackerthon 
+- https://github.com/mrwonko/fdc-hackerthon-2019
