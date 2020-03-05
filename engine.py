@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from scipy.spatial import Delaunay
 from math import *
 import random
 
@@ -163,6 +164,9 @@ class Engine():
             self.insert_symmetric_planets(x,y,self.generate_planet(), start_planets=((i==0) or (i < num_planets/2) and (random.randint(0,10) < 2)))
 
         #print self.planets
+        points = [[planet.posx, planet.posy] for planet in self.planets]
+        trig = Delaunay(points)
+        print(trig)
 
     def __init__(self,max_rounds = 500):
         self.planets = []

@@ -34,7 +34,7 @@ class Authenticator(object):
                 return False
             redis.set("user:%s" % username, password)
             return True
-        return saved_password == password
+        return saved_password.decode() == password
 
 Authenticator = Authenticator()
 
@@ -136,7 +136,7 @@ class Game(object):
         except OSError as err:
             if err.errno != errno.EEXIST:
                 raise
-        self.game_log = file(self.game_log_name, "wb")
+        self.game_log = open(self.game_log_name, "wb")
 
         self.players = players
 
@@ -154,6 +154,7 @@ class Game(object):
 
         self.send_state()
         self.deadline = eventlet.greenthread.spawn_after(COMMAND_DEADLINE, self.deadline_reached)
+        print(self.deadline)
 
         p = redis.pipeline()
         p.hset('game:%d' % self.game_id, 'p1', self.players[0].username)
@@ -302,8 +303,8 @@ class Game(object):
     def send_state(self):
         for player in self.players:
             player.send(json.dumps(self.get_player_state(player)))
-        self.game_log.write(json.dumps(self.get_log_state()))
-        self.game_log.write("\n")
+        self.game_log.write(json.dumps(self.get_log_state()).encode())
+        self.game_log.write("\n".encode())
         self.game_log.flush()
 
 class MatchMaking(object):
@@ -321,7 +322,7 @@ class MatchMaking(object):
         pairing = []
         for player in self.lobby:
             pairing.append((player.get_score(), player))
-        pairing.sort()
+        pairing = sorted(pairing, key=lambda t: t[0])
 
         while len(pairing) >= 2:
             first_idx = random.randint(0, len(pairing)-1)
@@ -453,7 +454,7 @@ class Connection(object):
             if data is None: # should close write side
                 break
             try:
-                self.socket.send(data)
+                self.socket.send(data.encode())
             except socket.error:
                 break
 
