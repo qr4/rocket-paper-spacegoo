@@ -14,8 +14,10 @@ pillow = "*"
 Jinja2 = ">=2.10.1"
 django = ">=1.11.22"
 flask-cors = "*"
+numpy = "*"
+scipy = "*"
 
 [dev-packages]
 
 [requires]
-python_version = "2.7"
+python_version = "3"

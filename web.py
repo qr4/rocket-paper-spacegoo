@@ -3,7 +3,7 @@ import os
 import gzip
 import logging
 import simplejson as json
-from itertools import izip_longest, izip
+from itertools import zip_longest
 
 from flask import Flask, Response
 from flask import render_template, jsonify, send_from_directory
@@ -21,7 +21,7 @@ CORS(app)
 
 def grouper(iterable, n, fillvalue=None):
     args = [iter(iterable)] * n
-    return izip_longest(fillvalue=fillvalue, *args)
+    return zip_longest(fillvalue=fillvalue, *args)
 
 
 def make_game_list(game_ids):
@@ -31,7 +31,7 @@ def make_game_list(game_ids):
         p.hget('game:%s' % game_id, 'p2')
         p.hget('game:%s' % game_id, 'elodiff')
     games = []
-    for game_id, (player1, player2, elodiff) in izip(game_ids, grouper(p.execute(), 3)):
+    for game_id, (player1, player2, elodiff) in zip(game_ids, grouper(p.execute(), 3)):
         if elodiff:
             elodiff = float(elodiff)
             if elodiff < 0:
@@ -115,7 +115,7 @@ def player_info(username):
 
 class vec(list):
     def add_inplace(self, other):
-        for idx, (a, b) in enumerate(izip(self, other)):
+        for idx, (a, b) in enumerate(zip(self, other)):
             self[idx] = a + b
 
 @app.route("/api/game/<int:game_id>/info.json")

@@ -85,7 +85,7 @@ class Player(object):
             self.conn.disconnect()
 
     def disqualify(self, reason):
-        print "player %r disqualified: %s" % (self, reason)
+        print("player %r disqualified: %s" % (self, reason))
         other_player = self.game.other_player(self)
         self.game.game_end(
             other_player.player_id,
@@ -128,12 +128,12 @@ class Game(object):
         assert len(players) == 2
         self.game_id = redis.incr('game_id')
 
-        print "starting game %r" % self.game_id
+        print("starting game %r" % self.game_id)
 
         self.game_log_name = "log/%08d/%04d.json" % (self.game_id / 1000, self.game_id % 1000)
         try:
             os.makedirs(os.path.dirname(self.game_log_name))
-        except OSError, err:
+        except OSError as err:
             if err.errno != errno.EEXIST:
                 raise
         self.game_log = file(self.game_log_name, "wb")
@@ -174,7 +174,7 @@ class Game(object):
     def game_end(self, winner, reason):
         assert not self.game_over
 
-        print "game ends: winner is %s: %s" % (winner, reason)
+        print("game ends: winner is %s: %s" % (winner, reason))
 
         if self.deadline is not None:
             self.deadline.cancel()
@@ -333,15 +333,15 @@ class MatchMaking(object):
             if first_idx > second_idx:
                 first_idx, second_idx = second_idx, first_idx
             (elo1, player1), (elo2, player2) = pairing.pop(second_idx), pairing.pop(first_idx)
-            print "sending %s (%f) and %s (%f) into game" % (
-                player1, elo1, player2, elo2)
+            print("sending %s (%f) and %s (%f) into game" % (
+                player1, elo1, player2, elo2))
             Game([player1, player2])
 
         # uebriggebliebenen Spieler ist nun die neue Lobby
         self.lobby = [player for _, player in pairing]
 
     def dump(self):
-        print "%d player in lobby" % len(self.lobby)
+        print("%d player in lobby" % len(self.lobby))
 
 MatchMaking = MatchMaking()
 
@@ -409,7 +409,7 @@ class Connection(object):
         self.send("closing connection. see you next time")
         self.write_queue.put(None) # signal eof to writer
 
-        print "reader closed"
+        print("reader closed")
         self.read_file.close()
         self.reader_thread.kill()
         # no code here: the kill might prevent this from being reached
@@ -444,7 +444,7 @@ class Connection(object):
             else:
                 try:
                     handler(*args)
-                except TypeError, err:
+                except TypeError as err:
                     self.send("invalid arguments: %s" % err)
 
     def writer(self):
@@ -457,7 +457,7 @@ class Connection(object):
             except socket.error:
                 break
 
-        print "writer closed"
+        print("writer closed")
         try:
             self.socket.shutdown(socket.SHUT_WR)
         except socket.error:
