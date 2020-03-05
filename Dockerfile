@@ -6,7 +6,7 @@ WORKDIR /opt/app
 RUN npm install -g yarn && yarn install && yarn build
 
 
-FROM python:2.7-alpine
+FROM python:3-alpine
 RUN apk update && \
     apk add python python-dev libffi-dev gcc make musl-dev py-pip mysql-client jpeg-dev zlib-dev npm bash && \
     pip install pipenv
