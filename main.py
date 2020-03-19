@@ -114,6 +114,9 @@ class Player(object):
         if a < 0 or b < 0 or c < 0:
             self.disqualify("sent negative amount of ships")
             return
+        if [origin_id, target_id] not in self.game.engine.hyperlanes:
+            self.disqualify("travel outside of hyperlanes is not alowed!")
+            return
         self.cmd_issued = True
         self.send("command received. waiting for other player...")
         self.game.engine.send_fleet(self.player_id, origin_id, target_id, [a,b,c])
@@ -212,6 +215,7 @@ class Game(object):
 
         for player in self.players:
             player.send("This game is now available at http://rps.freiheit.systems/game/%d" % self.game_id)
+            MatchMaking.remove_player(player)
 
         self.game_log.close()
 
@@ -233,7 +237,6 @@ class Game(object):
 
 
     def check_round_finished(self):
-        # pruefen, ob beide spieler befehle abgegeben haben...
         for player in self.players:
             if not player.cmd_issued:
                 return
@@ -328,7 +331,8 @@ class MatchMaking(object):
         if player in self.lobby:
             self.lobby.remove(player)
 
-        self.loggedIn.remove(player)
+        if player in self.loggedIn:
+          self.loggedIn.remove(player)
 
     def check_should_game_start(self):
         pairing = []
@@ -354,7 +358,7 @@ class MatchMaking(object):
 
     def dump(self):
         print(f"{len(self.lobby)} player in lobby, {self.lobby}")
-        print(f"loggedin players {self.loggedIn}")
+        print(f"logged in players {self.loggedIn}")
 
 MatchMaking = MatchMaking()
 
@@ -368,7 +372,6 @@ class Connection(object):
         pool.spawn_n(self.writer)
 
     def handle_cmd_login(self, username, password):
-        print("loggingin")
         if self.player:
             self.send("already logged in")
             self.disconnect()
