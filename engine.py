@@ -98,12 +98,25 @@ class Fleet():
              ("origin", self.origin.id),
              ("target", self.target.id),
              ("eta", self.eta),
+             ("alive", self.alive)
         ])
         return state
 
     def combine(self, other):
         for idx, count in enumerate(other.ships):
             self.ships[idx] += count
+
+    def battle(self, other):
+        self_ships, other_ships = battle(self.ships,other.ships)
+        self.ships = self_ships
+        other.ships = other_ships
+
+        if sum(other_ships) > 0:
+            # we died
+            self.alive = False
+        else:
+            other.alive = False
+
 
 class Engine():
 
@@ -203,7 +216,6 @@ class Engine():
 
         players_alive = []
         land_on_planet = {}
-        highest_owner = 1
         for fleet in self.fleets[:]:
             player = fleet.owner_id
             # print "fleet ", fleet.id, ", owner ", fleet.owner_id, ", eta ", fleet.eta
@@ -215,19 +227,46 @@ class Engine():
                 if fleet.target not in land_on_planet:
                     land_on_planet[fleet.target] = []
                 land_on_planet[fleet.target].append(fleet)
-                if fleet.owner_id > highest_owner: highest_owner = fleet.owner_id
 
         for planet, fleets in land_on_planet.items():
-            # print "landing fleets on ", planet
-            fleets_of_players = [[] for _ in range(highest_owner + 1)]
+            # print("landing fleets on ", planet)
+            fleets_of_players = {}
             for fleet in fleets:
+                if fleet.owner_id not in fleets_of_players:
+                    fleets_of_players[fleet.owner_id] = []
                 fleets_of_players[fleet.owner_id].append(fleet)
-            for playerfleets in fleets_of_players:
+
+            # combine the fleets
+            for key, playerfleets in fleets_of_players.items():
                 if len(playerfleets) > 1:
                     for other in playerfleets[1:]:
                         playerfleets[0].combine(other)
-                if playerfleets:
-                    playerfleets[0].land()
+
+
+            survivor = None
+            # check if there are multiple players landing the same time. If so, let them battle first
+            keys = list(fleets_of_players.keys())
+            if len(keys) > 1:
+                # print("more than one player!", fleets_of_players)
+                if len(keys) > 2:
+                    print("ERROR! more than 2 different playes landed on the planet")
+
+                p1 = fleets_of_players[keys[0]][0]
+                p2 = fleets_of_players[keys[1]][0]
+
+                p1.battle(p2)
+
+                if p1.alive:
+                    survivor = p1
+                elif p2.alive:
+                    survivor = p2
+
+            else:
+                survivor = fleets_of_players[keys[0]][0]
+
+
+            if survivor:
+                survivor.land()
 
         for planet in self.planets:
             player = planet.owner_id
