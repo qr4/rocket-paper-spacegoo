@@ -1,6 +1,5 @@
 import re
 import os
-import gzip
 import time
 import errno
 import eventlet
@@ -8,7 +7,7 @@ import simplejson as json
 import random
 import subprocess
 from collections import OrderedDict
-from math import*
+from math import *
 
 from eventlet.green import socket
 import redis
@@ -120,6 +119,12 @@ class Player(object):
         self.game.engine.send_fleet(self.player_id, origin_id, target_id, [a,b,c])
         self.game.check_round_finished()
 
+    def __eq__(self, other):
+        return self.username == other.username
+
+    def __hash__(self):
+        return hash(self.username)
+
     def __repr__(self):
         return "<Player %s>" % (self.username)
 
@@ -154,7 +159,6 @@ class Game(object):
 
         self.send_state()
         self.deadline = eventlet.greenthread.spawn_after(COMMAND_DEADLINE, self.deadline_reached)
-        print(self.deadline)
 
         p = redis.pipeline()
         p.hset('game:%d' % self.game_id, 'p1', self.players[0].username)
@@ -207,7 +211,7 @@ class Game(object):
         self.send_state()
 
         for player in self.players:
-            player.send("This game is now available at http://rps.vhenne.de/game/%d" % self.game_id)
+            player.send("This game is now available at http://rps.freiheit.systems/game/%d" % self.game_id)
 
         self.game_log.close()
 
@@ -310,13 +314,21 @@ class Game(object):
 class MatchMaking(object):
     def __init__(self):
         self.lobby = []
+        self.loggedIn = set()
+
+    def has_player(self, player):
+        return player in self.loggedIn
 
     def add_player(self, player):
         self.lobby.append(player)
+        self.loggedIn.add(player)
+
 
     def remove_player(self, player):
         if player in self.lobby:
             self.lobby.remove(player)
+
+        self.loggedIn.remove(player)
 
     def check_should_game_start(self):
         pairing = []
@@ -338,11 +350,11 @@ class MatchMaking(object):
                 player1, elo1, player2, elo2))
             Game([player1, player2])
 
-        # uebriggebliebenen Spieler ist nun die neue Lobby
         self.lobby = [player for _, player in pairing]
 
     def dump(self):
-        print("%d player in lobby" % len(self.lobby))
+        print(f"{len(self.lobby)} player in lobby, {self.lobby}")
+        print(f"loggedin players {self.loggedIn}")
 
 MatchMaking = MatchMaking()
 
@@ -356,15 +368,26 @@ class Connection(object):
         pool.spawn_n(self.writer)
 
     def handle_cmd_login(self, username, password):
+        print("loggingin")
         if self.player:
             self.send("already logged in")
+            self.disconnect()
             return
 
         if not Authenticator.check(username, password):
             self.send("invalid login")
+            self.disconnect()
             return
 
-        self.player = Player(self, username)
+        player = Player(self, username)
+
+        if MatchMaking.has_player(player):
+            self.send("you are already logged in")
+            self.disconnect()
+            return
+
+        self.player = player
+
         self.send("your current score: %.2f. waiting for game start..." % self.player.get_score())
         MatchMaking.add_player(self.player)
 
