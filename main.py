@@ -29,10 +29,7 @@ class Authenticator(object):
     def check(self, username, password):
         saved_password = redis.get("user:%s" % username)
         if not saved_password:
-            if len(username) > 20:
-                return False
-            redis.set("user:%s" % username, password)
-            return True
+            return False
         return saved_password.decode() == password
 
 Authenticator = Authenticator()
