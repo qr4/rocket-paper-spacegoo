@@ -10,7 +10,6 @@ class Planet():
     def __init__(self,id,owner_id,production,posx,posy):
         self.id = id
         self.owner_id = owner_id
-        self.initial_production = production
         self.production_rounds = 0
         self.production = production
         self.ships = [s*10 + 10 for s in production]
@@ -30,7 +29,6 @@ class Planet():
             ("owner_id", self.owner_id),
             ("ships", self.ships),
             ("production", self.production),
-            ("initial_production", self.initial_production),
             ("production_rounds_left", max(MAX_PRODUCTION_ROUNDS - self.production_rounds, 0))
         ])
         return state
@@ -216,10 +214,9 @@ class Engine():
     def do_round(self):
         for i,planet in enumerate(self.planets):
             # print "planet ", i, "owner ", planet.owner_id, " :"
-            if not planet.owner_id == 0:
+            if not planet.owner_id == 0 and planet.production_rounds is not MAX_PRODUCTION_ROUNDS:
                 planet.production_rounds += 1
                 planet.ships = list(map(lambda s,p: s+p, planet.ships, planet.production))
-                planet.production = list(map(lambda s: round(s * (1 - min(planet.production_rounds / 100, 1))), planet.initial_production)) 
             # print planet.ships
 
         players_alive = []

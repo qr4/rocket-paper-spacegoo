@@ -74,7 +74,9 @@ const computeRoundData = (round) => {
         const planet = round.planets[pi];
         planets[planet.owner_id] += 1;
         add(ships[planet.owner_id], planet.ships);
-        add(production[planet.owner_id], planet.production);
+        if (planet.production_rounds_left) {
+            add(production[planet.owner_id], planet.production);
+        }
     }
 
     return [

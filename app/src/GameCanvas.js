@@ -71,11 +71,11 @@ export const GameCanvas = memo(({turn, info, gameId}) => {
             const planets = turn.planets;
             for (let idx = 0; idx < planets.length; idx++) {
                 const planet = planets[idx];
-                const total_production = planet.initial_production[0] + planet.initial_production[1] + planet.initial_production[2];
+                const total_production = planet.production[0] + planet.production[1] + planet.production[2];
                 const r = Math.sqrt(total_production / (max_production*2)) * planet_canvas_size;
                 let alpha = - Math.PI/2;
                 for (let i = 0; i < 3; i++) {
-                    const beta = alpha + 2 * Math.PI * (planet.initial_production[i]/total_production);
+                    const beta = alpha + 2 * Math.PI * (planet.production[i]/total_production);
                     bc.fillStyle = default_shades[i];
                     bc.beginPath();
                     bc.moveTo(
@@ -148,7 +148,7 @@ export const GameCanvas = memo(({turn, info, gameId}) => {
             const planets = turn.planets;
             for (let idx = 0; idx < planets.length; idx++) {
                 const planet = planets[idx];
-                const total_production = planet.initial_production[0] + planet.initial_production[1] + planet.initial_production[2];
+                const total_production = planet.production[0] + planet.production[1] + planet.production[2];
                 const planet_r = Math.sqrt(total_production / (max_production*2)) * planet_canvas_size;
 
                 // ship numbers per type
@@ -187,7 +187,7 @@ export const GameCanvas = memo(({turn, info, gameId}) => {
             for (let idx = 0; idx < planets.length; idx++) {
                 const planet = planets[idx];
                 if (planet.owner_id !== 0) {
-                    const total_production = planet.initial_production[0] + planet.initial_production[1] + planet.initial_production[2];
+                    const total_production = planet.production[0] + planet.production[1] + planet.production[2];
                     const planet_r = Math.sqrt(total_production / (max_production*2)) * planet_canvas_size;
                     c.beginPath();
 
