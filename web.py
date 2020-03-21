@@ -32,8 +32,9 @@ def make_game_list(game_ids):
         p.hget('game:%s' % game_id, 'p1')
         p.hget('game:%s' % game_id, 'p2')
         p.hget('game:%s' % game_id, 'elodiff')
+        p.hget('game:%s' % game_id, 'end')
     games = []
-    for game_id, (player1, player2, elodiff) in zip(game_ids, grouper(p.execute(), 3)):
+    for game_id, (player1, player2, elodiff, end) in zip(game_ids, grouper(p.execute(), 4)):
         if elodiff:
             elodiff = float(elodiff)
             if elodiff < 0:
@@ -45,6 +46,7 @@ def make_game_list(game_ids):
             player2 = player2,
             elodiff = elodiff,
             game_id = game_id,
+            end     = end,
         ))
     return games
 
