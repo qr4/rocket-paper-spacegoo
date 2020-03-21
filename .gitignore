@@ -3,3 +3,5 @@ env/
 .vagrant
 .DS_Store
 dumb.rdb
+log
+app/public
