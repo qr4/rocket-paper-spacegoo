@@ -30,7 +30,7 @@ services:
       internal:
 
   caddy:
-    image: "abiosoft.caddy:1.0.3-no-stats"
+    image: "abiosoft/caddy:1.0.3-no-stats"
     volumes:
       - ./caddy/certs:/root/.caddy
       - ./caddy/Caddyfile:/etc/Caddyfile
