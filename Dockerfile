@@ -8,7 +8,7 @@ RUN yarn install && yarn build
 
 FROM python:3-buster
 RUN apt-get update && \
-    apt-get install python python-dev libffi-dev gcc make python-pip mysql-client bash && \
+    apt-get install -y python python-dev libffi-dev gcc make python-pip bash && \
     pip install pipenv
 
 RUN mkdir -p /opt/server
