@@ -5,8 +5,8 @@ import random, pprint
 #import view
 #view.init(1024, 768)
 
-USERNAME = "randa"
-PASSWORD = "bar"
+USERNAME = "<INSERT NAME HERE>"
+PASSWORD = "<INSERT PW HERE>"
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect(('localhost', 6000))

@@ -18,8 +18,8 @@ redis_url = os.environ.get('REDIS_URL') or 'localhost'
 redis = redis.Redis(host=redis_url)
 pool = eventlet.GreenPool()
 
-COMMAND_DEADLINE = 2
-MAX_ROUNDS = 1000
+COMMAND_DEADLINE = 6
+MAX_ROUNDS = 500
 START_ELO = 1000
 MATCHMAKING_INTERVAL = 1
 
