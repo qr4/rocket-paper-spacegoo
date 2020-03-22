@@ -1,5 +1,13 @@
 Rocket Paper Spacegoo
 ======================
+
+Teaser Images
+-------------
+![leaderboard](images/Leaderboard.png)
+![graph](images/Graph.png)
+![canvas](images/Canvas.png)
+
+
 Disclaimer
 ---------
 All credit for this game goes to the original creators (https://bitbucket.org/dividuum/rocket-scissor-spacegoo).
@@ -164,9 +172,6 @@ Kind-of-explanatory images:
 ----------------
 ![principle](images/Spacegoo_01_principle.png)
 ![battle system](images/Spacegoo_02_battle_system.png)
-![leaderboard](images/Leaderboard.png)
-![graph](images/Graph.png)
-![canvas](images/Canvas.png)
 
 Client-Libraries
 ----------------
