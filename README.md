@@ -93,8 +93,14 @@ An example gamestate looks as follows:
           "y": 0,
           "x": 0,
           "ships": [ 20, 20, 20 ],  // current amount of ships of type a,b,c
-          "production": [ 1, 1, 1 ] // production of ships in each round/tick of type a, b, c
+          "production": [ 1, 1, 1 ] // production of ships in each round/tick of type a, b, c,
+          "production_rounds_left": 100 // number of rounds where this planet will still be producing ships
         },
+        ...
+      ],
+      "hyperlanes": [ // contains edges along which travel is allowed
+        [0, 1],       // e.g. you can send ships from the first to the second planet 
+        [1, 0],
         ...
       ],
     }
