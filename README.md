@@ -6,12 +6,6 @@ All credit for this game goes to the original creators (https://bitbucket.org/di
 This is mainly a fork of said repo which makes the game
 easier runable on a modern machine (updated dependencies, vagrant, english language, minor fixes). Also a new shiny ui ^_^
 
-Assets
-------
-
-vector.py - https://raw.github.com/nickretallack/bunnies/master/vector.py
-
----------
 
 What its about: 2 players play either a maximum number of rounds or until
 one player is eliminated (has no planets and no ships left). Every player
@@ -162,8 +156,11 @@ def battle(s1,s2):
 
 Kind-of-explanatory images:
 ----------------
-![principle](Spacegoo_01_principle.png)
-![battle system](Spacegoo_02_battle_system.png)
+![principle](images/Spacegoo_01_principle.png)
+![battle system](images/Spacegoo_02_battle_system.png)
+![leaderboard](images/Leaderboard.png)
+![graph](images/Graph.png)
+![canvas](images/Canvas.png)
 
 Client-Libraries
 ----------------
