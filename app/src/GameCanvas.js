@@ -191,13 +191,6 @@ export const GameCanvas = memo(({turn, info, gameId}) => {
                     const planet_r = Math.sqrt(total_production / (max_production*2)) * planet_canvas_size;
                     c.beginPath();
 
-                    c.globalAlpha = 1;
-                    c.fillStyle = "purple";
-                    c.font = "bold 20px rps-font";
-                    c.textAlign = "center";
-                    c.textBaseline = "ideographic";
-                    c.fillText(planet.production_rounds_left, planet.x * -size_scale, planet.y * size_scale + 10);
-
                     c.globalAlpha = 0.4;
                     c.fillStyle = ["lightgrey", "green", "red"][planet.owner_id];
                     c.moveTo(
@@ -209,6 +202,14 @@ export const GameCanvas = memo(({turn, info, gameId}) => {
                         planet.y * size_scale,
                         planet_r, 0, 2 * Math.PI, false);
                     c.fill();
+
+                    c.globalAlpha = 1;
+                    c.fillStyle = "#111111";
+                    c.font = "bold 20px rps-font";
+                    c.textAlign = "center";
+                    c.textBaseline = "ideographic";
+                    c.fillText(planet.production_rounds_left, planet.x * -size_scale, planet.y * size_scale + 10);
+
                 }
             }
             c.globalAlpha = 1;
