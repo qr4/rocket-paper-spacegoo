@@ -200,6 +200,11 @@ class Engine():
             return
         if not (0 <= target_id < len(self.planets)):
             return
+        if origin_id == target_id:
+            return
+        if sum(ships) == 0:
+            return
+
         origin = self.planets[origin_id]
         target = self.planets[target_id]
 
