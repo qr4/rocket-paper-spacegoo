@@ -16,7 +16,6 @@ RUN mkdir -p /opt/server/app/build
 WORKDIR /opt/server
 
 COPY ./web.py /opt/server
-COPY ./vector.py /opt/server
 COPY ./main.py /opt/server
 COPY ./Pipfile  /opt/server
 COPY ./Pipfile.lock /opt/server
