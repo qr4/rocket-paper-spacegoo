@@ -2,8 +2,6 @@
 import socket, json
 import random, pprint
 
-#import view
-#view.init(1024, 768)
 
 USERNAME = "<INSERT NAME HERE>"
 PASSWORD = "<INSERT PW HERE>"
@@ -27,7 +25,6 @@ while 1:
         break
     elif data[0] == "{":
         state = json.loads(data)
-#        view.update(state)
         # pprint.pprint(state)
 
         if state['winner'] is not None or state['game_over']:
