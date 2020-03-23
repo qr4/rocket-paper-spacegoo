@@ -5,3 +5,5 @@ env/
 dumb.rdb
 log
 app/public
+caddy/certs/
+.data/redis/appendonly.aof
