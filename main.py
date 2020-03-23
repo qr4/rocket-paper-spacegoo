@@ -451,11 +451,35 @@ class Connection(object):
         if not line: # eof
             return None
 
-        if not re.match("^[a-z 0-9A-Z_\-]*$", line):
-            self.send("Invalid data received. Valid bytes: [a-z 0-9A-Z_\-]")
-            return None
+        tokens = []
+        in_quote = False
+        while line:
+            if not in_quote:
+                next_match = re.search(r'\s*["\s]', line)
+                if next_match:
+                    token = line[:next_match.start()]
+                    if next_match[0].endswith('"'):
+                        in_quote = True
+                    line = line[next_match.end():]
+                else:
+                    token = line
+                    line = ""
 
-        return [token.strip().lower() for token in line.split() if token]
+                if not re.match("^[a-z 0-9A-Z_\-]*$", token):
+                    self.send("Invalid data received. Valid bytes: [a-z 0-9A-Z_\-]")
+                    return None
+                tokens.append(token.strip().lower())
+            else:
+                quote_end = re.search(r'"\s*', line)
+                if not quote_end:
+                    self.send("Unfinished quote")
+                    return None
+                quoted_token = line[:quote_end.start()]
+                line = line[quote_end.end():]
+                tokens.append(quoted_token)
+                in_quote = False
+
+        return tokens
 
     def reader(self):
         while 1:
