@@ -212,7 +212,11 @@ class Engine():
         if not player_id == origin.owner_id:
             return
 
-        self.fleets.append(Fleet(self.next_fleet_id, player_id, origin, target,ships,self.round))
+        new_fleet = Fleet(self.next_fleet_id, player_id, origin, target,ships,self.round)
+        if sum(new_fleet.ships) == 0:
+            return
+
+        self.fleets.append(new_fleet)
         self.next_fleet_id+=1
 
 
