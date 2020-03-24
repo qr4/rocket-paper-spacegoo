@@ -12,7 +12,7 @@ services:
     depends_on:
       - redis
     volumes:
-      - .data/log:/opt/server/log
+      #      - .data/log:/opt/server/log
       - ./app:/opt/server/repo_app
     networks:
       default:
@@ -26,21 +26,21 @@ services:
     ports:
       - '6379:6379'
     volumes:
-      - .data/redis:/bitnami/redis/data
+      #      - .data/redis:/bitnami/redis/data
     networks:
       internal:
 
-  caddy:
-    image: "abiosoft/caddy:1.0.3-no-stats"
-    volumes:
-      - ./caddy/certs:/root/.caddy
-      - ./caddy/Caddyfile:/etc/Caddyfile
-    ports:
-      - "2015:2015"
-      - "80:80"
-      - "443:443"
-    depends_on:
-      - server
+        #  caddy:
+        #    image: "abiosoft/caddy:1.0.3-no-stats"
+        #    volumes:
+        #      - ./caddy/certs:/root/.caddy
+        #      - ./caddy/Caddyfile:/etc/Caddyfile
+        #    ports:
+        #      - "2015:2015"
+        #      - "80:80"
+        #      - "443:443"
+        #    depends_on:
+        #      - server
 
 volumes:
   redis_data:
