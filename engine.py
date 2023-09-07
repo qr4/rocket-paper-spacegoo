@@ -3,14 +3,11 @@ from scipy.spatial import Delaunay
 from math import *
 import random
 
-MAX_PRODUCTION_ROUNDS = 100
-
 
 class Planet():
     def __init__(self,id,owner_id,production,posx,posy):
         self.id = id
         self.owner_id = owner_id
-        self.production_rounds = 0
         self.production = production
         self.ships = [s*10 + 10 for s in production]
         self.posx = posx
@@ -28,8 +25,7 @@ class Planet():
             ("y", self.posy),
             ("owner_id", self.owner_id),
             ("ships", self.ships),
-            ("production", self.production),
-            ("production_rounds_left", max(MAX_PRODUCTION_ROUNDS - self.production_rounds, 0))
+            ("production", self.production)
         ])
         return state
 
@@ -147,6 +143,7 @@ class Engine():
             else:
                 production = [max(1,int(abs(random.gauss(0,3))))]*3
         random.shuffle(production)
+        print(production)
         return production
 
 
@@ -157,7 +154,7 @@ class Engine():
             ydiff = y-planet.posy
             dist = sqrt(xdiff*xdiff + ydiff*ydiff)
             mindist = min(mindist,dist)
-        return (mindist > 5.0)
+        return (mindist > 3.0)
 
     def find_fitting_position(self,max_x, max_y):
         x = 0
@@ -223,8 +220,7 @@ class Engine():
     def do_round(self):
         for i,planet in enumerate(self.planets):
             # print "planet ", i, "owner ", planet.owner_id, " :"
-            if not planet.owner_id == 0 and planet.production_rounds is not MAX_PRODUCTION_ROUNDS:
-                planet.production_rounds += 1
+            if not planet.owner_id == 0:
                 planet.ships = list(map(lambda s,p: s+p, planet.ships, planet.production))
             # print planet.ships
 
