@@ -56,9 +56,11 @@ def battle(s1,s2):
         new1 = battle_round(ships2,ships1)
         ships2 = battle_round(ships1,ships2)
         ships1 = new1
+        #print ships1,ships2
 
     ships1 = list(map(int,ships1))
     ships2 = list(map(int,ships2))
+    #print ships1,ships2
     return ships1, ships2
 
 
@@ -71,7 +73,6 @@ class Fleet():
         origin.ships = list(map(lambda infleet,onplanet: onplanet-infleet, self.ships,origin.ships))
         self.id = id
         self.owner_id = owner_id
-        self.alive = True
 
     def land(self):
         # print "fleet landing"
@@ -82,12 +83,13 @@ class Fleet():
             attacker,defender = battle(self.ships,self.target.ships)
             if sum(defender) > 0:
                 #defended!
+                # print "ZOMG defended"
                 self.target.ships = defender
             else:
                 #invasion successful!
+                # print "ZOMG invasion successful"
                 self.target.ships = attacker
                 self.target.owner_id = self.owner_id
-
     def dump(self):
         state = OrderedDict([
              ("id", self.id),
@@ -175,16 +177,11 @@ class Engine():
             self.insert_symmetric_planets(x,y,self.generate_planet(), start_planets=((i==0) or (i < num_planets/2) and (random.randint(0,10) < 2)))
 
         points = [[planet.posx, planet.posy] for planet in self.planets]
-        for tri in Delaunay(points).simplices:
-            for i in range(3):
-                pt1 = tri[i]
-                pt2 = tri[(i+1)%3]
-                self.hyperlanes.append([int(pt1), int(pt2)])
-                self.hyperlanes.append([int(pt2), int(pt1)])
+        trig = Delaunay(points)
+        print(trig)
 
     def __init__(self,max_rounds = 500):
         self.planets = []
-        self.hyperlanes = []
         self.generate_map()
         self.fleets = []
         self.round = 0
@@ -218,6 +215,8 @@ class Engine():
 
 
     def do_round(self):
+        # print "DINGDINGDING ROUND ", self.round
+
         for i,planet in enumerate(self.planets):
             # print "planet ", i, "owner ", planet.owner_id, " :"
             if not planet.owner_id == 0:
@@ -228,7 +227,7 @@ class Engine():
         land_on_planet = {}
         for fleet in self.fleets[:]:
             player = fleet.owner_id
-            # print("fleet ", fleet.id, ", owner ", fleet.owner_id, ", eta ", fleet.eta)
+            # print "fleet ", fleet.id, ", owner ", fleet.owner_id, ", eta ", fleet.eta
             if not player in players_alive:
                 players_alive.append(player)
             if fleet.eta == self.round:
@@ -302,7 +301,6 @@ class Engine():
             ("fleets", [f.dump() for f in self.fleets]),
             ("round", self.round),
             ("max_rounds", self.max_rounds),
-            ("hyperlanes", self.hyperlanes)
         ])
         return state
 
