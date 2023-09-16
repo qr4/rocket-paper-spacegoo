@@ -1,4 +1,4 @@
-FROM node:buster as builder
+FROM node:16.0.0-buster as builder
 
 RUN mkdir -p /opt/app
 COPY ./app /opt/app

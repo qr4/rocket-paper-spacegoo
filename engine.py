@@ -1,5 +1,4 @@
 from collections import OrderedDict
-from scipy.spatial import Delaunay
 from math import *
 import random
 
