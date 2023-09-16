@@ -73,6 +73,7 @@ class Fleet():
         origin.ships = list(map(lambda infleet,onplanet: onplanet-infleet, self.ships,origin.ships))
         self.id = id
         self.owner_id = owner_id
+        self.alive = True
 
     def land(self):
         # print "fleet landing"
@@ -175,10 +176,6 @@ class Engine():
         for i in range(0,num_planets):
             x,y = self.find_fitting_position(max_x, max_y)
             self.insert_symmetric_planets(x,y,self.generate_planet(), start_planets=((i==0) or (i < num_planets/2) and (random.randint(0,10) < 2)))
-
-        points = [[planet.posx, planet.posy] for planet in self.planets]
-        trig = Delaunay(points)
-        print(trig)
 
     def __init__(self,max_rounds = 500):
         self.planets = []

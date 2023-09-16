@@ -2,7 +2,7 @@
 # yarn lockfile v1
 
 
-"@arwes/arwes@^1.0.0-alpha.12":
+"@arwes/arwes@1.0.0-alpha.12":
   version "1.0.0-alpha.12"
   resolved "https://registry.yarnpkg.com/@arwes/arwes/-/arwes-1.0.0-alpha.12.tgz#3e2011987baaeb3d268fee445bfca13d4cf992af"
   integrity sha512-r92LKpg+ytBZmnq8q57ycOVuqsWKvZfx0pqOl48UnLHHKD0pnlvccplAHuLSy6J0q+gXrB69fetN0231a+bkBw==

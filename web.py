@@ -13,7 +13,7 @@ import redis
 INACTIVE_COUNT = 100
 
 redis_url = os.environ.get('REDIS_URL') or 'localhost'
-redis = redis.Redis(host=redis_url)
+redis = redis.Redis(host=redis_url, decode_responses=True)
 redis.ping()
 
 app = Flask(__name__, static_folder="app/build/static", template_folder="app/build")
@@ -28,7 +28,6 @@ def grouper(iterable, n, fillvalue=None):
 def make_game_list(game_ids):
     p = redis.pipeline()
     for game_id in game_ids:
-        game_id = game_id.decode()
         p.hget('game:%s' % game_id, 'p1')
         p.hget('game:%s' % game_id, 'p2')
         p.hget('game:%s' % game_id, 'elodiff')
@@ -69,12 +68,12 @@ def get_run_info(username = None):
         raw_highscores, last_game_ids, num_games = p.execute()
 
     highscores = []
-    for score_user, score in raw_highscores:
+    for user, score in raw_highscores:
         p = redis.pipeline()
-        p.lindex('player:%s:games' % score_user, -1)
+        p.lindex('player:%s:games' % user, -1)
         (last_game,) = p.execute()
         inactive = (int(last_game_ids[-1] or 0) - int(last_game or 0) > INACTIVE_COUNT)
-        highscores.append([score_user, -score, inactive] )
+        highscores.append([user, -score, inactive] )
 
     last_games = make_game_list(list(reversed(last_game_ids)))
 
@@ -165,7 +164,7 @@ def game_rounds(game_id, fromround):
     except IOError:
         game_log_name = game_log_name + ".gz"
         game_log = gzip.GzipFile(game_log_name, "rb")
-    lines = [l.decode() for l in game_log.readlines()]
+    lines = [l for l in game_log.readlines()]
     return Response (
             response = "[" + ",".join(lines[fromround:]) + "]",
             status = 200,
@@ -180,7 +179,7 @@ def logs(log_path):
     except IOError:
         game_log_name = game_log_name + ".gz"
         game_log = gzip.GzipFile(game_log_name, "rb")
-    lines = [l.decode() for l in game_log.readlines()]
+    lines = [l for l in game_log.readlines()]
     return Response (
             response = "[" + ",".join(lines) + "]",
             status = 200,

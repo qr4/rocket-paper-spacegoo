@@ -375,6 +375,9 @@ class Connection(object):
             self.disconnect()
             return
 
+        username = username.encode('utf-8')
+        password = password.encode('utf-8')
+        
         if not Authenticator.check(username, password):
             self.send("invalid login")
             self.disconnect()
