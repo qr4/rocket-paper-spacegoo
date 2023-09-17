@@ -15,16 +15,14 @@ RUN mkdir -p /opt/server
 RUN mkdir -p /opt/server/app/build
 WORKDIR /opt/server
 
-COPY ./web.py /opt/server
-COPY ./main.py /opt/server
 COPY ./Pipfile  /opt/server
 COPY ./Pipfile.lock /opt/server
+RUN pipenv install
+COPY ./web.py /opt/server
+COPY ./main.py /opt/server
 COPY ./engine.py /opt/server
 COPY ./start.sh /opt/server
 COPY --from=builder /opt/app/build /opt/server/app/build
-
-
-RUN pipenv install
 
 EXPOSE 8080
 EXPOSE 6000

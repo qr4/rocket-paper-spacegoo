@@ -369,15 +369,11 @@ class Connection(object):
         pool.spawn_n(self.writer)
 
     def handle_cmd_login(self, username, password):
-        print("loggingin")
         if self.player:
             self.send("already logged in")
             self.disconnect()
             return
 
-        username = username.encode('utf-8')
-        password = password.encode('utf-8')
-        
         if not Authenticator.check(username, password):
             self.send("invalid login")
             self.disconnect()
