@@ -164,7 +164,7 @@ def game_rounds(game_id, fromround):
     except IOError:
         game_log_name = game_log_name + ".gz"
         game_log = gzip.GzipFile(game_log_name, "rb")
-    lines = [l for l in game_log.readlines()]
+    lines = [l.decode("utf-8") for l in game_log.readlines()]
     return Response (
             response = "[" + ",".join(lines[fromround:]) + "]",
             status = 200,
@@ -179,7 +179,7 @@ def logs(log_path):
     except IOError:
         game_log_name = game_log_name + ".gz"
         game_log = gzip.GzipFile(game_log_name, "rb")
-    lines = [l for l in game_log.readlines()]
+    lines = [l.decode("utf-8") for l in game_log.readlines()]
     return Response (
             response = "[" + ",".join(lines) + "]",
             status = 200,

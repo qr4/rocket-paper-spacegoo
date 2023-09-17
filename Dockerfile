@@ -1,9 +1,12 @@
 FROM node:16.0.0-buster as builder
 
 RUN mkdir -p /opt/app
-COPY ./app /opt/app
 WORKDIR /opt/app
-RUN yarn install && yarn build
+COPY ./app/package.json /opt/app
+COPY ./app/yarn.lock /opt/app
+RUN yarn install
+COPY ./app /opt/app
+RUN yarn build
 
 
 FROM python:3-buster

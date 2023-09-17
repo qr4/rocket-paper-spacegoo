@@ -168,8 +168,6 @@ export const GameCanvas = memo(({turn, info, gameId}) => {
                     c.font = "bold 20px rps-font";
                     c.textAlign = "center";
                     c.textBaseline = "ideographic";
-                    c.fillText(planet.production_rounds_left, planet.x * -size_scale, planet.y * size_scale + 10);
-
                 }
             }
             c.globalAlpha = 1;

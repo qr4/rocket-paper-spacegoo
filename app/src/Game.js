@@ -183,7 +183,7 @@ export const Game = withStyles(styles)(({show, classes, showLatest}) => {
 
     useInterval(loadGameData, game && game.length && game[game.length -1]['game_over'] ? null : 500, true);
 
-    useInterval(() => playback && dispatch({type: 'incrementMove'}), playback? 10: null);
+    useInterval(() => playback && dispatch({type: 'incrementMove'}), playback? 50: null);
 
     return (
         <Container>
