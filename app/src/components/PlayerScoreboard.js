@@ -4,11 +4,7 @@ import React, {memo, useRef, useState} from 'react';
 
 import {useInterval} from '../hooks/useInterval';
 
-const styles = themes => ({
-    firstPlace: {
-        textTransform: 'uppercase',
-    },
-});
+const styles = themes => ({});
 
 export const PlayerScoreboard = withStyles(styles)(
     memo(({title, show, scoreboardData, classes, isGlobalRanking}) => {
@@ -34,7 +30,7 @@ export const PlayerScoreboard = withStyles(styles)(
                         animate
                         headers={[]}
                         dataset={scoreboardData.map((entry, index) => [
-                            index,
+                            index + 1,
                             <Link
                                 onClick={() =>
                                     history.push(`/player/${entry[0]}`)
@@ -45,11 +41,6 @@ export const PlayerScoreboard = withStyles(styles)(
                                         entry[2] ? 'secondary':
                                         isGlobalRanking && index < 3
                                             ? 'success' : 'primary'
-                                    }
-                                    className={
-                                        isGlobalRanking && index === 0
-                                            ? classes.firstPlace
-                                            : ''
                                     }
                                     show={show && displayedTableItems > index}>
                                     {entry[0]}
