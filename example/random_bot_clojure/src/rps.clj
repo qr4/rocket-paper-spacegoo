@@ -5,24 +5,21 @@
             [clojure.string :as str])
   (:gen-class))
 
+(def ^:private user-name "<PICK_AN_USER_NAME>")
+(def ^:private password  "<PICK_A_PASSWORD>")
+
 (def ^:private socket 
   (s/create-socket "rps.qr4.dev" 6000))
-
-(def ^:private game-finished?
-  (atom false))
 
 (defn- write [s]
   (println "SENDING" s)
   (s/write-line socket s))
 
 (defn- login [socket]
-  (write (format "login %s %s" 
-                 "<PICK_AN_USER_NAME>" 
-                 "<PICK_A_PASSWORD>")))
-
+  (write (format "login %s %s" user-name password)))
 
 ;; only an asymetric round. this needs to be called twice
-(defn battle-round [attacker defender]
+(defn- battle-round [attacker defender]
   (let [num-ships (count attacker)]
     (map-indexed (fn [defender-idx defender-count]
                    (loop [total-loss 0
@@ -105,11 +102,12 @@
   "Invoke me with `clojure -M -m rps` or `clojure -M:run`"
   [& args]
   (login socket)
-  (while (not @game-finished?)
-    (let [d (-> socket 
-                (s/read-line))]
-      (cond 
-        (nil? d) (reset! game-finished? true)
-        (str/starts-with? d "game is over") (reset! game-finished? true)
-        (not (str/starts-with? d "{")) (println d)
-        :else (process-game-state (json/read-str d :key-fn keyword))))))
+  (let [game-finished? (atom false)]
+    (while (not @game-finished?)
+      (let [d (-> socket 
+                  (s/read-line))]
+        (cond 
+          (nil? d) (reset! game-finished? true)
+          (str/starts-with? d "game is over") (reset! game-finished? true)
+          (not (str/starts-with? d "{")) (println d)
+          :else (process-game-state (json/read-str d :key-fn keyword)))))))
