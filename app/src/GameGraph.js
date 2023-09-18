@@ -46,7 +46,8 @@ export const GameGraph = memo(({game, turn, dispatch, show, arwesShow}) => {
 
     return (
         show && game ?
-            <VictoryChart theme={VictoryTheme.material} width={1200}
+            <VictoryChart theme={VictoryTheme.material} width={1200} padding={{left: 75, right: 50, top: 50, bottom: 25}}
+
                           containerComponent={
                               <VictoryCursorContainer cursorLabelComponent={<div style={{display: "none"}} />}
                                                       cursorDimension="x"
