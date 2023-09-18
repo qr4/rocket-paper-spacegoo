@@ -5,8 +5,8 @@
             [clojure.string :as str])
   (:gen-class))
 
-(def ^:private user-name "random_bot_clojure")
-(def ^:private password  "random_bot_clojure1")
+(def ^:private user-name "<PICK_AN_USER_NAME>")
+(def ^:private password  "<PICK_A_PASSWORD>")
 
 (def ^:private socket 
   (s/create-socket "rps.qr4.dev" 6000))
