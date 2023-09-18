@@ -67,10 +67,9 @@ An example gamestate looks as follows:
 
 ```
     {
+      "player_id": 1,               // your player_id
       "game_over": false,
-      "winner": null,               // player_id
-      "round": 2
-      "max_rounds": 500,
+      "winner": null,               // will contain the winning player_id
       "fleets": [
         {
           "id": 0,
