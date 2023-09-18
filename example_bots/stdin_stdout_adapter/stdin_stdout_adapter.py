@@ -10,7 +10,7 @@ USERNAME = sys.argv[1]
 PASSWORD = sys.argv[2]
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.connect(('rps.vhenne.de', 6000))
+s.connect(('rps.qr4.dev', 6000))
 io = s.makefile('rw')
 
 def write(data):
