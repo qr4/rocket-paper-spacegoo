@@ -51,15 +51,13 @@ def battle_round(attacker,defender):
 def battle(s1,s2):
     ships1 = s1[::]
     ships2 = s2[::]
-    while sum(ships1) > 0 and sum(ships2) >0:
+    while sum(ships1) > 0 and sum(ships2) > 0:
         new1 = battle_round(ships2,ships1)
         ships2 = battle_round(ships1,ships2)
         ships1 = new1
-        #print ships1,ships2
 
     ships1 = list(map(int,ships1))
     ships2 = list(map(int,ships2))
-    #print ships1,ships2
     return ships1, ships2
 
 
