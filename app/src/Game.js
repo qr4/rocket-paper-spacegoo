@@ -7,7 +7,8 @@ import {
     faPauseCircle
 } from '@fortawesome/free-solid-svg-icons';
 
-import {Table, Frame, Button, Loading, Words, withStyles } from "@arwes/arwes";
+import {Frame, Button, Loading, Words, withStyles } from "@arwes/arwes";
+import TableDualRow from "./components/TableDualRow";
 import {Container} from "./components/container";
 import {useHistory, useParams} from "react-router";
 import {useInterval} from "./hooks/useInterval";
@@ -74,19 +75,19 @@ const computeRoundData = (round) => {
         const planet = round.planets[pi];
         planets[planet.owner_id] += 1;
         add(ships[planet.owner_id], planet.ships);
-        if (planet.production_rounds_left) {
-            add(production[planet.owner_id], planet.production);
-        }
+        add(production[planet.owner_id], planet.production);
     }
 
-    return [
+    return [[
         round["game_over"] ? "Final Standings" : round.round,
         ships[0][0] + ships[0][1] + ships[0][2] + ships[1][0] + ships[1][1] + ships[1][2] + ships[2][0] + ships[2][1] + ships[2][2],
         planets[1], planets[2],
-        ships[1].join(","), ships[2].join(","),
+        ships[1].join(","), ships[2].join(",")
+    ], [
+        "", "",
         production[1].join(","), production[2].join(","),
         fleets[1],fleets[2]
-    ];
+    ]];
 };
 
 const reducer = (state, action) => {
@@ -197,6 +198,20 @@ export const Game = withStyles(styles)(({show, classes, showLatest}) => {
             </Frame>
 
             <Frame
+                className={classes.frames}
+                show={show}
+                animate={true}
+                level={3}
+                corners={4}
+                layer='primary'>
+                {(anim) => anim.entered && (game ?
+                        <GameCanvas turn={game[turn]} info={info} gameId={gameId}/> :
+                        show && <Loading animate/> || null
+                )}
+            </Frame>
+
+            <Frame
+                className={classes.frames}
                 animate={true}
                 level={3}
                 corners={4}
@@ -220,18 +235,6 @@ export const Game = withStyles(styles)(({show, classes, showLatest}) => {
                 }
             </Frame>
 
-            <Frame
-                className={classes.frames}
-                show={show}
-                animate={true}
-                level={3}
-                corners={4}
-                layer='primary'>
-                {(anim) => anim.entered && (game ?
-                        <GameCanvas turn={game[turn]} info={info} gameId={gameId}/> :
-                        show && <Loading animate/> || null
-                )}
-            </Frame>
 
             <Frame
                 className={classes.frames}
@@ -242,20 +245,22 @@ export const Game = withStyles(styles)(({show, classes, showLatest}) => {
                 layer='primary'>
                 {(anim) => anim.entered && (info && game && game[turn] ?
                         <div className={classes.frameContent}>
-                            <Table animate
-                                   headers={[
+                            <TableDualRow animate
+                                   headers={[[
                                        "Round",
-                                       "\u03A3 Fleets",
+                                       "\u03A3 All Ships",
                                        <Words layer="success"><div>Planets</div>{`${info["player1"]}`}</Words>,
                                        <Words layer="alert"><div>Planets</div>{`${info["player2"]}`}</Words>,
                                        <Words layer="success"><div>Ships</div>{`${info["player1"]}`}</Words>,
                                        <Words layer="alert"><div>Ships</div>{`${info["player2"]}`}</Words>,
+                                   ], [
+                                       "", "",
                                        <Words layer="success"><div>Production</div>{`${info["player1"]}`}</Words>,
                                        <Words layer="alert"><div>Production</div>{`${info["player2"]}`}</Words>,
                                        <Words layer="success"><div>Fleets</div>{`${info["player1"]}`}</Words>,
                                        <Words layer="alert"><div>Fleets</div>{`${info["player2"]}`}</Words>,
-                                   ]}
-                                   dataset={[computeRoundData(game[turn])]}/>
+                                   ]]}
+                                   dataset={computeRoundData(game[turn])}/>
                         </div>:
                         show && <Loading animate/> || null
                 )
