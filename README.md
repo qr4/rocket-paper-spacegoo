@@ -85,12 +85,12 @@ An example gamestate looks as follows:
       "players": [
         {
           "id": 1,
-          "name": "dividuum",
+          "name": "qr4",
           "itsme": true
         },
         {
           "id": 2,
-          "name": "cupe",
+          "name": "bot",
           "itsme": false
         }
       ],
@@ -98,18 +98,13 @@ An example gamestate looks as follows:
         {
           "id": 0,
           "owner_id": 0,            // player_id
-          "y": 0,
+          "y": 0,                   // position of the planet
           "x": 0,
           "ships": [ 20, 20, 20 ],  // current amount of ships of type a,b,c
           "production": [ 1, 1, 1 ] // production of ships in each round/tick of type a, b, c,
         },
         ...
-      ],
-      "hyperlanes": [ // contains edges along which travel is allowed
-        [0, 1],       // e.g. you can send ships from the first to the second planet 
-        [1, 0],
-        ...
-      ],
+      ]
     }
 ```
 
@@ -154,7 +149,7 @@ def battle_round(attacker,defender):
 def battle(s1,s2):
    ships1 = s1[::]
    ships2 = s2[::]
-   while sum(ships1) > 0 and sum(ships2) >0:
+   while sum(ships1) > 0 and sum(ships2) > 0:
        new1 = battle_round(ships2,ships1)
        ships2 = battle_round(ships1,ships2)
        ships1 = new1
