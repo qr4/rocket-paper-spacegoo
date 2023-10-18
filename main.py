@@ -121,7 +121,7 @@ class Player(object):
         self.game.check_round_finished()
 
     def __eq__(self, other):
-        return self.username == other.username
+        return (other is not None) and (self.username == other.username)
 
     def __hash__(self):
         return hash(self.username)
@@ -371,6 +371,7 @@ class Connection(object):
     def handle_cmd_login(self, username, password):
         if self.player:
             self.send("already logged in")
+            MatchMaking.remove_player(self.player)
             self.disconnect()
             return
 
@@ -383,6 +384,7 @@ class Connection(object):
 
         if MatchMaking.has_player(player):
             self.send("you are already logged in")
+            MatchMaking.remove_player(self.player)
             self.disconnect()
             return
 

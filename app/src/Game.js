@@ -101,7 +101,11 @@ const reducer = (state, action) => {
         case 'setMove':
             return {...state, turn: action.value, playback: false};
         case 'togglePlayback': {
-            return {...state, playback: !state.playback};
+	    if (state.turn + 1 >= state.game.length) {
+               return {...state, turn: 0, playback: !state.playback};
+            } else {
+               return {...state, playback: !state.playback};
+            }
         }
         case 'setPlayback': {
             return {...state, playback: action.value};
@@ -184,7 +188,7 @@ export const Game = withStyles(styles)(({show, classes, showLatest}) => {
 
     useInterval(loadGameData, game && game.length && game[game.length -1]['game_over'] ? null : 500, true);
 
-    useInterval(() => playback && dispatch({type: 'incrementMove'}), playback? 50: null);
+    useInterval(() => playback && dispatch({type: 'incrementMove'}), playback? 30: null);
 
     return (
         <Container>
