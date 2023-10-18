@@ -61,6 +61,48 @@ def send_fleet_command(io, source_planet_id, target_planet_id, ships_0, ships_1,
         ships_1,
         ships_2))
 
+# example gamestate:
+#  {
+#      "player_id": 1,               // your player_id
+#      "game_over": false,
+#      "winner": null,               // will contain the winning player_id
+#      "round": 2,
+#      "max_rounds": 500, 
+#      "fleets": [
+#        {
+#          "id": 0,
+#          "owner_id": 1,            // player_id
+#          "origin": 1,              // planet_id
+#          "target": 2,              // planet_id
+#          "ships": [ 3, 1, 1 ],     // Amount of ships of type a, b, c
+#          "eta": 45                 // the round this fleet will arrive at its destination
+#        },
+#        ...
+#      ],
+#      "players": [
+#        {
+#          "id": 1,
+#          "name": "qr4",
+#          "itsme": true
+#        },
+#        {
+#          "id": 2,
+#          "name": "bot",
+#          "itsme": false
+#        }
+#      ],
+#      "planets": [
+#        {
+#          "id": 0,
+#          "owner_id": 0,            // player_id
+#          "y": 0,                   // position of the planet
+#          "x": 0,
+#          "ships": [ 20, 20, 20 ],  // current amount of ships of type a,b,c
+#          "production": [ 1, 1, 1 ] // production of ships in each round/tick of type a, b, c,
+#        },
+#        ...
+#      ]
+#    }
 
 # TODO: Improve me!
 def compute_move(io, state):
