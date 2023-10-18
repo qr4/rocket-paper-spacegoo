@@ -8,7 +8,7 @@
 (def ^:private user-name "<PICK_AN_USER_NAME>")
 (def ^:private password  "<PICK_A_PASSWORD>")
 
-(def ^:private socket 
+(def ^:private socket
   (s/create-socket "rps.qr4.dev" 6000))
 
 (defn- write [s]
@@ -28,19 +28,19 @@
                        (max 0 (- defender-count total-loss))
 
                        (let [attacker-count (nth attacker cur-attacker-idx)
-                             [multiplier absolute-loss] 
-                             (cond 
+                             [multiplier absolute-loss]
+                             (cond
                                (= defender-idx cur-attacker-idx)                       [0.1  1]
                                (= 1 (mod (- defender-idx cur-attacker-idx) num-ships)) [0.25 2]
                                (= (- num-ships 1)
                                   (mod (- defender-idx cur-attacker-idx) num-ships))   [0.01 1])]
-                       (recur 
-                         (+ total-loss
-                            (max (* attacker-count multiplier)
-                                 (* (if (> attacker-count 0) 1 0)
-                                    absolute-loss)))
-                         (inc cur-attacker-idx)))))) 
-    defender)))
+                         (recur
+                          (+ total-loss
+                             (max (* attacker-count multiplier)
+                                  (* (if (> attacker-count 0) 1 0)
+                                     absolute-loss)))
+                          (inc cur-attacker-idx))))))
+                 defender)))
 
 ;; simulates a battle of two fleets `s1` and `s2`.
 ;; returns the surviving ships of each fleet after the battle
@@ -50,14 +50,13 @@
          s2 s2]
     (if (or (= 0 (apply + s1))
             (= 0 (apply + s2)))
-      [(map int s1) 
+      [(map int s1)
        (map int s2)]
       (recur (battle-round s2 s1)
              (battle-round s1 s2)))))
 
-
-(defn- process-game-state [{:keys [player_id 
-                                   winner 
+(defn- process-game-state [{:keys [player_id
+                                   winner
                                    planets
                                    game_over]
                             :as d}]
@@ -75,23 +74,23 @@
                                          last)
           target-planet (when (seq enemy-planets)
                           (rand-nth enemy-planets))]
-      (if (and 
-            (some? my-planet-with-most-ships)
-            (some? target-planet))
-        (write (format "send %s %s %d %d %d" 
+      (if (and
+           (some? my-planet-with-most-ships)
+           (some? target-planet))
+        (write (format "send %s %s %d %d %d"
                        (:id my-planet-with-most-ships)
                        (:id target-planet)
-                       (-> my-planet-with-most-ships 
+                       (-> my-planet-with-most-ships
                            :ships
                            (nth 0)
                            (/ 6)
                            int)
-                       (-> my-planet-with-most-ships 
+                       (-> my-planet-with-most-ships
                            :ships
                            (nth 1)
                            (/ 6)
                            int)
-                       (-> my-planet-with-most-ships 
+                       (-> my-planet-with-most-ships
                            :ships
                            (nth 2)
                            (/ 6)
@@ -104,9 +103,9 @@
   (login socket)
   (let [game-finished? (atom false)]
     (while (not @game-finished?)
-      (let [d (-> socket 
+      (let [d (-> socket
                   (s/read-line))]
-        (cond 
+        (cond
           (nil? d) (reset! game-finished? true)
           (str/starts-with? d "game is over") (reset! game-finished? true)
           (not (str/starts-with? d "{")) (println d)
