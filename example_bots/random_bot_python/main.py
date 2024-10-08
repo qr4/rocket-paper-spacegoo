@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import socket, json
 import random, pprint
+import argparse
 
 USERNAME = "<PICK_AN_USER_NAME>"
 PASSWORD = "<PICK_A_PASSWORD>"
@@ -134,28 +135,37 @@ def compute_move(io, state):
 
 
 if __name__ == "__main__":
-    # open the connection and login
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect(('rps.qr4.dev', 6000))
-    io = s.makefile('rw')
-    write(io, 'login %s %s' % (USERNAME, PASSWORD))
+    parser = argparse.ArgumentParser(description='Run the example bot')
+    parser.add_argument('--loop', action='store_true', help='Run the bot in a loop')
+    args = parser.parse_args()
 
-    # main game loop
-    while 1:
-        data = io.readline().strip()
-        if not data:
-            print("no data")
-            continue
-        elif data[0] == "{":
-            state = json.loads(data)
-            if state['winner'] is not None or state['game_over']:
-                print("Game Over.")
-                break
 
-            compute_move(io, state)
-        else:
-            print(data)
-            if data == "invalid login":
-                break
+    while True:
+        # open the connection and login
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect(('rps.qr4.dev', 6000))
+        io = s.makefile('rw')
+        write(io, 'login %s %s' % (USERNAME, PASSWORD))
 
-    s.close()
+        # main game loop
+        while 1:
+            data = io.readline().strip()
+            if not data:
+                print("no data")
+                continue
+            elif data[0] == "{":
+                state = json.loads(data)
+                if state['winner'] is not None or state['game_over']:
+                    print("Game Over.")
+                    break
+
+                compute_move(io, state)
+            else:
+                print(data)
+                if data == "invalid login":
+                    break
+
+        s.close()
+
+        if not args.loop:
+            break
