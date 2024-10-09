@@ -3,8 +3,9 @@ import socket, json
 import random, pprint
 import argparse
 
-USERNAME = "<PICK_AN_USER_NAME>"
+USERNAME = "<PICK_A_USER_NAME>"
 PASSWORD = "<PICK_A_PASSWORD>"
+SERVER = "rps-sfo.qr4.dev"
 
 # only an asymetric round. this needs to be called twice
 # ship_type_0 > ship_type_1 > ship_type_2 > ship_type_0
@@ -143,7 +144,7 @@ if __name__ == "__main__":
     while True:
         # open the connection and login
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(('rps.qr4.dev', 6000))
+        s.connect((SERVER, 6000))
         io = s.makefile('rw')
         write(io, 'login %s %s' % (USERNAME, PASSWORD))
 
